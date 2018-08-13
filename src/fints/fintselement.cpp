@@ -29,7 +29,8 @@ FinTsElement::Type FinTsElement::getType()
     return this->type;
 }
 
-void FinTsElement::setType(FinTsElement::Type newType)
+void FinTsElement::setType(const FinTsElement::Type &newType)
 {
     this->type = newType;
+    emit typeChanged(this->type);
 }

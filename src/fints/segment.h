@@ -17,29 +17,37 @@
     along with Zaster. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DATAELEMENTGROUP_H
-#define DATAELEMENTGROUP_H
+#ifndef SEGMENT_H
+#define SEGMENT_H
 
+#include "fintselement.h"
+#include "dataelementgroup.h"
 #include "dataelement.h"
 #include <QList>
 
-class DataElementGroup : public DataElement
+class Segment : public FinTsElement
 {
     Q_OBJECT
+    Q_PROPERTY(DataElementGroup header READ getHeader WRITE setHeader NOTIFY headerChanged)
     Q_PROPERTY(QList<DataElement> dataElements READ getDataElements WRITE setDataElements NOTIFY dataElementsChanged)
 public:
-    explicit DataElementGroup(DataElement *parent = 0);
-    QList<DataElement> getDataElements();
+    explicit Segment(FinTsElement *parent = 0);
+    void setHeader(const DataElementGroup &newHeader);
+    DataElementGroup getHeader();
     void setDataElements(const QList<DataElement> &newDataElements);
+    QList<DataElement> getDataElements();
     void addDataElement(const DataElement &dataElement);
 
 signals:
-    void dataElementsChanged(const QList<DataElement> newDataElements);
+    void headerChanged(const DataElementGroup &newHeader);
+    void dataElementsChanged(const QList<DataElement> &newDataElements);
 
 public slots:
 
 private:
+    DataElementGroup header;
     QList<DataElement> dataElements;
+
 };
 
-#endif // DATAELEMENTGROUP_H
+#endif // SEGMENT_H

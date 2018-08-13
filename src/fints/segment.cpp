@@ -17,25 +17,36 @@
     along with Zaster. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include "dataelementgroup.h"
+#include "segment.h"
 
-DataElementGroup::DataElementGroup(FinTsElement *parent) : DataElement(parent)
+Segment::Segment(FinTsElement *parent) : FinTsElement(parent)
 {
 
 }
 
-QList<FinTsElement::DataElement> DataElementGroup::getDataElements()
+void Segment::setHeader(const FinTsElement::DataElementGroup &newHeader)
 {
-    return this->dataElements;
+    this->header = newHeader;
+    emit headerChanged(this->header);
 }
 
-void DataElementGroup::setDataElements(const QList<FinTsElement::DataElement> &newDataElements)
+FinTsElement::DataElementGroup Segment::getHeader()
+{
+    return this->header;
+}
+
+void Segment::setDataElements(const QList<FinTsElement::DataElement> &newDataElements)
 {
     this->dataElements = newDataElements;
     emit dataElementsChanged(this->dataElements);
 }
 
-void DataElementGroup::addDataElement(const FinTsElement::DataElement &dataElement)
+QList<FinTsElement::DataElement> Segment::getDataElements()
+{
+    return this->dataElements;
+}
+
+void Segment::addDataElement(const FinTsElement::DataElement &dataElement)
 {
     this->dataElements.append(dataElement);
     emit dataElementsChanged(this->dataElements);

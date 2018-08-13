@@ -17,35 +17,30 @@
     along with Zaster. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef FINTSELEMENT_H
-#define FINTSELEMENT_H
+#ifndef MESSAGE_H
+#define MESSAGE_H
 
-#include <QObject>
+#include "fintselement.h"
+#include "segment.h"
+#include <QList>
 
-class FinTsElement : public QObject
+class Message : public FinTsElement
 {
     Q_OBJECT
-    Q_PROPERTY(Type type READ getType WRITE setType NOTIFY typeChanged)
+    Q_PROPERTY(QList<Segment> segments READ getSegments WRITE setSegments NOTIFY segmentsChanged)
 public:
-    explicit FinTsElement(QObject *parent = 0);
-    enum Type {
-        DataElement,
-        DataElementGroup,
-        Segment,
-        Message
-    };
-    Q_ENUM(Type)
-
-    Type getType();
-    void setType(const Type &newType);
+    explicit Message(FinTsElement *parent = 0);
+    void setSegments(const QList<Segment> &newSegments);
+    QList<Segment> getSegments();
+    void addSegment(const Segment &segment);
 
 signals:
-    void typeChanged(const Type &type);
+    void segmentsChanged(const QString &newSegments);
 
 public slots:
 
-protected:
-    Type type;
+private:
+    QList<Segment> segments;
 };
 
-#endif // FINTSELEMENT_H
+#endif // MESSAGE_H

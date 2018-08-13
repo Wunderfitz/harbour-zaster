@@ -23,3 +23,14 @@ DataElement::DataElement(FinTsElement *parent) : FinTsElement(parent)
 {
 
 }
+
+void DataElement::setValue(const QString &newValue)
+{
+    this->value = newValue;
+    emit valueChanged(this->value);
+}
+
+QString DataElement::getValue()
+{
+    return this->value;;
+}

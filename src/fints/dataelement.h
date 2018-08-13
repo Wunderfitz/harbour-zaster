@@ -25,12 +25,20 @@
 class DataElement : public FinTsElement
 {
     Q_OBJECT
+    Q_PROPERTY(QString value READ getValue WRITE setValue NOTIFY valueChanged)
 public:
     explicit DataElement(FinTsElement *parent = 0);
+    void setValue(const QString &newValue);
+    QString getValue();
 
 signals:
+    void valueChanged(const QString &newValue);
 
 public slots:
+
+private:
+    QString value;
+
 };
 
 #endif // DATAELEMENT_H
