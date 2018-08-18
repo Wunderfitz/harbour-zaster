@@ -42,12 +42,12 @@ QString FinTsSerializer::serialize(DataElement *dataElement)
 {
     QString serializedDataElement;
     if (dataElement->getType() == FinTsElement::DEG) {
-        DataElementGroup *dataElementGroup = qobject_cast<DataElementGroup *> dataElement;
+        DataElementGroup *dataElementGroup = qobject_cast<DataElementGroup *>(dataElement);
         QListIterator<DataElement *> dataElementIterator(dataElementGroup->getDataElements());
         while (dataElementIterator.hasNext()) {
             serializedDataElement.append(serialize(dataElementIterator.next()));
             if (dataElementIterator.hasNext()) {
-                serializedSegment.append(":");
+                serializedDataElement.append(":");
             }
         }
     } else {

@@ -32,6 +32,7 @@ public:
     QList<DataElement *> getDataElements();
     void setDataElements(const QList<DataElement *> &newDataElements);
     void addDataElement(DataElement *dataElement);
+    bool isEmpty();
 
 signals:
     void dataElementsChanged(const QList<DataElement *> &newDataElements);

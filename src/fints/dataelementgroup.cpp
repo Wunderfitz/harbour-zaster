@@ -47,4 +47,9 @@ void DataElementGroup::addDataElement(DataElement *dataElement)
     emit dataElementsChanged(this->dataElements);
 }
 
+bool DataElementGroup::isEmpty()
+{
+    return this->dataElements.size() == 0;
+}
+
 

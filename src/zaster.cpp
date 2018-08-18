@@ -18,11 +18,14 @@
 */
 
 #include "zaster.h"
+#include "fints/fintsdeserializer.h"
+#include "fints/message.h"
 
 Zaster::Zaster(QObject *parent) : QObject(parent), settings("harbour-zaster", "settings")
 {
     this->networkAccessManager = new QNetworkAccessManager(this);
     wagnis = new Wagnis(this->networkAccessManager, "harbour-zaster", "0.1", this);
+    doStupidTests();
 }
 
 Zaster::~Zaster()
@@ -32,4 +35,14 @@ Zaster::~Zaster()
 Wagnis *Zaster::getWagnis()
 {
     return this->wagnis;
+}
+
+void Zaster::doStupidTests()
+{
+    qDebug() << "Starting stupid tests...";
+    FinTsDeserializer deserializer;
+    QString rawMessage = "HNHBK:1:3+000000000125+300+0+1'HKIDN:2:2+280:67292200+9999999999+0+0'HKVVB:3:3+0+0+0+36792786FA12F235F04647689+3'HNHBS:4:1+1'";
+    Message *testMessage = deserializer.decodeAndDeserialize(rawMessage.toLatin1());
+    qDebug() << "Message decoded :)";
+    testMessage->deleteLater();
 }

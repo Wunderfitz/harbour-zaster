@@ -41,6 +41,8 @@ private:
     QNetworkAccessManager *networkAccessManager;
     Wagnis *wagnis;
     QSettings settings;
+
+    void doStupidTests();
 };
 
 #endif // ZASTER_H
