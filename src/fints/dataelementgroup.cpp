@@ -19,24 +19,32 @@
 
 #include "dataelementgroup.h"
 
-DataElementGroup::DataElementGroup(FinTsElement *parent) : DataElement(parent)
+DataElementGroup::DataElementGroup(DataElement *parent) : DataElement(parent)
 {
 
 }
 
-QList<FinTsElement::DataElement> DataElementGroup::getDataElements()
+DataElementGroup::~DataElementGroup()
+{
+    qDeleteAll(this->dataElements);
+}
+
+
+QList<DataElement *> DataElementGroup::getDataElements()
 {
     return this->dataElements;
 }
 
-void DataElementGroup::setDataElements(const QList<FinTsElement::DataElement> &newDataElements)
+void DataElementGroup::setDataElements(const QList<DataElement *> &newDataElements)
 {
     this->dataElements = newDataElements;
     emit dataElementsChanged(this->dataElements);
 }
 
-void DataElementGroup::addDataElement(const FinTsElement::DataElement &dataElement)
+void DataElementGroup::addDataElement(DataElement *dataElement)
 {
     this->dataElements.append(dataElement);
     emit dataElementsChanged(this->dataElements);
 }
+
+

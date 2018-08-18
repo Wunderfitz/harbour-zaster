@@ -26,20 +26,20 @@
 class DataElementGroup : public DataElement
 {
     Q_OBJECT
-    Q_PROPERTY(QList<DataElement> dataElements READ getDataElements WRITE setDataElements NOTIFY dataElementsChanged)
 public:
     explicit DataElementGroup(DataElement *parent = 0);
-    QList<DataElement> getDataElements();
-    void setDataElements(const QList<DataElement> &newDataElements);
-    void addDataElement(const DataElement &dataElement);
+    ~DataElementGroup();
+    QList<DataElement *> getDataElements();
+    void setDataElements(const QList<DataElement *> &newDataElements);
+    void addDataElement(DataElement *dataElement);
 
 signals:
-    void dataElementsChanged(const QList<DataElement> newDataElements);
+    void dataElementsChanged(const QList<DataElement *> &newDataElements);
 
 public slots:
 
 private:
-    QList<DataElement> dataElements;
+    QList<DataElement *> dataElements;
 };
 
 #endif // DATAELEMENTGROUP_H

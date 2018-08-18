@@ -24,7 +24,8 @@ SOURCES += src/harbour-zaster.cpp \
     src/fints/dataelementgroup.cpp \
     src/fints/fintselement.cpp \
     src/fints/segment.cpp \
-    src/fints/message.cpp
+    src/fints/message.cpp \
+    src/fints/fintsserializer.cpp
 
 DISTFILES += qml/*.qml \
     rpm/harbour-zaster.changes.in \
@@ -51,4 +52,5 @@ HEADERS += \
     src/fints/dataelementgroup.h \
     src/fints/fintselement.h \
     src/fints/segment.h \
-    src/fints/message.h
+    src/fints/message.h \
+    src/fints/fintsserializer.h

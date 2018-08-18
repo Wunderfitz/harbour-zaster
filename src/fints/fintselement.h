@@ -29,10 +29,10 @@ class FinTsElement : public QObject
 public:
     explicit FinTsElement(QObject *parent = 0);
     enum Type {
-        DataElement,
-        DataElementGroup,
-        Segment,
-        Message
+        DE,
+        DEG,
+        SEG,
+        MSG
     };
     Q_ENUM(Type)
 
@@ -46,6 +46,7 @@ public slots:
 
 protected:
     Type type;
+
 };
 
 #endif // FINTSELEMENT_H

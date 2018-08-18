@@ -24,29 +24,35 @@ Segment::Segment(FinTsElement *parent) : FinTsElement(parent)
 
 }
 
-void Segment::setHeader(const FinTsElement::DataElementGroup &newHeader)
+Segment::~Segment()
+{
+    qDeleteAll(this->dataElements);
+    delete header;
+}
+
+void Segment::setHeader(DataElementGroup *newHeader)
 {
     this->header = newHeader;
     emit headerChanged(this->header);
 }
 
-FinTsElement::DataElementGroup Segment::getHeader()
+DataElementGroup *Segment::getHeader()
 {
     return this->header;
 }
 
-void Segment::setDataElements(const QList<FinTsElement::DataElement> &newDataElements)
+void Segment::setDataElements(const QList<DataElement *> &newDataElements)
 {
     this->dataElements = newDataElements;
     emit dataElementsChanged(this->dataElements);
 }
 
-QList<FinTsElement::DataElement> Segment::getDataElements()
+QList<DataElement *> Segment::getDataElements()
 {
     return this->dataElements;
 }
 
-void Segment::addDataElement(const FinTsElement::DataElement &dataElement)
+void Segment::addDataElement(DataElement *dataElement)
 {
     this->dataElements.append(dataElement);
     emit dataElementsChanged(this->dataElements);

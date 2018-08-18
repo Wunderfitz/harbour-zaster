@@ -28,25 +28,24 @@
 class Segment : public FinTsElement
 {
     Q_OBJECT
-    Q_PROPERTY(DataElementGroup header READ getHeader WRITE setHeader NOTIFY headerChanged)
-    Q_PROPERTY(QList<DataElement> dataElements READ getDataElements WRITE setDataElements NOTIFY dataElementsChanged)
 public:
     explicit Segment(FinTsElement *parent = 0);
-    void setHeader(const DataElementGroup &newHeader);
-    DataElementGroup getHeader();
-    void setDataElements(const QList<DataElement> &newDataElements);
-    QList<DataElement> getDataElements();
-    void addDataElement(const DataElement &dataElement);
+    ~Segment();
+    void setHeader(DataElementGroup *newHeader);
+    DataElementGroup* getHeader();
+    void setDataElements(const QList<DataElement *> &newDataElements);
+    QList<DataElement *> getDataElements();
+    void addDataElement(DataElement *dataElement);
 
 signals:
-    void headerChanged(const DataElementGroup &newHeader);
-    void dataElementsChanged(const QList<DataElement> &newDataElements);
+    void headerChanged(DataElementGroup *newHeader);
+    void dataElementsChanged(const QList<DataElement *> &newDataElements);
 
 public slots:
 
 private:
-    DataElementGroup header;
-    QList<DataElement> dataElements;
+    DataElementGroup *header;
+    QList<DataElement *> dataElements;
 
 };
 

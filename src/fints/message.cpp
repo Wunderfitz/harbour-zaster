@@ -24,18 +24,23 @@ Message::Message(FinTsElement *parent) : FinTsElement(parent)
 
 }
 
-void Message::setSegments(const QList<FinTsElement::Segment> &newSegments)
+Message::~Message()
+{
+    qDeleteAll(this->segments);
+}
+
+void Message::setSegments(const QList<Segment *> &newSegments)
 {
     this->segments = newSegments;
     emit segmentsChanged(this->segments);
 }
 
-QList<FinTsElement::Segment> Message::getSegments()
+QList<Segment *> Message::getSegments()
 {
     return this->segments;
 }
 
-void Message::addSegment(const FinTsElement::Segment &segment)
+void Message::addSegment(Segment *segment)
 {
     this->segments.append(segment);
     emit segmentsChanged(this->segments);

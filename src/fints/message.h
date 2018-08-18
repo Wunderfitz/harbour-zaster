@@ -27,20 +27,20 @@
 class Message : public FinTsElement
 {
     Q_OBJECT
-    Q_PROPERTY(QList<Segment> segments READ getSegments WRITE setSegments NOTIFY segmentsChanged)
 public:
     explicit Message(FinTsElement *parent = 0);
-    void setSegments(const QList<Segment> &newSegments);
-    QList<Segment> getSegments();
-    void addSegment(const Segment &segment);
+    ~Message();
+    void setSegments(const QList<Segment *> &newSegments);
+    QList<Segment *> getSegments();
+    void addSegment(Segment *segment);
 
 signals:
-    void segmentsChanged(const QString &newSegments);
+    void segmentsChanged(const QList<Segment *> &newSegments);
 
 public slots:
 
 private:
-    QList<Segment> segments;
+    QList<Segment *> segments;
 };
 
 #endif // MESSAGE_H
