@@ -76,6 +76,33 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage
     return newMessage;
 }
 
+void FinTsDeserializer::debugOut(Message *message)
+{
+    QListIterator<Segment *> segmentIterator(message->getSegments());
+    while (segmentIterator.hasNext()) {
+        Segment *currentSegment = segmentIterator.next();
+        QListIterator<DataElement *> headerElementsIterator(currentSegment->getHeader()->getDataElements());
+        qDebug() << "[Segment] " << headerElementsIterator.next()->getValue();
+        while (headerElementsIterator.hasNext()) {
+            qDebug() << "-" << headerElementsIterator.next()->getValue();
+        }
+        QListIterator<DataElement *> segmentsElementsIterator(currentSegment->getDataElements());
+        while (segmentsElementsIterator.hasNext()) {
+            DataElement *myDataElement = segmentsElementsIterator.next();
+            if (myDataElement->getType() == FinTsElement::DEG) {
+                qDebug() << "  [Data Element Group]";
+                DataElementGroup *dataElementGroup = qobject_cast<DataElementGroup *>(myDataElement);
+                QListIterator<DataElement *> groupElementIterator(dataElementGroup->getDataElements());
+                while (groupElementIterator.hasNext()) {
+                    qDebug() << "---" << groupElementIterator.next()->getValue();
+                }
+            } else {
+                qDebug() << "--" << myDataElement->getValue();
+            }
+        }
+    }
+}
+
 DataElement *FinTsDeserializer::createDataElement(const QString &dataElementValue)
 {
     qDebug() << "[FinTsDeserializer] Creating data element " << dataElementValue;

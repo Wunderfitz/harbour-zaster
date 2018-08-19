@@ -21,7 +21,7 @@
 
 DataElementGroup::DataElementGroup(DataElement *parent) : DataElement(parent)
 {
-
+    this->type = FinTsElement::DEG;
 }
 
 DataElementGroup::~DataElementGroup()

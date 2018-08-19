@@ -21,7 +21,7 @@
 
 Message::Message(FinTsElement *parent) : FinTsElement(parent)
 {
-
+    this->type = FinTsElement::MSG;;
 }
 
 Message::~Message()

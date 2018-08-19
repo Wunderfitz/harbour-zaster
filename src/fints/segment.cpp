@@ -21,7 +21,7 @@
 
 Segment::Segment(FinTsElement *parent) : FinTsElement(parent)
 {
-
+    this->type = FinTsElement::SEG;
 }
 
 Segment::~Segment()

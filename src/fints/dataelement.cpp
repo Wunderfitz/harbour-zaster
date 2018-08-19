@@ -21,7 +21,7 @@
 
 DataElement::DataElement(FinTsElement *parent) : FinTsElement(parent)
 {
-
+    this->type = FinTsElement::DE;
 }
 
 void DataElement::setValue(const QString &newValue)

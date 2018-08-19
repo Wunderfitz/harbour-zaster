@@ -14,6 +14,7 @@ class FinTsDeserializer : public QObject
 public:
     explicit FinTsDeserializer(QObject *parent = 0);
     Message *decodeAndDeserialize(const QByteArray encodedMessage);
+    void debugOut(Message *message);
 
 signals:
 
