@@ -17,28 +17,34 @@
     along with Zaster. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef DATAELEMENT_H
-#define DATAELEMENT_H
+#ifndef FINTSDIALOG_H
+#define FINTSDIALOG_H
 
-#include "fintselement.h"
+#include <QObject>
+#include <QDebug>
+#include "dataelementgroup.h"
+#include "dataelement.h"
+#include "message.h"
+#include "segment.h"
 
-class DataElement : public FinTsElement
+const char MESSAGE_HEADER_ID[] = "HNHBK";
+const char MESSAGE_HEADER_VERSION[] = "3";
+
+class FinTsDialog : public QObject
 {
     Q_OBJECT
-    Q_PROPERTY(QString value READ getValue WRITE setValue NOTIFY valueChanged)
 public:
-    explicit DataElement(FinTsElement *parent = 0, const QString &myValue = "");
-    void setValue(const QString &newValue);
-    QString getValue();
+    explicit FinTsDialog(QObject *parent = 0);
+    void initialize();
 
 signals:
-    void valueChanged(const QString &newValue);
 
 public slots:
 
 private:
-    QString value;
-
+    Message *createDialogInitializationMessage();
+    Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, int dialogId, int messageNumber);
+    DataElementGroup *createSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
 };
 
-#endif // DATAELEMENT_H
+#endif // FINTSDIALOG_H

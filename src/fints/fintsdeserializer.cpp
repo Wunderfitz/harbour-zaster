@@ -15,7 +15,7 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage
     QList<DataElement *> currentDataElements;
     QList<Segment *> currentSegments;
     QString currentValue;
-    DataElementGroup *segmentHeader = new DataElementGroup();
+    DataElementGroup *segmentHeader = new DataElementGroup(newMessage);
     for (int i = 0; i < rawMessage.size(); i++) {
         QChar currentCharacter = rawMessage.at(i);
         if (inEscape) {
@@ -31,32 +31,32 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage
         case '\'':
             // segment end
             if (inGroup) {
-                currentGroupDataElements.append(createDataElement(currentValue));
+                currentGroupDataElements.append(createDataElement(newMessage, currentValue));
                 inGroup = false;
-                currentDataElements.append(createDataElementGroup(currentGroupDataElements));
+                currentDataElements.append(createDataElementGroup(newMessage, currentGroupDataElements));
                 currentGroupDataElements.clear();
             } else {
-                currentDataElements.append(createDataElement(currentValue));
+                currentDataElements.append(createDataElement(newMessage, currentValue));
             }
             if (!segmentHeader->isEmpty()) {
-                currentSegments.append(createSegment(segmentHeader, currentDataElements));
+                currentSegments.append(createSegment(newMessage, segmentHeader, currentDataElements));
                 currentDataElements.clear();
-                segmentHeader = new DataElementGroup();
+                segmentHeader = new DataElementGroup(newMessage);
             }
             currentValue.clear();
             break;
         case '+':
             // data element (group) end
             if (inGroup) {
-                currentGroupDataElements.append(createDataElement(currentValue));
+                currentGroupDataElements.append(createDataElement(newMessage, currentValue));
                 if (segmentHeader->isEmpty()) {
                     segmentHeader->setDataElements(currentGroupDataElements);
                 } else {
-                    currentDataElements.append(createDataElementGroup(currentGroupDataElements));
+                    currentDataElements.append(createDataElementGroup(newMessage, currentGroupDataElements));
                 }
                 currentGroupDataElements.clear();
             } else {
-                currentDataElements.append(createDataElement(currentValue));
+                currentDataElements.append(createDataElement(newMessage, currentValue));
             }
             inGroup = false;
             currentValue.clear();
@@ -64,7 +64,7 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage
         case ':':
             // data element end within group
             inGroup = true;
-            currentGroupDataElements.append(createDataElement(currentValue));
+            currentGroupDataElements.append(createDataElement(newMessage, currentValue));
             currentValue.clear();
             break;
         default:
@@ -103,26 +103,26 @@ void FinTsDeserializer::debugOut(Message *message)
     }
 }
 
-DataElement *FinTsDeserializer::createDataElement(const QString &dataElementValue)
+DataElement *FinTsDeserializer::createDataElement(FinTsElement *parentElement, const QString &dataElementValue)
 {
     qDebug() << "[FinTsDeserializer] Creating data element " << dataElementValue;
-    DataElement *dataElement = new DataElement();
+    DataElement *dataElement = new DataElement(parentElement);
     dataElement->setValue(dataElementValue);
     return dataElement;
 }
 
-DataElementGroup *FinTsDeserializer::createDataElementGroup(const QList<DataElement *> &dataElements)
+DataElementGroup *FinTsDeserializer::createDataElementGroup(FinTsElement *parentElement, const QList<DataElement *> &dataElements)
 {
     qDebug() << "[FinTsDeserializer] Creating data element group";
-    DataElementGroup *dataElementGroup = new DataElementGroup();
+    DataElementGroup *dataElementGroup = new DataElementGroup(parentElement);
     dataElementGroup->setDataElements(dataElements);
     return dataElementGroup;
 }
 
-Segment *FinTsDeserializer::createSegment(DataElementGroup *header, const QList<DataElement *> &dataElements)
+Segment *FinTsDeserializer::createSegment(FinTsElement *parentElement, DataElementGroup *header, const QList<DataElement *> &dataElements)
 {
     qDebug() << "[FinTsDeserializer] Creating segment " << header->getDataElements().at(0)->getValue();
-    Segment *segment = new Segment();
+    Segment *segment = new Segment(parentElement);
     segment->setHeader(header);
     segment->setDataElements(dataElements);
     return segment;

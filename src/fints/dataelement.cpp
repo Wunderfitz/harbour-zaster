@@ -19,9 +19,10 @@
 
 #include "dataelement.h"
 
-DataElement::DataElement(FinTsElement *parent) : FinTsElement(parent)
+DataElement::DataElement(FinTsElement *parent, const QString &myValue) : FinTsElement(parent)
 {
     this->type = FinTsElement::DE;
+    this->value = myValue;
 }
 
 void DataElement::setValue(const QString &newValue)
@@ -32,5 +33,5 @@ void DataElement::setValue(const QString &newValue)
 
 QString DataElement::getValue()
 {
-    return this->value;;
+    return this->value;
 }

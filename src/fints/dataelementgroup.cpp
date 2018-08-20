@@ -19,7 +19,7 @@
 
 #include "dataelementgroup.h"
 
-DataElementGroup::DataElementGroup(DataElement *parent) : DataElement(parent)
+DataElementGroup::DataElementGroup(FinTsElement *parent) : DataElement(parent)
 {
     this->type = FinTsElement::DEG;
 }

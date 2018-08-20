@@ -27,7 +27,7 @@ class DataElementGroup : public DataElement
 {
     Q_OBJECT
 public:
-    explicit DataElementGroup(DataElement *parent = 0);
+    explicit DataElementGroup(FinTsElement *parent = 0);
     ~DataElementGroup();
     QList<DataElement *> getDataElements();
     void setDataElements(const QList<DataElement *> &newDataElements);

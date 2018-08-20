@@ -21,9 +21,9 @@ signals:
 public slots:
 
 private:
-    DataElement *createDataElement(const QString &dataElementValue);
-    DataElementGroup *createDataElementGroup(const QList<DataElement *> &dataElements);
-    Segment *createSegment(DataElementGroup *header, const QList<DataElement *> &dataElements);
+    DataElement *createDataElement(FinTsElement *parentElement, const QString &dataElementValue);
+    DataElementGroup *createDataElementGroup(FinTsElement *parentElement, const QList<DataElement *> &dataElements);
+    Segment *createSegment(FinTsElement *parentElement, DataElementGroup *header, const QList<DataElement *> &dataElements);
 };
 
 #endif // FINTSDESERIALIZER_H
