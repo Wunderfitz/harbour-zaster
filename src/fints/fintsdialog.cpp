@@ -39,7 +39,13 @@ Message *FinTsDialog::createDialogInitializationMessage()
     // Dialog-ID - first message is always "0", see Formals, page 109 // TODO: use the received ID from bank later!
     // Message number - first message is always "1", see Formals, page 120 // TODO: increment later!
     dialogInitializationMessage->addSegment(createMessageHeaderSegment(dialogInitializationMessage, currentSegmentNumber, 0, 1));
+    currentSegmentNumber++;
+    // TODO: Don't use hard-coded BLZ :D
+    dialogInitializationMessage->addSegment(createIdentificationSegment(dialogInitializationMessage, currentSegmentNumber, "67292200"));
+
     // TODO: Dialoginitialisierung fortsetzen -> Segmentnummer inkrementieren -> Andere Segmente hinzufügen
+
+    // TODO: Calculate message length and replace first data element of the first segment
     return dialogInitializationMessage;
 }
 
@@ -48,8 +54,8 @@ Segment *FinTsDialog::createMessageHeaderSegment(FinTsElement *parentElement, in
 {
     Segment *messageHeaderSegment = new Segment(parentElement);
     messageHeaderSegment->setHeader(createSegmentHeader(messageHeaderSegment, MESSAGE_HEADER_ID, QString::number(segmentNumber), MESSAGE_HEADER_VERSION));
-    // TODO: Hard-coded message length, that should be changed
-    messageHeaderSegment->addDataElement(new DataElement(messageHeaderSegment, "000000000125"));
+    // Placeholder message length, that will be changed when we completed the whole message
+    messageHeaderSegment->addDataElement(new DataElement(messageHeaderSegment, "000000000000"));
     // HBCI-Version - always fixed version 3.0 -> "300", see Formals, page 15
     messageHeaderSegment->addDataElement(new DataElement(messageHeaderSegment, "300"));
     // Dialog-ID
@@ -57,6 +63,21 @@ Segment *FinTsDialog::createMessageHeaderSegment(FinTsElement *parentElement, in
     // Message number
     messageHeaderSegment->addDataElement(new DataElement(messageHeaderSegment, QString::number(messageNumber)));
     return messageHeaderSegment;
+}
+
+// See Formals, page 43
+Segment *FinTsDialog::createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz)
+{
+    Segment *messageIdentificationSegment = new Segment(parentElement);
+    messageIdentificationSegment->setHeader(createSegmentHeader(messageIdentificationSegment, MESSAGE_IDENTIFICATION_ID, QString::number(segmentNumber), MESSAGE_IDENTIFICATION_VERSION));
+    messageIdentificationSegment->addDataElement(createBankId(messageIdentificationSegment, blz));
+    // Customer ID
+    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, FINTS_PLACEHOLDER_PRODUCT_ID));
+    // Customer system ID must be 0 for PIN/TAN, see Formals page 116
+    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, "0"));
+    // Customer system status, needs to be "1", see Formals page 117
+    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, "1"));
+    return messageIdentificationSegment;
 }
 
 DataElementGroup *FinTsDialog::createSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion)
@@ -67,4 +88,15 @@ DataElementGroup *FinTsDialog::createSegmentHeader(FinTsElement *parentElement, 
     segmentHeader->addDataElement(new DataElement(segmentHeader, segmentNumber));
     segmentHeader->addDataElement(new DataElement(segmentHeader, segmentVersion));
     return segmentHeader;
+}
+
+// See Geschäftsvorfälle, page 3
+DataElementGroup *FinTsDialog::createBankId(FinTsElement *parentElement, const QString &blz)
+{
+    DataElementGroup *bankId = new DataElementGroup(parentElement);
+    // 280 is fixed for Germany, see Geschäftsvorfälle page 613
+    bankId->addDataElement(new DataElement(bankId, "280"));
+    // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
+    bankId->addDataElement(new DataElement(bankId, blz));
+    return bankId;
 }

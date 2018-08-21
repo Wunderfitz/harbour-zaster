@@ -36,6 +36,7 @@ public:
     void setDataElements(const QList<DataElement *> &newDataElements);
     QList<DataElement *> getDataElements();
     void addDataElement(DataElement *dataElement);
+    void replaceDataElement(int index, DataElement *dataElement);
 
 signals:
     void headerChanged(DataElementGroup *newHeader);

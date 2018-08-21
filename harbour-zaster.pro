@@ -57,4 +57,5 @@ HEADERS += \
     src/fints/message.h \
     src/fints/fintsserializer.h \
     src/fints/fintsdeserializer.h \
-    src/fints/fintsdialog.h
+    src/fints/fintsdialog.h \
+    src/fints/fintsglobals.h

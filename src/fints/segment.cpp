@@ -57,3 +57,9 @@ void Segment::addDataElement(DataElement *dataElement)
     this->dataElements.append(dataElement);
     emit dataElementsChanged(this->dataElements);
 }
+
+void Segment::replaceDataElement(int index, DataElement *dataElement)
+{
+    this->dataElements.replace(index, dataElement);
+    emit dataElementsChanged(this->dataElements);
+}

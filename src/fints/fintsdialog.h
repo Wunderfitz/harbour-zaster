@@ -26,9 +26,14 @@
 #include "dataelement.h"
 #include "message.h"
 #include "segment.h"
+#include "fintsglobals.h"
 
 const char MESSAGE_HEADER_ID[] = "HNHBK";
 const char MESSAGE_HEADER_VERSION[] = "3";
+const char MESSAGE_IDENTIFICATION_ID[] = "HKIDN";
+const char MESSAGE_IDENTIFICATION_VERSION[] = "2";
+const char MESSAGE_PROCESS_PREPARATION_ID[] = "HKVVB";
+const char MESSAGE_PROCESS_PREPARATION_VERSION[] = "3";
 
 class FinTsDialog : public QObject
 {
@@ -43,8 +48,12 @@ public slots:
 
 private:
     Message *createDialogInitializationMessage();
+
     Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, int dialogId, int messageNumber);
+    Segment *createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz);
+
     DataElementGroup *createSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
+    DataElementGroup *createBankId(FinTsElement *parentElement, const QString &blz);
 };
 
 #endif // FINTSDIALOG_H
