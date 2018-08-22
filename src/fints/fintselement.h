@@ -38,6 +38,7 @@ public:
 
     Type getType();
     void setType(const Type &newType);
+    virtual int getCompleteLength() = 0;
 
 signals:
     void typeChanged(const Type &type);

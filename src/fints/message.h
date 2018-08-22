@@ -33,6 +33,7 @@ public:
     void setSegments(const QList<Segment *> &newSegments);
     QList<Segment *> getSegments();
     void addSegment(Segment *segment);
+    int getCompleteLength();
 
 signals:
     void segmentsChanged(const QList<Segment *> &newSegments);

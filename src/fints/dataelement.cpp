@@ -35,3 +35,8 @@ QString DataElement::getValue()
 {
     return this->value;
 }
+
+int DataElement::getCompleteLength()
+{
+    return this->value.size();
+}

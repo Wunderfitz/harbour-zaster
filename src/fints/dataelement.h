@@ -30,6 +30,7 @@ public:
     explicit DataElement(FinTsElement *parent = 0, const QString &myValue = "");
     void setValue(const QString &newValue);
     QString getValue();
+    int getCompleteLength();
 
 signals:
     void valueChanged(const QString &newValue);

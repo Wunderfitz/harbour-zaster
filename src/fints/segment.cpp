@@ -18,6 +18,7 @@
 */
 
 #include "segment.h"
+#include <QListIterator>
 
 Segment::Segment(FinTsElement *parent) : FinTsElement(parent)
 {
@@ -62,4 +63,26 @@ void Segment::replaceDataElement(int index, DataElement *dataElement)
 {
     this->dataElements.replace(index, dataElement);
     emit dataElementsChanged(this->dataElements);
+}
+
+int Segment::getCompleteLength()
+{
+    QListIterator<DataElement *> dataElementIterator(this->dataElements);
+    int completeLength = 0;
+    while (dataElementIterator.hasNext()) {
+        completeLength = completeLength + dataElementIterator.next()->getCompleteLength();
+        if (dataElementIterator.hasNext()) {
+            completeLength++;
+        }
+    }
+    QListIterator<DataElement *> headerIterator(this->header->getDataElements());
+    while (headerIterator.hasNext()) {
+        completeLength = completeLength + headerIterator.next()->getCompleteLength();
+        if (headerIterator.hasNext()) {
+            completeLength++;
+        }
+    }
+    // This is the separator between the header and the rest of the segment
+    completeLength++;
+    return completeLength;
 }

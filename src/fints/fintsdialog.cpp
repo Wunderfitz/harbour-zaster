@@ -18,6 +18,8 @@
 */
 
 #include "fintsdialog.h"
+#include "fintsserializer.h"
+#include <QListIterator>
 
 FinTsDialog::FinTsDialog(QObject *parent) : QObject(parent)
 {
@@ -28,7 +30,12 @@ void FinTsDialog::initialize()
 {
     qDebug() << "FinTsDialog::initialize";
     Message *dialogInitializationMessage = createDialogInitializationMessage();
+    FinTsSerializer serializer;
+    qDebug() << serializer.serializeAndEncode(dialogInitializationMessage);
+
     // TODO: Send message and receive bank response...
+
+    dialogInitializationMessage->deleteLater();
 }
 
 Message *FinTsDialog::createDialogInitializationMessage()
@@ -42,10 +49,13 @@ Message *FinTsDialog::createDialogInitializationMessage()
     currentSegmentNumber++;
     // TODO: Don't use hard-coded BLZ :D
     dialogInitializationMessage->addSegment(createIdentificationSegment(dialogInitializationMessage, currentSegmentNumber, "67292200"));
+    currentSegmentNumber++;
+    dialogInitializationMessage->addSegment(createProcessPreparationSegment(dialogInitializationMessage, currentSegmentNumber));
+    currentSegmentNumber++;
+    // Message number - first message is always "1", see Formals, page 120 // TODO: increment later!
+    dialogInitializationMessage->addSegment(createMessageTerminationSegment(dialogInitializationMessage, currentSegmentNumber, 1));
 
-    // TODO: Dialoginitialisierung fortsetzen -> Segmentnummer inkrementieren -> Andere Segmente hinzufügen
-
-    // TODO: Calculate message length and replace first data element of the first segment
+    insertMessageLength(dialogInitializationMessage);
     return dialogInitializationMessage;
 }
 
@@ -80,6 +90,31 @@ Segment *FinTsDialog::createIdentificationSegment(FinTsElement *parentElement, i
     return messageIdentificationSegment;
 }
 
+Segment *FinTsDialog::createProcessPreparationSegment(FinTsElement *parentElement, int segmentNumber)
+{
+    Segment *processPreparationSegment = new Segment(parentElement);
+    processPreparationSegment->setHeader(createSegmentHeader(processPreparationSegment, MESSAGE_PROCESS_PREPARATION_ID, QString::number(segmentNumber), MESSAGE_PROCESS_PREPARATION_VERSION));
+    // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45, TODO: make it adopting to received BPD
+    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, "0"));
+    // User Parameter Data (UPD) version, TODO: make it a proper version
+    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, "0"));
+    // Dialog language, needs to be "0" for Standard, see Formals page 109
+    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, "0"));
+    // Product ID
+    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_ID));
+    // Product Version
+    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_VERSION));
+    return processPreparationSegment;
+}
+
+Segment *FinTsDialog::createMessageTerminationSegment(FinTsElement *parentElement, int segmentNumber, int messageNumber)
+{
+    Segment *messageTerminationSegment = new Segment(parentElement);
+    messageTerminationSegment->setHeader(createSegmentHeader(messageTerminationSegment, MESSAGE_TERMINATION_ID, QString::number(segmentNumber), MESSAGE_TERMINATION_VERSION));
+    messageTerminationSegment->addDataElement(new DataElement(messageTerminationSegment, QString::number(messageNumber)));
+    return messageTerminationSegment;
+}
+
 DataElementGroup *FinTsDialog::createSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion)
 {
     qDebug() << "FinTsDialog::createSegmentHeader" << segmentId << segmentNumber << segmentVersion;
@@ -99,4 +134,10 @@ DataElementGroup *FinTsDialog::createBankId(FinTsElement *parentElement, const Q
     // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
     bankId->addDataElement(new DataElement(bankId, blz));
     return bankId;
+}
+
+void FinTsDialog::insertMessageLength(Message *message)
+{
+    QString messageLengthString = QString::number(message->getCompleteLength()).rightJustified(12, '0');
+    message->getSegments().at(0)->getDataElements().at(0)->setValue(messageLengthString);
 }

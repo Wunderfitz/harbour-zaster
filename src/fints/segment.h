@@ -37,6 +37,7 @@ public:
     QList<DataElement *> getDataElements();
     void addDataElement(DataElement *dataElement);
     void replaceDataElement(int index, DataElement *dataElement);
+    int getCompleteLength();
 
 signals:
     void headerChanged(DataElementGroup *newHeader);

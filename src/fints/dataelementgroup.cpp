@@ -18,6 +18,7 @@
 */
 
 #include "dataelementgroup.h"
+#include <QListIterator>
 
 DataElementGroup::DataElementGroup(FinTsElement *parent) : DataElement(parent)
 {
@@ -50,6 +51,19 @@ void DataElementGroup::addDataElement(DataElement *dataElement)
 bool DataElementGroup::isEmpty()
 {
     return this->dataElements.size() == 0;
+}
+
+int DataElementGroup::getCompleteLength()
+{
+    QListIterator<DataElement *> dataElementIterator(this->dataElements);
+    int completeLength = 0;
+    while (dataElementIterator.hasNext()) {
+        completeLength = completeLength + dataElementIterator.next()->getValue().size();
+        if (dataElementIterator.hasNext()) {
+            completeLength++;
+        }
+    }
+    return completeLength;
 }
 
 

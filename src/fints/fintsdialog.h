@@ -34,6 +34,8 @@ const char MESSAGE_IDENTIFICATION_ID[] = "HKIDN";
 const char MESSAGE_IDENTIFICATION_VERSION[] = "2";
 const char MESSAGE_PROCESS_PREPARATION_ID[] = "HKVVB";
 const char MESSAGE_PROCESS_PREPARATION_VERSION[] = "3";
+const char MESSAGE_TERMINATION_ID[] = "HNHBS";
+const char MESSAGE_TERMINATION_VERSION[] = "1";
 
 class FinTsDialog : public QObject
 {
@@ -51,9 +53,13 @@ private:
 
     Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, int dialogId, int messageNumber);
     Segment *createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz);
+    Segment *createProcessPreparationSegment(FinTsElement *parentElement, int segmentNumber);
+    Segment *createMessageTerminationSegment(FinTsElement *parentElement, int segmentNumber, int messageNumber);
 
     DataElementGroup *createSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
     DataElementGroup *createBankId(FinTsElement *parentElement, const QString &blz);
+
+    void insertMessageLength(Message *message);
 };
 
 #endif // FINTSDIALOG_H

@@ -33,6 +33,7 @@ public:
     void setDataElements(const QList<DataElement *> &newDataElements);
     void addDataElement(DataElement *dataElement);
     bool isEmpty();
+    int getCompleteLength();
 
 signals:
     void dataElementsChanged(const QList<DataElement *> &newDataElements);

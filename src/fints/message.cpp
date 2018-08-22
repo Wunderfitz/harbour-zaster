@@ -45,3 +45,14 @@ void Message::addSegment(Segment *segment)
     this->segments.append(segment);
     emit segmentsChanged(this->segments);
 }
+
+int Message::getCompleteLength()
+{
+    QListIterator<Segment *> segmentIterator(this->segments);
+    int completeLength = 0;
+    while (segmentIterator.hasNext()) {
+        completeLength = completeLength + segmentIterator.next()->getCompleteLength();
+        completeLength++;
+    }
+    return completeLength;
+}
