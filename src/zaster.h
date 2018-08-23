@@ -37,6 +37,10 @@ signals:
 
 public slots:
 
+private slots:
+    void handleStupidTestsError(QNetworkReply::NetworkError error);
+    void handleStupidTestsFinished();
+
 private:
     QNetworkAccessManager *networkAccessManager;
     Wagnis *wagnis;

@@ -42,14 +42,13 @@ class FinTsDialog : public QObject
     Q_OBJECT
 public:
     explicit FinTsDialog(QObject *parent = 0);
-    void initialize();
+    Message *createDialogInitializationMessage();
 
 signals:
 
 public slots:
 
 private:
-    Message *createDialogInitializationMessage();
 
     Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, int dialogId, int messageNumber);
     Segment *createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz);

@@ -39,18 +39,43 @@ Wagnis *Zaster::getWagnis()
     return this->wagnis;
 }
 
+void Zaster::handleStupidTestsError(QNetworkReply::NetworkError error)
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    qWarning() << "Zaster::handleStupidTestsError:" << (int)error << reply->errorString() << reply->readAll();
+}
+
+void Zaster::handleStupidTestsFinished()
+{
+    qDebug() << "Zaster::handleStupidTestsFinished";
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+
+    FinTsDeserializer deserializer;
+    Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
+    deserializer.debugOut(replyMessage);
+    replyMessage->deleteLater();
+}
+
 void Zaster::doStupidTests()
 {
     qDebug() << "Starting stupid tests...";
-//    FinTsDeserializer deserializer;
-//    QString rawMessage = "HNHBK:1:3+000000000125+300+0+1'HKIDN:2:2+280:67292200+9999999999+0+0'HKVVB:3:3+0+0+0+36792786FA12F235F04647689+3'HNHBS:4:1+1'";
-//    qDebug() << "Original message: " << rawMessage;
-//    Message *testMessage = deserializer.decodeAndDeserialize(rawMessage.toLatin1());
-//    deserializer.debugOut(testMessage);
-//    FinTsSerializer serializer;
-//    QByteArray serializedMessage = serializer.serializeAndEncode(testMessage);
-//    qDebug() << serializedMessage;
-//    testMessage->deleteLater();
     FinTsDialog finTsDialog;
-    finTsDialog.initialize();
+    Message *dialogInitializationMessage = finTsDialog.createDialogInitializationMessage();
+    FinTsSerializer serializer;
+    QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
+    qDebug() << "INPUT" << serializedInitializationMessage;
+
+    QUrl url = QUrl("https://hbci11.fiducia.de/cgi-bin/hbciservlet");
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = networkAccessManager->post(request, serializedInitializationMessage);
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleStupidTestsError(QNetworkReply::NetworkError)));
+    connect(reply, SIGNAL(finished()), this, SLOT(handleStupidTestsFinished()));
+
+    dialogInitializationMessage->deleteLater();
+
 }

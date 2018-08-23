@@ -8,8 +8,7 @@ FinTsSerializer::FinTsSerializer(QObject *parent) : QObject(parent)
 
 QByteArray FinTsSerializer::serializeAndEncode(Message *message)
 {
-    return serialize(message).toLatin1();
-    return QByteArray();
+    return serialize(message).toLatin1().toBase64();
 }
 
 QString FinTsSerializer::serialize(Message *message)

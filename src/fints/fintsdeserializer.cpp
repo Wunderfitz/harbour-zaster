@@ -8,7 +8,7 @@ FinTsDeserializer::FinTsDeserializer(QObject *parent) : QObject(parent)
 Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage)
 {
     Message *newMessage = new Message();
-    QString rawMessage = QString::fromLatin1(encodedMessage);
+    QString rawMessage = QString::fromLatin1(QByteArray::fromBase64(encodedMessage));
     bool inEscape = false;
     bool inGroup = false;
     QList<DataElement *> currentGroupDataElements;

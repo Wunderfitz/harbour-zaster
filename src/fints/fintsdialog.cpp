@@ -26,18 +26,6 @@ FinTsDialog::FinTsDialog(QObject *parent) : QObject(parent)
 
 }
 
-void FinTsDialog::initialize()
-{
-    qDebug() << "FinTsDialog::initialize";
-    Message *dialogInitializationMessage = createDialogInitializationMessage();
-    FinTsSerializer serializer;
-    qDebug() << serializer.serializeAndEncode(dialogInitializationMessage);
-
-    // TODO: Send message and receive bank response...
-
-    dialogInitializationMessage->deleteLater();
-}
-
 Message *FinTsDialog::createDialogInitializationMessage()
 {
     qDebug() << "FinTsDialog::createDialogInitialization";
