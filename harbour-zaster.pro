@@ -58,4 +58,6 @@ HEADERS += \
     src/fints/fintsserializer.h \
     src/fints/fintsdeserializer.h \
     src/fints/fintsdialog.h \
-    src/fints/fintsglobals.h
+    src/fints/fintsglobals.h \
+    src/fints/bpdconstants.h \
+    src/fints/updconstants.h

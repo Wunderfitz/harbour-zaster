@@ -22,12 +22,25 @@
 
 #include <QObject>
 #include <QDebug>
+#include <QVariantMap>
 #include "dataelementgroup.h"
 #include "dataelement.h"
 #include "message.h"
 #include "segment.h"
 #include "fintsglobals.h"
+#include "bpdconstants.h"
+#include "updconstants.h"
 
+// HBCI-Version - always fixed version 3.0, see Formals, page 15
+const char FINTS_VERSION[] = "300";
+
+// Customer system ID must be 0 for PIN/TAN, see Formals page 116
+const char CUSTOMER_SYSTEM_ID[] = "0";
+// Customer system status, needs to be "1", see Formals page 117
+const char CUSTOMER_SYSTEM_STATUS[] = "1";
+
+// Placeholder message length, that will be changed when we completed the whole message
+const char MESSAGE_LENGTH_PLACEHOLDER[] = "000000000000";
 const char MESSAGE_HEADER_ID[] = "HNHBK";
 const char MESSAGE_HEADER_VERSION[] = "3";
 const char MESSAGE_IDENTIFICATION_ID[] = "HKIDN";
@@ -50,7 +63,7 @@ public slots:
 
 private:
 
-    Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, int dialogId, int messageNumber);
+    Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);
     Segment *createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz);
     Segment *createProcessPreparationSegment(FinTsElement *parentElement, int segmentNumber);
     Segment *createMessageTerminationSegment(FinTsElement *parentElement, int segmentNumber, int messageNumber);
@@ -59,6 +72,12 @@ private:
     DataElementGroup *createBankId(FinTsElement *parentElement, const QString &blz);
 
     void insertMessageLength(Message *message);
+
+    QString myDialogId;
+    QString myDialogLanguage;
+    int myMessageNumber;
+    QVariantMap bankParameterData;
+    QVariantMap userParameterData;
 };
 
 #endif // FINTSDIALOG_H

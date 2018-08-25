@@ -56,3 +56,8 @@ int Message::getCompleteLength()
     }
     return completeLength;
 }
+
+int Message::getNextSegmentNumber()
+{
+    return this->segments.size() + 1;
+}
