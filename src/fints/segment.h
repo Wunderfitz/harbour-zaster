@@ -38,6 +38,7 @@ public:
     void addDataElement(DataElement *dataElement);
     void replaceDataElement(int index, DataElement *dataElement);
     int getCompleteLength();
+    QString getIdentifier();
 
 signals:
     void headerChanged(DataElementGroup *newHeader);

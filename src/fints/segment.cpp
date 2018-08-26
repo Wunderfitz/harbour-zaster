@@ -86,3 +86,12 @@ int Segment::getCompleteLength()
     completeLength++;
     return completeLength;
 }
+
+QString Segment::getIdentifier()
+{
+    QString myIdentifier = "//undefined//";
+    if (this->header) {
+        return this->header->getDataElements().at(0)->getValue();
+    }
+    return myIdentifier;
+}

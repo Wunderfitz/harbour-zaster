@@ -62,15 +62,19 @@ private slots:
 
 private:    
 
-    Message *createDialogInitializationMessage();
+    Message *createMessageDialogInitialization();
+    void parseReplyDialogInitialization(Message *replyMessage);
 
-    Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);    
-    Segment *createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz);
-    Segment *createProcessPreparationSegment(FinTsElement *parentElement, int segmentNumber);
-    Segment *createMessageTerminationSegment(FinTsElement *parentElement, int segmentNumber, int messageNumber);
+    Segment *createSegmentMessageHeader(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);
+    Segment *createSegmentIdentification(FinTsElement *parentElement, int segmentNumber, const QString &blz);
+    Segment *createSegmentProcessPreparation(FinTsElement *parentElement, int segmentNumber);
+    Segment *createSegmentMessageTermination(FinTsElement *parentElement, int segmentNumber, int messageNumber);
+    void parseSegmentMessageHeader(Segment *segmentMessageHeader);
+    void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
+    void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
 
-    DataElementGroup *createSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
-    DataElementGroup *createBankId(FinTsElement *parentElement, const QString &blz);
+    DataElementGroup *createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
+    DataElementGroup *createDegBankId(FinTsElement *parentElement, const QString &blz);
 
     void insertMessageLength(Message *message);
 

@@ -9,6 +9,7 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage
 {
     Message *newMessage = new Message();
     QString rawMessage = QString::fromLatin1(QByteArray::fromBase64(encodedMessage));
+    // qDebug() << "[FinTsDeserializer] Bank replied: " << rawMessage;
     bool inEscape = false;
     bool inGroup = false;
     QList<DataElement *> currentGroupDataElements;
@@ -105,7 +106,7 @@ void FinTsDeserializer::debugOut(Message *message)
 
 DataElement *FinTsDeserializer::createDataElement(FinTsElement *parentElement, const QString &dataElementValue)
 {
-    qDebug() << "[FinTsDeserializer] Creating data element " << dataElementValue;
+    // qDebug() << "[FinTsDeserializer] Creating data element " << dataElementValue;
     DataElement *dataElement = new DataElement(parentElement);
     dataElement->setValue(dataElementValue);
     return dataElement;
@@ -113,7 +114,7 @@ DataElement *FinTsDeserializer::createDataElement(FinTsElement *parentElement, c
 
 DataElementGroup *FinTsDeserializer::createDataElementGroup(FinTsElement *parentElement, const QList<DataElement *> &dataElements)
 {
-    qDebug() << "[FinTsDeserializer] Creating data element group";
+    // qDebug() << "[FinTsDeserializer] Creating data element group";
     DataElementGroup *dataElementGroup = new DataElementGroup(parentElement);
     dataElementGroup->setDataElements(dataElements);
     return dataElementGroup;
@@ -121,7 +122,7 @@ DataElementGroup *FinTsDeserializer::createDataElementGroup(FinTsElement *parent
 
 Segment *FinTsDeserializer::createSegment(FinTsElement *parentElement, DataElementGroup *header, const QList<DataElement *> &dataElements)
 {
-    qDebug() << "[FinTsDeserializer] Creating segment " << header->getDataElements().at(0)->getValue();
+    // qDebug() << "[FinTsDeserializer] Creating segment " << header->getDataElements().at(0)->getValue();
     Segment *segment = new Segment(parentElement);
     segment->setHeader(header);
     segment->setDataElements(dataElements);

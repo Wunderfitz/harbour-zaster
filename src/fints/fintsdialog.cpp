@@ -42,7 +42,7 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
 void FinTsDialog::dialogInitialization()
 {
     qDebug() << "FinTsDialog::dialogInitialization";
-    Message *dialogInitializationMessage = this->createDialogInitializationMessage();
+    Message *dialogInitializationMessage = this->createMessageDialogInitialization();
     QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
 
     // TODO: Use automatially determined endpoint
@@ -72,29 +72,42 @@ void FinTsDialog::handleDialogInitializationFinished()
     }
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
-    deserializer.debugOut(replyMessage);
+    parseReplyDialogInitialization(replyMessage);
     replyMessage->deleteLater();
 }
 
-Message *FinTsDialog::createDialogInitializationMessage()
+Message *FinTsDialog::createMessageDialogInitialization()
 {
     qDebug() << "FinTsDialog::createDialogInitialization";
     Message *dialogInitializationMessage = new Message();
-    dialogInitializationMessage->addSegment(createMessageHeaderSegment(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
+    dialogInitializationMessage->addSegment(createSegmentMessageHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
     // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608, TODO: Don't use hard-coded BLZ :D
-    dialogInitializationMessage->addSegment(createIdentificationSegment(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), FINTS_PLACEHOLDER_BLZ));
-    dialogInitializationMessage->addSegment(createProcessPreparationSegment(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
-    dialogInitializationMessage->addSegment(createMessageTerminationSegment(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myMessageNumber));
+    dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), FINTS_PLACEHOLDER_BLZ));
+    dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+    dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myMessageNumber));
 
     insertMessageLength(dialogInitializationMessage);
     return dialogInitializationMessage;
 }
 
+void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
+{
+    qDebug() << "FinTsDialog::parseDialogInitializationReply";
+    QListIterator<Segment *> segmentIterator(replyMessage->getSegments());
+    while (segmentIterator.hasNext()) {
+        Segment *currentSegment = segmentIterator.next();
+        QString segmentIdentifier = currentSegment->getIdentifier();
+        if (segmentIdentifier == SEGMENT_MESSAGE_HEADER_ID) { parseSegmentMessageHeader(currentSegment); }
+        if (segmentIdentifier == SEGMENT_MESSAGE_FEEDBACK_ID) { parseSegmentMessageFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
+    }
+}
+
 // See Formals, page 15
-Segment *FinTsDialog::createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber)
+Segment *FinTsDialog::createSegmentMessageHeader(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber)
 {
     Segment *messageHeaderSegment = new Segment(parentElement);
-    messageHeaderSegment->setHeader(createSegmentHeader(messageHeaderSegment, MESSAGE_HEADER_ID, QString::number(segmentNumber), MESSAGE_HEADER_VERSION));
+    messageHeaderSegment->setHeader(createDegSegmentHeader(messageHeaderSegment, SEGMENT_MESSAGE_HEADER_ID, QString::number(segmentNumber), SEGMENT_MESSAGE_HEADER_VERSION));
 
     messageHeaderSegment->addDataElement(new DataElement(messageHeaderSegment, MESSAGE_LENGTH_PLACEHOLDER));
     messageHeaderSegment->addDataElement(new DataElement(messageHeaderSegment, FINTS_VERSION));
@@ -103,13 +116,59 @@ Segment *FinTsDialog::createMessageHeaderSegment(FinTsElement *parentElement, in
     return messageHeaderSegment;
 }
 
+void FinTsDialog::parseSegmentMessageHeader(Segment *segmentMessageHeader)
+{
+    QList<DataElement *> dataElements = segmentMessageHeader->getDataElements();
+    if (dataElements.size() >= 3) {
+        this->myDialogId = dataElements.at(2)->getValue();
+        qDebug() << "[FinTsDialog] Bank told us to use dialog ID" << this->myDialogId;
+    }
+}
+
+// See Formals, page 24
+void FinTsDialog::parseSegmentMessageFeedback(Segment *segmentMessageFeedback)
+{
+    QListIterator<DataElement *> feedbackElementIterator(segmentMessageFeedback->getDataElements());
+    while (feedbackElementIterator.hasNext()) {
+        DataElement *feedbackElement = feedbackElementIterator.next();
+        if (feedbackElement->getType() == FinTsElement::DEG) {
+            DataElementGroup *feedbackGroup = qobject_cast<DataElementGroup *>(feedbackElement);
+            QList<DataElement *> feedbackElements = feedbackGroup->getDataElements();
+            if (feedbackElements.size() >= 3) {
+                qDebug() << "[FinTsDialog] Feedback for message: " << feedbackElements.at(0)->getValue() << feedbackElements.at(2)->getValue();
+            }
+        }
+    }
+}
+
+// See Formals, page 24
+void FinTsDialog::parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback)
+{
+    QString referenceSegmentNumber = "0";
+    QList<DataElement *> segmentHeaderElements = segmentSegmentFeedback->getHeader()->getDataElements();
+    if (segmentHeaderElements.size() >= 4) {
+        referenceSegmentNumber = segmentHeaderElements.at(3)->getValue();
+    }
+    QListIterator<DataElement *> feedbackElementIterator(segmentSegmentFeedback->getDataElements());
+    while (feedbackElementIterator.hasNext()) {
+        DataElement *feedbackElement = feedbackElementIterator.next();
+        if (feedbackElement->getType() == FinTsElement::DEG) {
+            DataElementGroup *feedbackGroup = qobject_cast<DataElementGroup *>(feedbackElement);
+            QList<DataElement *> feedbackElements = feedbackGroup->getDataElements();
+            if (feedbackElements.size() >= 3) {
+                qDebug() << "[FinTsDialog] Feedback for segment " << referenceSegmentNumber << ":" << feedbackElements.at(0)->getValue() << feedbackElements.at(2)->getValue();
+            }
+        }
+    }
+}
+
 // See Formals, page 43
-Segment *FinTsDialog::createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz)
+Segment *FinTsDialog::createSegmentIdentification(FinTsElement *parentElement, int segmentNumber, const QString &blz)
 {
     Segment *messageIdentificationSegment = new Segment(parentElement);
-    messageIdentificationSegment->setHeader(createSegmentHeader(messageIdentificationSegment, MESSAGE_IDENTIFICATION_ID, QString::number(segmentNumber), MESSAGE_IDENTIFICATION_VERSION));
+    messageIdentificationSegment->setHeader(createDegSegmentHeader(messageIdentificationSegment, SEGMENT_IDENTIFICATION_ID, QString::number(segmentNumber), SEGMENT_IDENTIFICATION_VERSION));
 
-    messageIdentificationSegment->addDataElement(createBankId(messageIdentificationSegment, blz));
+    messageIdentificationSegment->addDataElement(createDegBankId(messageIdentificationSegment, blz));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, FINTS_PLACEHOLDER_CUSTOMER_ID));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, CUSTOMER_SYSTEM_ID));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, CUSTOMER_SYSTEM_STATUS));
@@ -117,10 +176,10 @@ Segment *FinTsDialog::createIdentificationSegment(FinTsElement *parentElement, i
 }
 
 // See Formals, page 45
-Segment *FinTsDialog::createProcessPreparationSegment(FinTsElement *parentElement, int segmentNumber)
+Segment *FinTsDialog::createSegmentProcessPreparation(FinTsElement *parentElement, int segmentNumber)
 {
     Segment *processPreparationSegment = new Segment(parentElement);
-    processPreparationSegment->setHeader(createSegmentHeader(processPreparationSegment, MESSAGE_PROCESS_PREPARATION_ID, QString::number(segmentNumber), MESSAGE_PROCESS_PREPARATION_VERSION));
+    processPreparationSegment->setHeader(createDegSegmentHeader(processPreparationSegment, SEGMENT_PROCESS_PREPARATION_ID, QString::number(segmentNumber), SEGMENT_PROCESS_PREPARATION_VERSION));
 
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(BPD_KEY_VERSION).toString()));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(UPD_KEY_VERSION).toString()));
@@ -131,17 +190,17 @@ Segment *FinTsDialog::createProcessPreparationSegment(FinTsElement *parentElemen
 }
 
 // See Formals, page 15/16
-Segment *FinTsDialog::createMessageTerminationSegment(FinTsElement *parentElement, int segmentNumber, int messageNumber)
+Segment *FinTsDialog::createSegmentMessageTermination(FinTsElement *parentElement, int segmentNumber, int messageNumber)
 {
     Segment *messageTerminationSegment = new Segment(parentElement);
-    messageTerminationSegment->setHeader(createSegmentHeader(messageTerminationSegment, MESSAGE_TERMINATION_ID, QString::number(segmentNumber), MESSAGE_TERMINATION_VERSION));
+    messageTerminationSegment->setHeader(createDegSegmentHeader(messageTerminationSegment, SEGMENT_MESSAGE_TERMINATION_ID, QString::number(segmentNumber), SEGMENT_MESSAGE_TERMINATION_VERSION));
 
     messageTerminationSegment->addDataElement(new DataElement(messageTerminationSegment, QString::number(messageNumber)));
     return messageTerminationSegment;
 }
 
 // See Formals, page 123
-DataElementGroup *FinTsDialog::createSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion)
+DataElementGroup *FinTsDialog::createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion)
 {
     qDebug() << "FinTsDialog::createSegmentHeader" << segmentId << segmentNumber << segmentVersion;
     DataElementGroup *segmentHeader = new DataElementGroup(parentElement);
@@ -152,7 +211,7 @@ DataElementGroup *FinTsDialog::createSegmentHeader(FinTsElement *parentElement, 
 }
 
 // See Geschäftsvorfälle, page 3
-DataElementGroup *FinTsDialog::createBankId(FinTsElement *parentElement, const QString &blz)
+DataElementGroup *FinTsDialog::createDegBankId(FinTsElement *parentElement, const QString &blz)
 {
     DataElementGroup *bankId = new DataElementGroup(parentElement);
     bankId->addDataElement(new DataElement(bankId, this->bankParameterData.value(BPD_KEY_COUNTRY_CODE).toString()));
