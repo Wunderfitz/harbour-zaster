@@ -23,47 +23,48 @@
 #include <QObject>
 #include <QDebug>
 #include <QVariantMap>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QUrl>
+#include "fintsserializer.h"
+#include "fintsdeserializer.h"
 #include "dataelementgroup.h"
 #include "dataelement.h"
 #include "message.h"
 #include "segment.h"
 #include "fintsglobals.h"
+#include "messageconstants.h"
 #include "bpdconstants.h"
 #include "updconstants.h"
 
 // HBCI-Version - always fixed version 3.0, see Formals, page 15
 const char FINTS_VERSION[] = "300";
-
 // Customer system ID must be 0 for PIN/TAN, see Formals page 116
 const char CUSTOMER_SYSTEM_ID[] = "0";
 // Customer system status, needs to be "1", see Formals page 117
 const char CUSTOMER_SYSTEM_STATUS[] = "1";
 
-// Placeholder message length, that will be changed when we completed the whole message
-const char MESSAGE_LENGTH_PLACEHOLDER[] = "000000000000";
-const char MESSAGE_HEADER_ID[] = "HNHBK";
-const char MESSAGE_HEADER_VERSION[] = "3";
-const char MESSAGE_IDENTIFICATION_ID[] = "HKIDN";
-const char MESSAGE_IDENTIFICATION_VERSION[] = "2";
-const char MESSAGE_PROCESS_PREPARATION_ID[] = "HKVVB";
-const char MESSAGE_PROCESS_PREPARATION_VERSION[] = "3";
-const char MESSAGE_TERMINATION_ID[] = "HNHBS";
-const char MESSAGE_TERMINATION_VERSION[] = "1";
-
 class FinTsDialog : public QObject
 {
     Q_OBJECT
 public:
-    explicit FinTsDialog(QObject *parent = 0);
-    Message *createDialogInitializationMessage();
+    explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0);
+
+    Q_INVOKABLE void dialogInitialization();
 
 signals:
 
 public slots:
 
-private:
+private slots:
+    void handleDialogInitializationError(QNetworkReply::NetworkError error);
+    void handleDialogInitializationFinished();
 
-    Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);
+private:    
+
+    Message *createDialogInitializationMessage();
+
+    Segment *createMessageHeaderSegment(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);    
     Segment *createIdentificationSegment(FinTsElement *parentElement, int segmentNumber, const QString &blz);
     Segment *createProcessPreparationSegment(FinTsElement *parentElement, int segmentNumber);
     Segment *createMessageTerminationSegment(FinTsElement *parentElement, int segmentNumber, int messageNumber);
@@ -73,6 +74,9 @@ private:
 
     void insertMessageLength(Message *message);
 
+    QNetworkAccessManager *networkAccessManager;
+    FinTsSerializer serializer;
+    FinTsDeserializer deserializer;
     QString myDialogId;
     QString myDialogLanguage;
     int myMessageNumber;

@@ -18,11 +18,12 @@
 */
 
 #include "fintsdialog.h"
-#include "fintsserializer.h"
 #include <QListIterator>
 
-FinTsDialog::FinTsDialog(QObject *parent) : QObject(parent)
+FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
+    this->networkAccessManager = networkAccessManager;
+
     // Dialog-ID - first message is always "0", see Formals, page 109, TODO: use the received ID from bank later!
     this->myDialogId = "0";
     // Message number - first message is always "1", see Formals, page 120 // TODO: increment later!
@@ -36,6 +37,43 @@ FinTsDialog::FinTsDialog(QObject *parent) : QObject(parent)
     this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, "280");
     // User Parameter Data (UPD) version, TODO: make it adopting to received UPD
     this->userParameterData.insert(UPD_KEY_VERSION, "0");
+}
+
+void FinTsDialog::dialogInitialization()
+{
+    qDebug() << "FinTsDialog::dialogInitialization";
+    Message *dialogInitializationMessage = this->createDialogInitializationMessage();
+    QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
+
+    // TODO: Use automatially determined endpoint
+    QUrl url = QUrl(FINTS_PLACEHOLDER_ENDPOINT);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = networkAccessManager->post(request, serializedInitializationMessage);
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleDialogInitializationError(QNetworkReply::NetworkError)));
+    connect(reply, SIGNAL(finished()), this, SLOT(handleDialogInitializationFinished()));
+
+    dialogInitializationMessage->deleteLater();
+}
+
+void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    qWarning() << "FinTsDialog::handleDialogInitializationError:" << (int)error << reply->errorString() << reply->readAll();
+}
+
+void FinTsDialog::handleDialogInitializationFinished()
+{
+    qDebug() << "FinTsDialog::handleDialogInitializationFinished";
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+
+    Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
+    deserializer.debugOut(replyMessage);
+    replyMessage->deleteLater();
 }
 
 Message *FinTsDialog::createDialogInitializationMessage()

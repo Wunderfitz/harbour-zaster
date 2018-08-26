@@ -24,6 +24,7 @@
 #include <QNetworkAccessManager>
 #include <QSettings>
 #include "wagnis/wagnis.h"
+#include "fints/fintsdialog.h"
 
 class Zaster : public QObject
 {
@@ -37,14 +38,11 @@ signals:
 
 public slots:
 
-private slots:
-    void handleStupidTestsError(QNetworkReply::NetworkError error);
-    void handleStupidTestsFinished();
-
 private:
     QNetworkAccessManager *networkAccessManager;
     Wagnis *wagnis;
     QSettings settings;
+    FinTsDialog *finTsDialog;
 
     void doStupidTests();
 };

@@ -18,15 +18,12 @@
 */
 
 #include "zaster.h"
-#include "fints/fintsdeserializer.h"
-#include "fints/fintsserializer.h"
-#include "fints/fintsdialog.h"
-#include "fints/message.h"
 
 Zaster::Zaster(QObject *parent) : QObject(parent), settings("harbour-zaster", "settings")
 {
     this->networkAccessManager = new QNetworkAccessManager(this);
     wagnis = new Wagnis(this->networkAccessManager, "harbour-zaster", "0.1", this);
+    finTsDialog = new FinTsDialog(this, this->networkAccessManager);
     doStupidTests();
 }
 
@@ -39,43 +36,8 @@ Wagnis *Zaster::getWagnis()
     return this->wagnis;
 }
 
-void Zaster::handleStupidTestsError(QNetworkReply::NetworkError error)
-{
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    qWarning() << "Zaster::handleStupidTestsError:" << (int)error << reply->errorString() << reply->readAll();
-}
-
-void Zaster::handleStupidTestsFinished()
-{
-    qDebug() << "Zaster::handleStupidTestsFinished";
-    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
-    reply->deleteLater();
-    if (reply->error() != QNetworkReply::NoError) {
-        return;
-    }
-
-    FinTsDeserializer deserializer;
-    Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
-    deserializer.debugOut(replyMessage);
-    replyMessage->deleteLater();
-}
-
 void Zaster::doStupidTests()
 {
     qDebug() << "Starting stupid tests...";
-    FinTsDialog finTsDialog;
-    Message *dialogInitializationMessage = finTsDialog.createDialogInitializationMessage();
-    FinTsSerializer serializer;
-    QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
-    qDebug() << "INPUT" << serializedInitializationMessage;
-
-    QUrl url = QUrl("https://hbci11.fiducia.de/cgi-bin/hbciservlet");
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-    QNetworkReply *reply = networkAccessManager->post(request, serializedInitializationMessage);
-    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleStupidTestsError(QNetworkReply::NetworkError)));
-    connect(reply, SIGNAL(finished()), this, SLOT(handleStupidTestsFinished()));
-
-    dialogInitializationMessage->deleteLater();
-
+    finTsDialog->dialogInitialization();
 }

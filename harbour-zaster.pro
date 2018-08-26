@@ -60,4 +60,5 @@ HEADERS += \
     src/fints/fintsdialog.h \
     src/fints/fintsglobals.h \
     src/fints/bpdconstants.h \
-    src/fints/updconstants.h
+    src/fints/updconstants.h \
+    src/fints/messageconstants.h
