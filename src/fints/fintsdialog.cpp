@@ -100,6 +100,8 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_MESSAGE_HEADER_ID) { parseSegmentMessageHeader(currentSegment); }
         if (segmentIdentifier == SEGMENT_MESSAGE_FEEDBACK_ID) { parseSegmentMessageFeedback(currentSegment); }
         if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_BANK_PARAMETER_ID) { parseSegmentBankParameter(currentSegment); }
+        if (segmentIdentifier == SEGMENT_SECURITY_PROCEDURE_ID) { parseSegmentSecurityProcedure(currentSegment); }
     }
 }
 
@@ -160,6 +162,57 @@ void FinTsDialog::parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback)
             }
         }
     }
+}
+
+// See Formals, page 79
+void FinTsDialog::parseSegmentBankParameter(Segment *segmentBankParameter)
+{
+    QList<DataElement *> bankParameterElements = segmentBankParameter->getDataElements();
+    if (bankParameterElements.size() >= 6) {
+        QString bpdVersion = bankParameterElements.at(0)->getValue();
+        this->bankParameterData.insert(BPD_KEY_VERSION, bpdVersion);
+        qDebug() << "[FinTsDialog] Bank Parameter Data (BPD) Version: " << bpdVersion;
+        QList<DataElement *> kikElements = qobject_cast<DataElementGroup *>(bankParameterElements.at(1))->getDataElements();
+        QString countryCode = kikElements.at(0)->getValue();
+        this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, countryCode);
+        qDebug() << "[FinTsDialog] Bank country code: " << countryCode;
+        QString bankCode = kikElements.at(1)->getValue();
+        this->bankParameterData.insert(BPD_KEY_BANK_CODE, bankCode);
+        qDebug() << "[FinTsDialog] Bank code: " << bankCode;
+        QString bankName = bankParameterElements.at(2)->getValue();
+        this->bankParameterData.insert(BPD_KEY_BANK_NAME, bankName);
+        qDebug() << "[FinTsDialog] Bank name: " << bankName;
+        QString maxTransactions = bankParameterElements.at(3)->getValue();
+        this->bankParameterData.insert(BPD_KEY_MAX_TRANSACTIONS, maxTransactions);
+        qDebug() << "[FinTsDialog] Maximum transactions per message: " << maxTransactions;
+        QString supportedLanguage = bankParameterElements.at(4)->getValue();
+        this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, supportedLanguage);
+        qDebug() << "[FinTsDialog] Supported Language (0: Default, 1: German, 2: English, 3: French): " << supportedLanguage;
+        QString supportedHBCIVersion = bankParameterElements.at(5)->getValue();
+        this->bankParameterData.insert(BPD_KEY_SUPPORTED_HBCI_VERSION, supportedHBCIVersion);
+        qDebug() << "[FinTsDialog] Supported HBCI version: " << supportedHBCIVersion;
+    }
+}
+
+// See Formals, page 81
+void FinTsDialog::parseSegmentSecurityProcedure(Segment *segmentSecurityProcedure)
+{
+    QList<DataElement *> securityProcedureElements = segmentSecurityProcedure->getDataElements();
+    QListIterator<DataElement *> securityProcedureIterator(securityProcedureElements);
+    bool pinTanSupported = false;
+    while (securityProcedureIterator.hasNext()) {
+        DataElement *currentSecurityProcedureElement = securityProcedureIterator.next();
+        if (currentSecurityProcedureElement->getType() == FinTsElement::DEG) {
+            QList<DataElement *> currentSecurityProcedureInfo = qobject_cast<DataElementGroup *>(currentSecurityProcedureElement)->getDataElements();
+            DataElement *currentSecurityProcedureName = currentSecurityProcedureInfo.at(0);
+            if (currentSecurityProcedureName->getValue() == "PIN") {
+                pinTanSupported = true;
+            }
+            qDebug() << "[FinTsDialog] Supported security procedure: " << currentSecurityProcedureName->getValue() << currentSecurityProcedureInfo.at(1)->getValue();
+        }
+    }
+    this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, pinTanSupported);
+    qDebug() << "[FinTsDialog] PIN/TAN supported: " << pinTanSupported;
 }
 
 // See Formals, page 43
