@@ -26,10 +26,10 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
 
     // Dialog-ID - first message is always "0", see Formals, page 109, TODO: use the received ID from bank later!
     this->myDialogId = "0";
-    // Message number - first message is always "1", see Formals, page 120 // TODO: increment later!
-    this->myMessageNumber = 1;
+    // Message number - first message is always "1", but is increased at message creation, see Formals, page 120 // TODO: increment later!
+    this->myMessageNumber = 0;
     // Dialog language, needs to be "0" for Standard, see Formals page 109
-    this->myDialogLanguage = "0";
+    this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, "0");
 
     // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45, TODO: make it adopting to received BPD
     this->bankParameterData.insert(BPD_KEY_VERSION, "0");
@@ -56,6 +56,22 @@ void FinTsDialog::dialogInitialization()
     dialogInitializationMessage->deleteLater();
 }
 
+void FinTsDialog::closeDialog()
+{
+    qDebug() << "FinTsDialog::closeDialog";
+    Message *closeDialogMessage = this->createMessageCloseDialog();
+    QByteArray serializedCloseDialogMessage = serializer.serializeAndEncode(closeDialogMessage);
+
+    // TODO: Use automatially determined endpoint
+    QUrl url = QUrl(FINTS_PLACEHOLDER_ENDPOINT);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = networkAccessManager->post(request, serializedCloseDialogMessage);
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleDialogEndError(QNetworkReply::NetworkError)));
+    connect(reply, SIGNAL(finished()), this, SLOT(handleDialogEndFinished()));
+
+}
+
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -73,12 +89,34 @@ void FinTsDialog::handleDialogInitializationFinished()
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyDialogInitialization(replyMessage);
+    closeDialog();
+    replyMessage->deleteLater();
+}
+
+void FinTsDialog::handleDialogEndError(QNetworkReply::NetworkError error)
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    qWarning() << "FinTsDialog::handleDialogEndError:" << (int)error << reply->errorString() << reply->readAll();
+}
+
+void FinTsDialog::handleDialogEndFinished()
+{
+    qDebug() << "FinTsDialog::handleDialogEndFinished";
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+
+    Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
+    parseReplyCloseDialog(replyMessage);
     replyMessage->deleteLater();
 }
 
 Message *FinTsDialog::createMessageDialogInitialization()
 {
-    qDebug() << "FinTsDialog::createDialogInitialization";
+    qDebug() << "FinTsDialog::createMessageDialogInitialization";
+    this->myMessageNumber++;
     Message *dialogInitializationMessage = new Message();
     dialogInitializationMessage->addSegment(createSegmentMessageHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
     // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608, TODO: Don't use hard-coded BLZ :D
@@ -102,6 +140,30 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
         if (segmentIdentifier == SEGMENT_BANK_PARAMETER_ID) { parseSegmentBankParameter(currentSegment); }
         if (segmentIdentifier == SEGMENT_SECURITY_PROCEDURE_ID) { parseSegmentSecurityProcedure(currentSegment); }
+    }
+}
+
+Message *FinTsDialog::createMessageCloseDialog()
+{
+    qDebug() << "FinTsDialog::createMessageCloseDialog";
+    Message *closeDialogMessage = new Message();
+    this->myMessageNumber++;
+    closeDialogMessage->addSegment(createSegmentMessageHeader(closeDialogMessage, closeDialogMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
+    closeDialogMessage->addSegment(createSegmentDialogEnd(closeDialogMessage, closeDialogMessage->getNextSegmentNumber()));
+    closeDialogMessage->addSegment(createSegmentMessageTermination(closeDialogMessage, closeDialogMessage->getNextSegmentNumber(), this->myMessageNumber));
+
+    insertMessageLength(closeDialogMessage);
+    return closeDialogMessage;
+}
+
+void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
+{
+    qDebug() << "FinTsDialog::parseReplyCloseDialog";
+    QListIterator<Segment *> segmentIterator(replyMessage->getSegments());
+    while (segmentIterator.hasNext()) {
+        Segment *currentSegment = segmentIterator.next();
+        QString segmentIdentifier = currentSegment->getIdentifier();
+        if (segmentIdentifier == SEGMENT_MESSAGE_FEEDBACK_ID) { parseSegmentMessageFeedback(currentSegment); }
     }
 }
 
@@ -236,7 +298,7 @@ Segment *FinTsDialog::createSegmentProcessPreparation(FinTsElement *parentElemen
 
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(BPD_KEY_VERSION).toString()));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(UPD_KEY_VERSION).toString()));
-    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->myDialogLanguage));
+    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(BPD_KEY_SUPPORTED_LANGUAGE).toString()));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_ID));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_VERSION));
     return processPreparationSegment;
@@ -250,6 +312,16 @@ Segment *FinTsDialog::createSegmentMessageTermination(FinTsElement *parentElemen
 
     messageTerminationSegment->addDataElement(new DataElement(messageTerminationSegment, QString::number(messageNumber)));
     return messageTerminationSegment;
+}
+
+// See Fomals, page 54
+Segment *FinTsDialog::createSegmentDialogEnd(FinTsElement *parentElement, int segmentNumber)
+{
+    Segment *dialogEndSegment = new Segment(parentElement);
+    dialogEndSegment->setHeader(createDegSegmentHeader(dialogEndSegment, SEGMENT_DIALOG_END_ID, QString::number(segmentNumber), SEGMENT_DIALOG_END_VERSION));
+
+    dialogEndSegment->addDataElement(new DataElement(dialogEndSegment, this->myDialogId));
+    return dialogEndSegment;
 }
 
 // See Formals, page 123

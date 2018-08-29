@@ -51,6 +51,7 @@ public:
     explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0);
 
     Q_INVOKABLE void dialogInitialization();
+    Q_INVOKABLE void closeDialog();
 
 signals:
 
@@ -59,16 +60,21 @@ public slots:
 private slots:
     void handleDialogInitializationError(QNetworkReply::NetworkError error);
     void handleDialogInitializationFinished();
+    void handleDialogEndError(QNetworkReply::NetworkError error);
+    void handleDialogEndFinished();
 
 private:    
 
     Message *createMessageDialogInitialization();
     void parseReplyDialogInitialization(Message *replyMessage);
+    Message *createMessageCloseDialog();
+    void parseReplyCloseDialog(Message *replyMessage);
 
     Segment *createSegmentMessageHeader(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);
     Segment *createSegmentIdentification(FinTsElement *parentElement, int segmentNumber, const QString &blz);
     Segment *createSegmentProcessPreparation(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentMessageTermination(FinTsElement *parentElement, int segmentNumber, int messageNumber);
+    Segment *createSegmentDialogEnd(FinTsElement *parentElement, int segmentNumber);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
@@ -84,7 +90,6 @@ private:
     FinTsSerializer serializer;
     FinTsDeserializer deserializer;
     QString myDialogId;
-    QString myDialogLanguage;
     int myMessageNumber;
     QVariantMap bankParameterData;
     QVariantMap userParameterData;
