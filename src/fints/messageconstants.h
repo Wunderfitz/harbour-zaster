@@ -3,6 +3,7 @@
 
 // Placeholder message length, that will be changed when we completed the whole message
 const char MESSAGE_LENGTH_PLACEHOLDER[] = "000000000000";
+const char SIGNATURE_CONTROL_REFERENCE[] = "4242";
 const char SEGMENT_MESSAGE_HEADER_ID[] = "HNHBK";
 const char SEGMENT_MESSAGE_HEADER_VERSION[] = "3";
 const char SEGMENT_IDENTIFICATION_ID[] = "HKIDN";
@@ -21,4 +22,12 @@ const char SEGMENT_SECURITY_PROCEDURE_ID[] = "HISHV";
 const char SEGMENT_SECURITY_PROCEDURE_VERSION[] = "3";
 const char SEGMENT_DIALOG_END_ID[] = "HKEND";
 const char SEGMENT_DIALOG_END_VERSION[] = "1";
+const char SEGMENT_SIGNATURE_HEADER_ID[] = "HNSHK";
+const char SEGMENT_SIGNATURE_HEADER_VERSION[] = "4";
+const char SEGMENT_SIGNATURE_FOOTER_ID[] = "HNSHA";
+const char SEGMENT_SIGNATURE_FOOTER_VERSION[] = "2";
+const char SEGMENT_ENCRYPTION_HEADER_ID[] = "HNVSK";
+const char SEGMENT_ENCRYPTION_HEADER_VERSION[] = "3";
+const char SEGMENT_ENCRYPTED_DATA_ID[] = "HNVSD";
+const char SEGMENT_ENCRYPTED_DATA_VERSION[] = "1";
 #endif // MESSAGECONSTANTS_H

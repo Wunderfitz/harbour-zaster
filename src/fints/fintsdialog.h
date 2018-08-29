@@ -75,6 +75,7 @@ private:
     Segment *createSegmentProcessPreparation(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentMessageTermination(FinTsElement *parentElement, int segmentNumber, int messageNumber);
     Segment *createSegmentDialogEnd(FinTsElement *parentElement, int segmentNumber);
+    Segment *createSegmentSignatureHeader(FinTsElement *parentElement, int segmentNumber);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
@@ -83,6 +84,7 @@ private:
 
     DataElementGroup *createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
     DataElementGroup *createDegBankId(FinTsElement *parentElement, const QString &blz);
+    DataElementGroup *createDegSecurityProfile(FinTsElement *parentElement);
 
     void insertMessageLength(Message *message);
 
@@ -91,6 +93,7 @@ private:
     FinTsDeserializer deserializer;
     QString myDialogId;
     int myMessageNumber;
+    bool anonymousDialog;
     QVariantMap bankParameterData;
     QVariantMap userParameterData;
 };

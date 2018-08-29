@@ -28,9 +28,11 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     this->myDialogId = "0";
     // Message number - first message is always "1", but is increased at message creation, see Formals, page 120 // TODO: increment later!
     this->myMessageNumber = 0;
+    // We always start with an anonymous dialog to check if PIN/TAN is supported
+    this->anonymousDialog = true;
+
     // Dialog language, needs to be "0" for Standard, see Formals page 109
     this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, "0");
-
     // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45, TODO: make it adopting to received BPD
     this->bankParameterData.insert(BPD_KEY_VERSION, "0");
     // Country code according to  ISO 3166-1, 280 is fixed for Germany (instead of 276), see Geschäftsvorfälle page 613
@@ -275,6 +277,7 @@ void FinTsDialog::parseSegmentSecurityProcedure(Segment *segmentSecurityProcedur
     }
     this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, pinTanSupported);
     qDebug() << "[FinTsDialog] PIN/TAN supported: " << pinTanSupported;
+    this->anonymousDialog = false;
 }
 
 // See Formals, page 43
@@ -324,6 +327,23 @@ Segment *FinTsDialog::createSegmentDialogEnd(FinTsElement *parentElement, int se
     return dialogEndSegment;
 }
 
+Segment *FinTsDialog::createSegmentSignatureHeader(FinTsElement *parentElement, int segmentNumber)
+{
+    Segment *signatureHeaderSegment = new Segment(parentElement);
+    signatureHeaderSegment->setHeader(createDegSegmentHeader(signatureHeaderSegment, SEGMENT_SIGNATURE_HEADER_ID, QString::number(segmentNumber), SEGMENT_SIGNATURE_HEADER_VERSION));
+
+    signatureHeaderSegment->addDataElement(createDegSecurityProfile(signatureHeaderSegment));
+    // See PIN/TAN, page 58
+    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "999"));
+    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, SIGNATURE_CONTROL_REFERENCE));
+    // See HBCI, page 50
+    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
+    // See HBCI, page 50
+    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
+    // To be continued (Sicherheitsidentifikation, Details
+    return signatureHeaderSegment;
+}
+
 // See Formals, page 123
 DataElementGroup *FinTsDialog::createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion)
 {
@@ -342,6 +362,16 @@ DataElementGroup *FinTsDialog::createDegBankId(FinTsElement *parentElement, cons
     bankId->addDataElement(new DataElement(bankId, this->bankParameterData.value(BPD_KEY_COUNTRY_CODE).toString()));
     bankId->addDataElement(new DataElement(bankId, blz));
     return bankId;
+}
+
+// See PIN/TAN, page 58 and HBCI, page 174
+DataElementGroup *FinTsDialog::createDegSecurityProfile(FinTsElement *parentElement)
+{
+    DataElementGroup *securityProfile = new DataElementGroup(parentElement);
+    securityProfile->addDataElement(new DataElement(securityProfile, "PIN"));
+    // One-step for now, as we don't do transactions yet
+    securityProfile->addDataElement(new DataElement(securityProfile, "1"));
+    return securityProfile;
 }
 
 void FinTsDialog::insertMessageLength(Message *message)
