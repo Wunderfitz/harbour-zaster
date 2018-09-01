@@ -1,5 +1,6 @@
 #include "fintsserializer.h"
 #include <QListIterator>
+#include <QDebug>
 
 FinTsSerializer::FinTsSerializer(QObject *parent) : QObject(parent)
 {
@@ -8,15 +9,27 @@ FinTsSerializer::FinTsSerializer(QObject *parent) : QObject(parent)
 
 QByteArray FinTsSerializer::serializeAndEncode(Message *message)
 {
-    return serialize(message).toLatin1().toBase64();
+    return serialize(message, false).toLatin1().toBase64();
 }
 
-QString FinTsSerializer::serialize(Message *message)
+QString FinTsSerializer::serializeCore(Message *message)
+{
+    return serialize(message, true);
+}
+
+QString FinTsSerializer::serialize(Message *message, const bool &coreOnly)
 {
     QString serializedMessage;
     QListIterator<Segment *> segmentIterator(message->getSegments());
     while (segmentIterator.hasNext()) {
-        serializedMessage.append(serialize(segmentIterator.next()));
+        Segment *nextSegment = segmentIterator.next();
+        if (coreOnly) {
+            QString headerId = nextSegment->getHeader()->getDataElements().at(0)->getValue();
+            if (headerId == SEGMENT_MESSAGE_HEADER_ID || headerId == SEGMENT_MESSAGE_TERMINATION_ID) {
+                continue;
+            }
+        }
+        serializedMessage.append(serialize(nextSegment));
         serializedMessage.append("'");
     }
     return serializedMessage;

@@ -19,6 +19,7 @@
 
 #include "fintsdialog.h"
 #include <QListIterator>
+#include <QDateTime>
 
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
@@ -37,8 +38,14 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     this->bankParameterData.insert(BPD_KEY_VERSION, "0");
     // Country code according to  ISO 3166-1, 280 is fixed for Germany (instead of 276), see Geschäftsvorfälle page 613
     this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, "280");
+
     // User Parameter Data (UPD) version, TODO: make it adopting to received UPD
-    this->userParameterData.insert(UPD_KEY_VERSION, "0");
+    this->userParameterData.insert(UPD_KEY_VERSION, "0");    
+    // TODO: Don't use hard-coded BLZ/bank ID
+    this->userParameterData.insert(UPD_KEY_BANK_ID, FINTS_PLACEHOLDER_BLZ);
+    // TODO: Don't use hard-coded user ID
+    this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_PLACEHOLDER_CUSTOMER_ID);
+
 }
 
 void FinTsDialog::dialogInitialization()
@@ -121,8 +128,8 @@ Message *FinTsDialog::createMessageDialogInitialization()
     this->myMessageNumber++;
     Message *dialogInitializationMessage = new Message();
     dialogInitializationMessage->addSegment(createSegmentMessageHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
-    // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608, TODO: Don't use hard-coded BLZ :D
-    dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), FINTS_PLACEHOLDER_BLZ));
+    // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
+    dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->userParameterData.value(UPD_KEY_BANK_ID).toString()));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
     dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myMessageNumber));
 
@@ -287,7 +294,7 @@ Segment *FinTsDialog::createSegmentIdentification(FinTsElement *parentElement, i
     messageIdentificationSegment->setHeader(createDegSegmentHeader(messageIdentificationSegment, SEGMENT_IDENTIFICATION_ID, QString::number(segmentNumber), SEGMENT_IDENTIFICATION_VERSION));
 
     messageIdentificationSegment->addDataElement(createDegBankId(messageIdentificationSegment, blz));
-    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, FINTS_PLACEHOLDER_CUSTOMER_ID));
+    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, CUSTOMER_SYSTEM_ID));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, CUSTOMER_SYSTEM_STATUS));
     return messageIdentificationSegment;
@@ -327,6 +334,7 @@ Segment *FinTsDialog::createSegmentDialogEnd(FinTsElement *parentElement, int se
     return dialogEndSegment;
 }
 
+// See HBCI, page 49
 Segment *FinTsDialog::createSegmentSignatureHeader(FinTsElement *parentElement, int segmentNumber)
 {
     Segment *signatureHeaderSegment = new Segment(parentElement);
@@ -340,8 +348,26 @@ Segment *FinTsDialog::createSegmentSignatureHeader(FinTsElement *parentElement, 
     signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
     // See HBCI, page 50
     signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
-    // To be continued (Sicherheitsidentifikation, Details
+    signatureHeaderSegment->addDataElement(createDegSecurityIdentificationDetails(signatureHeaderSegment));
+    // Security Reference Number, if I interpret the docs correctly it's simply the user ID here
+    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
+    signatureHeaderSegment->addDataElement(createDegDateTime(signatureHeaderSegment));
+    signatureHeaderSegment->addDataElement(createDegHashAlgorithm(signatureHeaderSegment));
+    signatureHeaderSegment->addDataElement(createDegSignatureAlgorithm(signatureHeaderSegment));
+    signatureHeaderSegment->addDataElement(createDegKeyName(signatureHeaderSegment));
     return signatureHeaderSegment;
+}
+
+// See HBCI, page 52
+Segment *FinTsDialog::createSegmentSignatureFooter(FinTsElement *parentElement, int segmentNumber)
+{
+    Segment *signatureFooterSegment = new Segment(parentElement);
+    signatureFooterSegment->setHeader(createDegSegmentHeader(signatureFooterSegment, SEGMENT_SIGNATURE_FOOTER_ID, QString::number(segmentNumber), SEGMENT_SIGNATURE_FOOTER_VERSION));
+    signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, SIGNATURE_CONTROL_REFERENCE));
+    signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, ""));
+    // See PIN/TAN, page 59
+    signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, FINTS_PLACEHOLDER_CUSTOMER_PIN));
+    return signatureFooterSegment;
 }
 
 // See Formals, page 123
@@ -374,8 +400,71 @@ DataElementGroup *FinTsDialog::createDegSecurityProfile(FinTsElement *parentElem
     return securityProfile;
 }
 
+// See HBCI, page 173
+DataElementGroup *FinTsDialog::createDegSecurityIdentificationDetails(FinTsElement *parentElement)
+{
+    DataElementGroup *securityDetails = new DataElementGroup(parentElement);
+    // We are the message sender
+    securityDetails->addDataElement(new DataElement(securityDetails, "1"));
+    // Empty CID
+    securityDetails->addDataElement(new DataElement(securityDetails, ""));
+    securityDetails->addDataElement(new DataElement(securityDetails, SYSTEM_IDENTIFICATION));
+    return securityDetails;
+}
+
+DataElementGroup *FinTsDialog::createDegDateTime(FinTsElement *parentElement)
+{
+    DataElementGroup *dateTime = new DataElementGroup(parentElement);
+    // Security Timestamp, see HBCI page 163
+    dateTime->addDataElement(new DataElement(dateTime, "1"));
+    QDateTime currentDateTime = QDateTime::currentDateTime();
+    dateTime->addDataElement(new DataElement(dateTime, currentDateTime.toString("yyyyMMdd:hhmmss")));
+    return dateTime;
+}
+
+// See HBCI, page 163
+DataElementGroup *FinTsDialog::createDegHashAlgorithm(FinTsElement *parentElement)
+{
+    DataElementGroup *hashAlgorithm = new DataElementGroup(parentElement);
+    hashAlgorithm->addDataElement(new DataElement(hashAlgorithm, "1"));
+    hashAlgorithm->addDataElement(new DataElement(hashAlgorithm, "999"));
+    hashAlgorithm->addDataElement(new DataElement(hashAlgorithm, "1"));
+    return hashAlgorithm;
+}
+
+// See HBCI, page 175 & PIN/TAN, page 58
+DataElementGroup *FinTsDialog::createDegSignatureAlgorithm(FinTsElement *parentElement)
+{
+    DataElementGroup *signatureAlgorithm = new DataElementGroup(parentElement);
+    signatureAlgorithm->addDataElement(new DataElement(signatureAlgorithm, "6"));
+    signatureAlgorithm->addDataElement(new DataElement(signatureAlgorithm, "10"));
+    signatureAlgorithm->addDataElement(new DataElement(signatureAlgorithm, "16"));
+    return signatureAlgorithm;
+}
+
+// See HBCI, page 170
+DataElementGroup *FinTsDialog::createDegKeyName(FinTsElement *parentElement)
+{
+    DataElementGroup *keyName = new DataElementGroup(parentElement);
+    keyName->addDataElement(createDegBankId(keyName, this->userParameterData.value(UPD_KEY_BANK_ID).toString()));
+    keyName->addDataElement(new DataElement(keyName, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
+    keyName->addDataElement(new DataElement(keyName, "S"));
+    keyName->addDataElement(new DataElement(keyName, "0"));
+    keyName->addDataElement(new DataElement(keyName, "0"));
+    return keyName;
+}
+
 void FinTsDialog::insertMessageLength(Message *message)
 {
     QString messageLengthString = QString::number(message->getCompleteLength()).rightJustified(12, '0');
     message->getSegments().at(0)->getDataElements().at(0)->setValue(messageLengthString);
+}
+
+QString FinTsDialog::convertToBinaryFormat(QString &originalString)
+{
+    QByteArray binaryString = originalString.toLatin1();
+    QString formattedBinaryString = "@";
+    formattedBinaryString.append(QString::number(binaryString.length()));
+    formattedBinaryString.append("@");
+    formattedBinaryString.append(binaryString);
 }
