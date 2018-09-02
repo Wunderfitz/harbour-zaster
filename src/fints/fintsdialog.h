@@ -54,6 +54,7 @@ public:
     Q_INVOKABLE void closeDialog();
 
 signals:
+    void pinTanSupport(const bool &isSupported);
 
 public slots:
 
@@ -77,6 +78,8 @@ private:
     Segment *createSegmentDialogEnd(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentSignatureHeader(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentSignatureFooter(FinTsElement *parentElement, int segmentNumber);
+    Segment *createSegmentEncryptionHeader(FinTsElement *parentElement, int segmentNumber);
+    Segment *createSegmentEncryptedData(FinTsElement *parentElement, int segmentNumber);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
@@ -90,10 +93,12 @@ private:
     DataElementGroup *createDegDateTime(FinTsElement *parentElement);
     DataElementGroup *createDegHashAlgorithm(FinTsElement *parentElement);
     DataElementGroup *createDegSignatureAlgorithm(FinTsElement *parentElement);
-    DataElementGroup *createDegKeyName(FinTsElement *parentElement);
+    DataElementGroup *createDegKeyName(FinTsElement *parentElement, const QString &keyType);
+    DataElementGroup *createDegEncryptionAlgorithm(FinTsElement *parentElement);
 
     void insertMessageLength(Message *message);
     QString convertToBinaryFormat(QString &originalString);
+    Message *packageMessage(Message *originalMessage);
 
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;

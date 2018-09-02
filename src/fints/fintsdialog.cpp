@@ -128,13 +128,23 @@ Message *FinTsDialog::createMessageDialogInitialization()
     this->myMessageNumber++;
     Message *dialogInitializationMessage = new Message();
     dialogInitializationMessage->addSegment(createSegmentMessageHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
+    if (!this->anonymousDialog) {
+        dialogInitializationMessage->addSegment(createSegmentSignatureHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+    }
     // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
     dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->userParameterData.value(UPD_KEY_BANK_ID).toString()));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+    if (!this->anonymousDialog) {
+        dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+    }
     dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myMessageNumber));
 
-    insertMessageLength(dialogInitializationMessage);
-    return dialogInitializationMessage;
+    if (this->anonymousDialog) {
+        insertMessageLength(dialogInitializationMessage);
+        return dialogInitializationMessage;
+    } else {
+        return packageMessage(dialogInitializationMessage);
+    }
 }
 
 void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
@@ -284,6 +294,7 @@ void FinTsDialog::parseSegmentSecurityProcedure(Segment *segmentSecurityProcedur
     }
     this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, pinTanSupported);
     qDebug() << "[FinTsDialog] PIN/TAN supported: " << pinTanSupported;
+    emit pinTanSupport(pinTanSupported);
     this->anonymousDialog = false;
 }
 
@@ -354,7 +365,7 @@ Segment *FinTsDialog::createSegmentSignatureHeader(FinTsElement *parentElement, 
     signatureHeaderSegment->addDataElement(createDegDateTime(signatureHeaderSegment));
     signatureHeaderSegment->addDataElement(createDegHashAlgorithm(signatureHeaderSegment));
     signatureHeaderSegment->addDataElement(createDegSignatureAlgorithm(signatureHeaderSegment));
-    signatureHeaderSegment->addDataElement(createDegKeyName(signatureHeaderSegment));
+    signatureHeaderSegment->addDataElement(createDegKeyName(signatureHeaderSegment, "S"));
     return signatureHeaderSegment;
 }
 
@@ -368,6 +379,31 @@ Segment *FinTsDialog::createSegmentSignatureFooter(FinTsElement *parentElement, 
     // See PIN/TAN, page 59
     signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, FINTS_PLACEHOLDER_CUSTOMER_PIN));
     return signatureFooterSegment;
+}
+
+// See HBCI, page 53
+Segment *FinTsDialog::createSegmentEncryptionHeader(FinTsElement *parentElement, int segmentNumber)
+{
+    Segment *encryptionHeaderSegment = new Segment(parentElement);
+    encryptionHeaderSegment->setHeader(createDegSegmentHeader(encryptionHeaderSegment, SEGMENT_ENCRYPTION_HEADER_ID, QString::number(segmentNumber), SEGMENT_ENCRYPTION_HEADER_VERSION));
+    encryptionHeaderSegment->addDataElement(createDegSecurityProfile(encryptionHeaderSegment));
+    //See PIN/TAN, page 59
+    encryptionHeaderSegment->addDataElement(new DataElement(encryptionHeaderSegment, "998"));
+    encryptionHeaderSegment->addDataElement(new DataElement(encryptionHeaderSegment, "1"));
+    encryptionHeaderSegment->addDataElement(createDegSecurityIdentificationDetails(encryptionHeaderSegment));
+    encryptionHeaderSegment->addDataElement(createDegDateTime(encryptionHeaderSegment));
+    encryptionHeaderSegment->addDataElement(createDegEncryptionAlgorithm(encryptionHeaderSegment));
+    encryptionHeaderSegment->addDataElement(createDegKeyName(encryptionHeaderSegment, "V"));
+    encryptionHeaderSegment->addDataElement(new DataElement(encryptionHeaderSegment, "0"));
+    return encryptionHeaderSegment;
+}
+
+Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, int segmentNumber, const QString &encryptedData)
+{
+    Segment *encryptionDataSegment = new Segment(parentElement);
+    encryptionDataSegment->setHeader(createDegSegmentHeader(encryptionDataSegment, SEGMENT_ENCRYPTED_DATA_ID, QString::number(segmentNumber), SEGMENT_ENCRYPTED_DATA_VERSION));
+    encryptionDataSegment->addDataElement(new DataElement(encryptionHeaderSegment, encryptedData));
+    return encryptionDataSegment;
 }
 
 // See Formals, page 123
@@ -443,15 +479,28 @@ DataElementGroup *FinTsDialog::createDegSignatureAlgorithm(FinTsElement *parentE
 }
 
 // See HBCI, page 170
-DataElementGroup *FinTsDialog::createDegKeyName(FinTsElement *parentElement)
+DataElementGroup *FinTsDialog::createDegKeyName(FinTsElement *parentElement, const QString &keyType)
 {
     DataElementGroup *keyName = new DataElementGroup(parentElement);
     keyName->addDataElement(createDegBankId(keyName, this->userParameterData.value(UPD_KEY_BANK_ID).toString()));
     keyName->addDataElement(new DataElement(keyName, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
-    keyName->addDataElement(new DataElement(keyName, "S"));
+    keyName->addDataElement(new DataElement(keyName, keyType));
     keyName->addDataElement(new DataElement(keyName, "0"));
     keyName->addDataElement(new DataElement(keyName, "0"));
     return keyName;
+}
+
+// See HBCI, page 177
+DataElementGroup *FinTsDialog::createDegEncryptionAlgorithm(FinTsElement *parentElement)
+{
+    DataElementGroup *encryptionAlgorithm = new DataElementGroup(parentElement);
+    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "2"));
+    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "2"));
+    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "13"));
+    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "@8@<X'00 00 00 00 00 00 00 00'>"));
+    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "5"));
+    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "1"));
+    return encryptionAlgorithm;
 }
 
 void FinTsDialog::insertMessageLength(Message *message)
@@ -467,4 +516,22 @@ QString FinTsDialog::convertToBinaryFormat(QString &originalString)
     formattedBinaryString.append(QString::number(binaryString.length()));
     formattedBinaryString.append("@");
     formattedBinaryString.append(binaryString);
+    return binaryString;
+}
+
+Message *FinTsDialog::packageMessage(Message *originalMessage)
+{
+    Message *packagedMessage = new Message();
+    QList<Segment *> originalSegments = originalMessage->getSegments();
+    Segment *headerSegment = originalSegments.first();
+    headerSegment->setParent(packagedMessage);
+    packagedMessage->addSegment(headerSegment);
+    packagedMessage->addSegment(createSegmentEncryptionHeader(packagedMessage, 998));
+    packagedMessage->addSegment(createSegmentEncryptedData(packagedMessage, 999, convertToBinaryFormat(serializer.serializeCore(originalMessage))));
+    Segment *terminationSegment = originalSegments.last();
+    terminationSegment->setParent(packagedMessage);
+    packagedMessage->addSegment(terminationSegment);
+    originalMessage->deleteLater();
+    insertMessageLength(packagedMessage);
+    return packagedMessage;
 }
