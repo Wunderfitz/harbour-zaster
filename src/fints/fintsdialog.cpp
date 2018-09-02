@@ -402,7 +402,7 @@ Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, in
 {
     Segment *encryptionDataSegment = new Segment(parentElement);
     encryptionDataSegment->setHeader(createDegSegmentHeader(encryptionDataSegment, SEGMENT_ENCRYPTED_DATA_ID, QString::number(segmentNumber), SEGMENT_ENCRYPTED_DATA_VERSION));
-    encryptionDataSegment->addDataElement(new DataElement(encryptionHeaderSegment, encryptedData));
+    encryptionDataSegment->addDataElement(new DataElement(encryptionDataSegment, encryptedData));
     return encryptionDataSegment;
 }
 
@@ -509,7 +509,7 @@ void FinTsDialog::insertMessageLength(Message *message)
     message->getSegments().at(0)->getDataElements().at(0)->setValue(messageLengthString);
 }
 
-QString FinTsDialog::convertToBinaryFormat(QString &originalString)
+QString FinTsDialog::convertToBinaryFormat(const QString &originalString)
 {
     QByteArray binaryString = originalString.toLatin1();
     QString formattedBinaryString = "@";

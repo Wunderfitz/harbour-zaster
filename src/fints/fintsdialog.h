@@ -79,7 +79,7 @@ private:
     Segment *createSegmentSignatureHeader(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentSignatureFooter(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentEncryptionHeader(FinTsElement *parentElement, int segmentNumber);
-    Segment *createSegmentEncryptedData(FinTsElement *parentElement, int segmentNumber);
+    Segment *createSegmentEncryptedData(FinTsElement *parentElement, int segmentNumber, const QString &encryptedData);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
@@ -97,7 +97,7 @@ private:
     DataElementGroup *createDegEncryptionAlgorithm(FinTsElement *parentElement);
 
     void insertMessageLength(Message *message);
-    QString convertToBinaryFormat(QString &originalString);
+    QString convertToBinaryFormat(const QString &originalString);
     Message *packageMessage(Message *originalMessage);
 
     QNetworkAccessManager *networkAccessManager;
