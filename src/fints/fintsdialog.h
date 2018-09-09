@@ -85,6 +85,7 @@ private:
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
     void parseSegmentBankParameter(Segment *segmentBankParameter);
     void parseSegmentSecurityProcedure(Segment *segmentSecurityProcedure);
+    Message *parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage);
 
     DataElementGroup *createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
     DataElementGroup *createDegBankId(FinTsElement *parentElement, const QString &blz);
@@ -108,6 +109,8 @@ private:
     bool anonymousDialog;
     QVariantMap bankParameterData;
     QVariantMap userParameterData;
+
+    bool debugStop;
 };
 
 #endif // FINTSDIALOG_H

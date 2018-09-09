@@ -19,6 +19,7 @@
 
 #include "dataelementgroup.h"
 #include <QListIterator>
+#include <QDebug>
 
 DataElementGroup::DataElementGroup(FinTsElement *parent) : DataElement(parent)
 {
@@ -27,7 +28,7 @@ DataElementGroup::DataElementGroup(FinTsElement *parent) : DataElement(parent)
 
 DataElementGroup::~DataElementGroup()
 {
-    qDeleteAll(this->dataElements);
+    // Children are deleted automatically by Qt's parent/child handling
 }
 
 
@@ -58,7 +59,7 @@ int DataElementGroup::getCompleteLength()
     QListIterator<DataElement *> dataElementIterator(this->dataElements);
     int completeLength = 0;
     while (dataElementIterator.hasNext()) {
-        completeLength = completeLength + dataElementIterator.next()->getValue().size();
+        completeLength = completeLength + dataElementIterator.next()->getCompleteLength();
         if (dataElementIterator.hasNext()) {
             completeLength++;
         }

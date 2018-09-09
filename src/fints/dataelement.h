@@ -28,6 +28,7 @@ class DataElement : public FinTsElement
     Q_PROPERTY(QString value READ getValue WRITE setValue NOTIFY valueChanged)
 public:
     explicit DataElement(FinTsElement *parent = 0, const QString &myValue = "");
+    ~DataElement();
     void setValue(const QString &newValue);
     QString getValue();
     int getCompleteLength();

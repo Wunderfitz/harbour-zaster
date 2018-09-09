@@ -20,6 +20,7 @@
 #include "fintsdialog.h"
 #include <QListIterator>
 #include <QDateTime>
+#include <QTimeZone>
 
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
@@ -46,6 +47,8 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     // TODO: Don't use hard-coded user ID
     this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_PLACEHOLDER_CUSTOMER_ID);
 
+    this->debugStop = false;
+
 }
 
 void FinTsDialog::dialogInitialization()
@@ -58,6 +61,7 @@ void FinTsDialog::dialogInitialization()
     QUrl url = QUrl(FINTS_PLACEHOLDER_ENDPOINT);
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    qDebug() << "Dialog Initialization Message " << serializedInitializationMessage;
     QNetworkReply *reply = networkAccessManager->post(request, serializedInitializationMessage);
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleDialogInitializationError(QNetworkReply::NetworkError)));
     connect(reply, SIGNAL(finished()), this, SLOT(handleDialogInitializationFinished()));
@@ -168,11 +172,21 @@ Message *FinTsDialog::createMessageCloseDialog()
     Message *closeDialogMessage = new Message();
     this->myMessageNumber++;
     closeDialogMessage->addSegment(createSegmentMessageHeader(closeDialogMessage, closeDialogMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
+    if (!this->anonymousDialog) {
+        closeDialogMessage->addSegment(createSegmentSignatureHeader(closeDialogMessage, closeDialogMessage->getNextSegmentNumber()));
+    }
     closeDialogMessage->addSegment(createSegmentDialogEnd(closeDialogMessage, closeDialogMessage->getNextSegmentNumber()));
+    if (!this->anonymousDialog) {
+        closeDialogMessage->addSegment(createSegmentSignatureFooter(closeDialogMessage, closeDialogMessage->getNextSegmentNumber()));
+    }
     closeDialogMessage->addSegment(createSegmentMessageTermination(closeDialogMessage, closeDialogMessage->getNextSegmentNumber(), this->myMessageNumber));
 
-    insertMessageLength(closeDialogMessage);
-    return closeDialogMessage;
+    if (this->anonymousDialog) {
+        insertMessageLength(closeDialogMessage);
+        return closeDialogMessage;
+    } else {
+        return packageMessage(closeDialogMessage);
+    }
 }
 
 void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
@@ -183,6 +197,13 @@ void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
         Segment *currentSegment = segmentIterator.next();
         QString segmentIdentifier = currentSegment->getIdentifier();
         if (segmentIdentifier == SEGMENT_MESSAGE_FEEDBACK_ID) { parseSegmentMessageFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyCloseDialog(parseSegmentEncryptedMessage(currentSegment)); }
+    }
+    this->myDialogId = "0";
+    this->myMessageNumber = 0;
+    if (this->bankParameterData.value(BPD_KEY_PIN_TAN_SUPPORTED).toBool() == true && this->debugStop == false) {
+        this->debugStop = true;
+        dialogInitialization();
     }
 }
 
@@ -298,6 +319,17 @@ void FinTsDialog::parseSegmentSecurityProcedure(Segment *segmentSecurityProcedur
     this->anonymousDialog = false;
 }
 
+Message *FinTsDialog::parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage)
+{
+    QList<DataElement *> encryptedMessageElements = segmentEncryptedMessage->getDataElements();
+    if (encryptedMessageElements.size() >= 1) {
+        return deserializer.deserialize(encryptedMessageElements.at(0)->getValue());
+    } else {
+        qDebug() << "[FinTsDialog] ERROR: Unable to decrypt message!";
+        return 0;
+    }
+}
+
 // See Formals, page 43
 Segment *FinTsDialog::createSegmentIdentification(FinTsElement *parentElement, int segmentNumber, const QString &blz)
 {
@@ -318,7 +350,7 @@ Segment *FinTsDialog::createSegmentProcessPreparation(FinTsElement *parentElemen
     processPreparationSegment->setHeader(createDegSegmentHeader(processPreparationSegment, SEGMENT_PROCESS_PREPARATION_ID, QString::number(segmentNumber), SEGMENT_PROCESS_PREPARATION_VERSION));
 
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(BPD_KEY_VERSION).toString()));
-    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(UPD_KEY_VERSION).toString()));
+    processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->userParameterData.value(UPD_KEY_VERSION).toString()));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, this->bankParameterData.value(BPD_KEY_SUPPORTED_LANGUAGE).toString()));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_ID));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_VERSION));
@@ -360,8 +392,9 @@ Segment *FinTsDialog::createSegmentSignatureHeader(FinTsElement *parentElement, 
     // See HBCI, page 50
     signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
     signatureHeaderSegment->addDataElement(createDegSecurityIdentificationDetails(signatureHeaderSegment));
-    // Security Reference Number, if I interpret the docs correctly it's simply the user ID here
-    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
+    // Security Reference Number, if I interpret the docs correctly it's simply the user ID here, could also be 0
+    // signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
+    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
     signatureHeaderSegment->addDataElement(createDegDateTime(signatureHeaderSegment));
     signatureHeaderSegment->addDataElement(createDegHashAlgorithm(signatureHeaderSegment));
     signatureHeaderSegment->addDataElement(createDegSignatureAlgorithm(signatureHeaderSegment));
@@ -454,6 +487,8 @@ DataElementGroup *FinTsDialog::createDegDateTime(FinTsElement *parentElement)
     // Security Timestamp, see HBCI page 163
     dateTime->addDataElement(new DataElement(dateTime, "1"));
     QDateTime currentDateTime = QDateTime::currentDateTime();
+    QTimeZone timezone("Europe/Berlin");
+    currentDateTime.setTimeZone(timezone);
     dateTime->addDataElement(new DataElement(dateTime, currentDateTime.toString("yyyyMMdd:hhmmss")));
     return dateTime;
 }
@@ -497,7 +532,7 @@ DataElementGroup *FinTsDialog::createDegEncryptionAlgorithm(FinTsElement *parent
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "2"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "2"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "13"));
-    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "@8@<X'00 00 00 00 00 00 00 00'>"));
+    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "@1@X"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "5"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "1"));
     return encryptionAlgorithm;
@@ -516,7 +551,7 @@ QString FinTsDialog::convertToBinaryFormat(const QString &originalString)
     formattedBinaryString.append(QString::number(binaryString.length()));
     formattedBinaryString.append("@");
     formattedBinaryString.append(binaryString);
-    return binaryString;
+    return formattedBinaryString;
 }
 
 Message *FinTsDialog::packageMessage(Message *originalMessage)

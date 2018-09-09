@@ -4,7 +4,7 @@
 // Placeholder message length, that will be changed when we completed the whole message
 const char MESSAGE_LENGTH_PLACEHOLDER[] = "000000000000";
 const char SIGNATURE_CONTROL_REFERENCE[] = "4242";
-const char SYSTEM_IDENTIFICATION[] = "23";
+const char SYSTEM_IDENTIFICATION[] = "0";
 const char SEGMENT_MESSAGE_HEADER_ID[] = "HNHBK";
 const char SEGMENT_MESSAGE_HEADER_VERSION[] = "3";
 const char SEGMENT_IDENTIFICATION_ID[] = "HKIDN";

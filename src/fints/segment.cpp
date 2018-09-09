@@ -19,6 +19,7 @@
 
 #include "segment.h"
 #include <QListIterator>
+#include <QDebug>
 
 Segment::Segment(FinTsElement *parent) : FinTsElement(parent)
 {
@@ -27,8 +28,7 @@ Segment::Segment(FinTsElement *parent) : FinTsElement(parent)
 
 Segment::~Segment()
 {
-    qDeleteAll(this->dataElements);
-    delete header;
+    // Children are deleted automatically by Qt's parent/child handling
 }
 
 void Segment::setHeader(DataElementGroup *newHeader)

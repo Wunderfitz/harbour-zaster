@@ -18,11 +18,17 @@
 */
 
 #include "dataelement.h"
+#include <QDebug>
 
 DataElement::DataElement(FinTsElement *parent, const QString &myValue) : FinTsElement(parent)
 {
     this->type = FinTsElement::DE;
     this->value = myValue;
+}
+
+DataElement::~DataElement()
+{
+    // Children are deleted automatically by Qt's parent/child handling
 }
 
 void DataElement::setValue(const QString &newValue)

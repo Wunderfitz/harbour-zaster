@@ -18,6 +18,7 @@
 */
 
 #include "message.h"
+#include <QDebug>
 
 Message::Message(FinTsElement *parent) : FinTsElement(parent)
 {
@@ -26,7 +27,7 @@ Message::Message(FinTsElement *parent) : FinTsElement(parent)
 
 Message::~Message()
 {
-    qDeleteAll(this->segments);
+    // Children are deleted automatically by Qt's parent/child handling
 }
 
 void Message::setSegments(const QList<Segment *> &newSegments)

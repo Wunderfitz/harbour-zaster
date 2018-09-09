@@ -13,7 +13,8 @@ class FinTsDeserializer : public QObject
     Q_OBJECT
 public:
     explicit FinTsDeserializer(QObject *parent = 0);
-    Message *decodeAndDeserialize(const QByteArray encodedMessage);
+    Message *decodeAndDeserialize(const QByteArray &encodedMessage);
+    Message *deserialize(const QString &decodedMessage);
     void debugOut(Message *message);
 
 signals:

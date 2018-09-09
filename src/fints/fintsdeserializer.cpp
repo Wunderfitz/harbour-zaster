@@ -5,23 +5,44 @@ FinTsDeserializer::FinTsDeserializer(QObject *parent) : QObject(parent)
 
 }
 
-Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage)
+Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray &encodedMessage)
+{
+    return deserialize(QString::fromLatin1(QByteArray::fromBase64(encodedMessage)));
+}
+
+Message *FinTsDeserializer::deserialize(const QString &decodedMessage)
 {
     Message *newMessage = new Message();
-    QString rawMessage = QString::fromLatin1(QByteArray::fromBase64(encodedMessage));
-    // qDebug() << "[FinTsDeserializer] Bank replied: " << rawMessage;
+    qDebug() << "[FinTsDeserializer] Raw Message: " << decodedMessage;
     bool inEscape = false;
     bool inGroup = false;
+    bool inBinaryLength = false;
+    QString rawBinaryLength;
+    int binaryLength = 0;
     QList<DataElement *> currentGroupDataElements;
     QList<DataElement *> currentDataElements;
     QList<Segment *> currentSegments;
     QString currentValue;
     DataElementGroup *segmentHeader = new DataElementGroup(newMessage);
-    for (int i = 0; i < rawMessage.size(); i++) {
-        QChar currentCharacter = rawMessage.at(i);
+    for (int i = 0; i < decodedMessage.size(); i++) {
+        QChar currentCharacter = decodedMessage.at(i);
         if (inEscape) {
             currentValue.append(currentCharacter);
             inEscape = false;
+            continue;
+        }
+        if (inBinaryLength) {
+            if (currentCharacter == '@') {
+                inBinaryLength = false;
+                binaryLength = rawBinaryLength.toInt();
+            } else {
+                rawBinaryLength.append(currentCharacter);
+            }
+            continue;
+        }
+        if (binaryLength > 0) {
+            currentValue.append(currentCharacter);
+            binaryLength--;
             continue;
         }
         switch (currentCharacter.toLatin1()) {
@@ -67,6 +88,12 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray encodedMessage
             inGroup = true;
             currentGroupDataElements.append(createDataElement(newMessage, currentValue));
             currentValue.clear();
+            break;
+        case '@':
+            // Starting binary bullshit...
+            inBinaryLength = true;
+            rawBinaryLength.clear();
+            binaryLength = 0;
             break;
         default:
             currentValue.append(currentCharacter);
