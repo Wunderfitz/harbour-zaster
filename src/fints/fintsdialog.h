@@ -85,6 +85,8 @@ private:
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
     void parseSegmentBankParameter(Segment *segmentBankParameter);
     void parseSegmentSecurityProcedure(Segment *segmentSecurityProcedure);
+    void parseSegmentUserParameterData(Segment *segmentUserParameterData);
+    void parseSegmentAccountInformation(Segment *segmentaccountInformation);
     Message *parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage);
 
     DataElementGroup *createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);

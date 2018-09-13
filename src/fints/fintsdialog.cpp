@@ -21,6 +21,8 @@
 #include <QListIterator>
 #include <QDateTime>
 #include <QTimeZone>
+#include <QJsonDocument>
+#include <QJsonObject>
 
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
@@ -163,6 +165,9 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
         if (segmentIdentifier == SEGMENT_BANK_PARAMETER_ID) { parseSegmentBankParameter(currentSegment); }
         if (segmentIdentifier == SEGMENT_SECURITY_PROCEDURE_ID) { parseSegmentSecurityProcedure(currentSegment); }
+        if (segmentIdentifier == SEGMENT_USER_PARAMETER_DATA_ID) { parseSegmentUserParameterData(currentSegment); }
+        if (segmentIdentifier == SEGMENT_ACCOUNT_INFORMATION_ID) { parseSegmentAccountInformation(currentSegment); }
+        if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
 }
 
@@ -317,6 +322,83 @@ void FinTsDialog::parseSegmentSecurityProcedure(Segment *segmentSecurityProcedur
     qDebug() << "[FinTsDialog] PIN/TAN supported: " << pinTanSupported;
     emit pinTanSupport(pinTanSupported);
     this->anonymousDialog = false;
+}
+
+// See Formals, page 87
+void FinTsDialog::parseSegmentUserParameterData(Segment *segmentUserParameterData)
+{
+    QList<DataElement *> userParameterElements = segmentUserParameterData->getDataElements();
+    if (userParameterElements.size() >= 2) {
+        QString userId = userParameterElements.at(0)->getValue();
+        this->userParameterData.insert(UPD_KEY_USER_ID, userId);
+        qDebug() << "[FinTsDialog] User ID: " << userId;
+        QString updVersion = userParameterElements.at(1)->getValue();
+        this->userParameterData.insert(UPD_KEY_VERSION, updVersion);
+        qDebug() << "[FinTsDialog] User Parameter Data (UPD) version: " << updVersion;
+    }
+}
+
+// See Formals, page 88
+void FinTsDialog::parseSegmentAccountInformation(Segment *segmentaccountInformation)
+{
+    QVariantMap currentAccount;
+    QVariantList allowedTransactions;
+
+    QList<DataElement *> accountInformationElements = segmentaccountInformation->getDataElements();
+    if (accountInformationElements.size() >= 6) {
+        qDebug() << "[FinTsDialog] === Found account! ===";
+        QList<DataElement *> ktvElements = qobject_cast<DataElementGroup *>(accountInformationElements.at(0))->getDataElements();
+        currentAccount.insert(UPD_KEY_ACCOUNT_ID, ktvElements.at(0)->getValue());
+        qDebug() << "[FinTsDialog] Account ID: " << ktvElements.at(0)->getValue();
+        currentAccount.insert(UPD_KEY_BANK_ID, ktvElements.at(3)->getValue());
+        qDebug() << "[FinTsDialog] Bank ID: " << ktvElements.at(3)->getValue();
+        currentAccount.insert(UPD_KEY_IBAN, accountInformationElements.at(1)->getValue());
+        qDebug() << "[FinTsDialog] IBAN: " << accountInformationElements.at(1)->getValue();
+        currentAccount.insert(UPD_KEY_USER_ID, accountInformationElements.at(2)->getValue());
+        qDebug() << "[FinTsDialog] User ID: " << accountInformationElements.at(2)->getValue();
+        // See Formals, page 114
+        currentAccount.insert(UPD_KEY_ACCOUNT_KIND, accountInformationElements.at(3)->getValue());
+        qDebug() << "[FinTsDialog] Account Kind: " << accountInformationElements.at(3)->getValue();
+        currentAccount.insert(UPD_KEY_ACCOUNT_CURRENCY, accountInformationElements.at(4)->getValue());
+        qDebug() << "[FinTsDialog] Account Currency: " << accountInformationElements.at(4)->getValue();
+        currentAccount.insert(UPD_KEY_ACCOUNT_OWNER_1, accountInformationElements.at(5)->getValue());
+        qDebug() << "[FinTsDialog] Account Owner 1: " << accountInformationElements.at(5)->getValue();
+    }
+    if (accountInformationElements.size() >= 7) {
+        currentAccount.insert(UPD_KEY_ACCOUNT_OWNER_2, accountInformationElements.at(6)->getValue());
+        qDebug() << "[FinTsDialog] Account Owner 2: " << accountInformationElements.at(6)->getValue();
+    }
+    if (accountInformationElements.size() >= 8) {
+        currentAccount.insert(UPD_KEY_ACCOUNT_DESCRIPTION, accountInformationElements.at(7)->getValue());
+        qDebug() << "[FinTsDialog] Account Description: " << accountInformationElements.at(7)->getValue();
+    }
+    if (accountInformationElements.size() >= 9) {
+        currentAccount.insert(UPD_KEY_ACCOUNT_LIMIT, accountInformationElements.at(8)->getValue());
+        qDebug() << "[FinTsDialog] Account Limit: " << accountInformationElements.at(8)->getValue();
+    }
+    for (int i = 10; i <= 1008; i++) {
+        if (accountInformationElements.size() >= i) {
+            DataElement *rawTransactionElement = accountInformationElements.at(i - 1);
+            if (rawTransactionElement->getType() == FinTsElement::DEG) {
+                QList<DataElement *> allowedTransactionElements = qobject_cast<DataElementGroup *>(rawTransactionElement)->getDataElements();
+                allowedTransactions.append(allowedTransactionElements.at(0)->getValue());
+                qDebug() << "[FinTsDialog] Allowed Transaction: " << allowedTransactionElements.at(0)->getValue();
+            }
+        } else {
+            break;
+        }
+    }
+    if (accountInformationElements.size() >= 1009) {
+        QJsonDocument accountExtensionJson = QJsonDocument::fromJson( accountInformationElements.at(1008)->getValue().toLatin1() );
+        currentAccount.insert(UPD_KEY_ACCOUNT_EXTENSION, accountExtensionJson.toVariant());
+        qDebug() << "[FinTsDialog] Account Extension found";
+        QJsonObject accountExtensionObject = accountExtensionJson.object();
+        if (accountExtensionObject.contains("umsltzt")) {
+            QDateTime changedAtTimestamp = QDateTime::fromString(accountExtensionObject.value("umsltzt").toString(), "yyyy-MM-dd-hh.mm.ss.000zzz");
+            qDebug() << "[FinTsDialog] Last changed at: " << changedAtTimestamp.toString();
+            currentAccount.insert(UPD_KEY_ACCOUNT_CHANGED_AT, changedAtTimestamp);
+        }
+    }
 }
 
 Message *FinTsDialog::parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage)
