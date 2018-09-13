@@ -399,6 +399,9 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentaccountInformat
             currentAccount.insert(UPD_KEY_ACCOUNT_CHANGED_AT, changedAtTimestamp);
         }
     }
+    QVariantList accounts = this->userParameterData.value(UPD_KEY_ACCOUNTS, QVariantList()).toList();
+    accounts.append(currentAccount);
+    this->userParameterData.insert(UPD_KEY_ACCOUNTS, accounts);
 }
 
 Message *FinTsDialog::parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage)
