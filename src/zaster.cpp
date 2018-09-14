@@ -24,7 +24,6 @@ Zaster::Zaster(QObject *parent) : QObject(parent), settings("harbour-zaster", "s
     this->networkAccessManager = new QNetworkAccessManager(this);
     wagnis = new Wagnis(this->networkAccessManager, "harbour-zaster", "0.1", this);
     finTsDialog = new FinTsDialog(this, this->networkAccessManager);
-    doStupidTests();
 }
 
 Zaster::~Zaster()
@@ -36,8 +35,7 @@ Wagnis *Zaster::getWagnis()
     return this->wagnis;
 }
 
-void Zaster::doStupidTests()
+FinTsDialog *Zaster::getFinTsDialog()
 {
-    qDebug() << "Starting stupid tests...";
-    finTsDialog->dialogInitialization();
+    return this->finTsDialog;
 }

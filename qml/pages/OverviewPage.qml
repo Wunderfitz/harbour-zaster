@@ -26,6 +26,23 @@ Page {
 
     allowedOrientations: Orientation.All
 
+    Component.onCompleted: {
+        finTsDialog.dialogInitialization();
+    }
+
+    Connections {
+        target: finTsDialog
+        onDialogInitializationCompleted: {
+            finTsDialog.closeDialog();
+        }
+        onDialogEndCompleted: {
+            if (anonymously && finTsDialog.supportsPinTan()) {
+                // Reinitialize with user
+                finTsDialog.dialogInitialization();
+            }
+        }
+    }
+
     SilicaFlickable {
         anchors.fill: parent
         contentHeight: overviewColumn.height

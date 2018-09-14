@@ -33,6 +33,7 @@ public:
     explicit Zaster(QObject *parent = 0);
     ~Zaster();
     Wagnis *getWagnis();
+    FinTsDialog *getFinTsDialog();
 
 signals:
 

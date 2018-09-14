@@ -49,8 +49,6 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     // TODO: Don't use hard-coded user ID
     this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_PLACEHOLDER_CUSTOMER_ID);
 
-    this->debugStop = false;
-
 }
 
 void FinTsDialog::dialogInitialization()
@@ -87,10 +85,16 @@ void FinTsDialog::closeDialog()
 
 }
 
+bool FinTsDialog::supportsPinTan()
+{
+    return this->bankParameterData.value(BPD_KEY_PIN_TAN_SUPPORTED, false).toBool();
+}
+
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     qWarning() << "FinTsDialog::handleDialogInitializationError:" << (int)error << reply->errorString() << reply->readAll();
+    emit dialogInitializationFailed();
 }
 
 void FinTsDialog::handleDialogInitializationFinished()
@@ -104,7 +108,11 @@ void FinTsDialog::handleDialogInitializationFinished()
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyDialogInitialization(replyMessage);
-    closeDialog();
+    if (this->anonymousDialog) {
+        emit dialogInitializationCompleted(true);
+    } else {
+        emit dialogInitializationCompleted(false);
+    }
     replyMessage->deleteLater();
 }
 
@@ -112,6 +120,7 @@ void FinTsDialog::handleDialogEndError(QNetworkReply::NetworkError error)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
     qWarning() << "FinTsDialog::handleDialogEndError:" << (int)error << reply->errorString() << reply->readAll();
+    emit dialogEndFailed();
 }
 
 void FinTsDialog::handleDialogEndFinished()
@@ -125,12 +134,18 @@ void FinTsDialog::handleDialogEndFinished()
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyCloseDialog(replyMessage);
+    if (this->anonymousDialog) {
+        this->anonymousDialog = false;
+        emit dialogEndCompleted(true);
+    } else {
+        emit dialogEndCompleted(false);
+    }
     replyMessage->deleteLater();
 }
 
 Message *FinTsDialog::createMessageDialogInitialization()
 {
-    qDebug() << "FinTsDialog::createMessageDialogInitialization";
+    qDebug() << "FinTsDialog::createMessageDialogInitialization" << this->anonymousDialog;
     this->myMessageNumber++;
     Message *dialogInitializationMessage = new Message();
     dialogInitializationMessage->addSegment(createSegmentMessageHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
@@ -206,10 +221,6 @@ void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
     }
     this->myDialogId = "0";
     this->myMessageNumber = 0;
-    if (this->bankParameterData.value(BPD_KEY_PIN_TAN_SUPPORTED).toBool() == true && this->debugStop == false) {
-        this->debugStop = true;
-        dialogInitialization();
-    }
 }
 
 // See Formals, page 15
@@ -320,8 +331,6 @@ void FinTsDialog::parseSegmentSecurityProcedure(Segment *segmentSecurityProcedur
     }
     this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, pinTanSupported);
     qDebug() << "[FinTsDialog] PIN/TAN supported: " << pinTanSupported;
-    emit pinTanSupport(pinTanSupported);
-    this->anonymousDialog = false;
 }
 
 // See Formals, page 87

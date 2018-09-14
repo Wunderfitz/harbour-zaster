@@ -52,9 +52,13 @@ public:
 
     Q_INVOKABLE void dialogInitialization();
     Q_INVOKABLE void closeDialog();
+    Q_INVOKABLE bool supportsPinTan();
 
 signals:
-    void pinTanSupport(const bool &isSupported);
+    void dialogInitializationCompleted(const bool &anonymously);
+    void dialogInitializationFailed();
+    void dialogEndCompleted(const bool &anonymously);
+    void dialogEndFailed();
 
 public slots:
 
@@ -112,7 +116,6 @@ private:
     QVariantMap bankParameterData;
     QVariantMap userParameterData;
 
-    bool debugStop;
 };
 
 #endif // FINTSDIALOG_H
