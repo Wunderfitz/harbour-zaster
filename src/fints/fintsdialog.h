@@ -36,6 +36,7 @@
 #include "messageconstants.h"
 #include "bpdconstants.h"
 #include "updconstants.h"
+#include "transactionconstants.h"
 
 // HBCI-Version - always fixed version 3.0, see Formals, page 15
 const char FINTS_VERSION[] = "300";
@@ -52,13 +53,18 @@ public:
 
     Q_INVOKABLE void dialogInitialization();
     Q_INVOKABLE void closeDialog();
+    Q_INVOKABLE void accountBalance();
     Q_INVOKABLE bool supportsPinTan();
+    Q_INVOKABLE QString getBankCode();
+    Q_INVOKABLE QString getBankName();
 
 signals:
     void dialogInitializationCompleted(const bool &anonymously);
     void dialogInitializationFailed();
     void dialogEndCompleted(const bool &anonymously);
     void dialogEndFailed();
+    void accountBalanceCompleted(const QVariantList &accountBalances);
+    void accountBalanceFailed();
 
 public slots:
 
@@ -67,6 +73,8 @@ private slots:
     void handleDialogInitializationFinished();
     void handleDialogEndError(QNetworkReply::NetworkError error);
     void handleDialogEndFinished();
+    void handleAccountBalanceError(QNetworkReply::NetworkError error);
+    void handleAccountBalanceFinished();
 
 private:    
 
@@ -74,6 +82,8 @@ private:
     void parseReplyDialogInitialization(Message *replyMessage);
     Message *createMessageCloseDialog();
     void parseReplyCloseDialog(Message *replyMessage);
+    Message *createMessageAccountBalance();
+    QVariantList parseReplyAccountBalance(Message *replyMessage);
 
     Segment *createSegmentMessageHeader(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);
     Segment *createSegmentIdentification(FinTsElement *parentElement, int segmentNumber, const QString &blz);
@@ -84,13 +94,15 @@ private:
     Segment *createSegmentSignatureFooter(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentEncryptionHeader(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentEncryptedData(FinTsElement *parentElement, int segmentNumber, const QString &encryptedData);
+    Segment *createSegmentAccountBalance(FinTsElement *parentElement, int segmentNumber);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
     void parseSegmentBankParameter(Segment *segmentBankParameter);
     void parseSegmentSecurityProcedure(Segment *segmentSecurityProcedure);
     void parseSegmentUserParameterData(Segment *segmentUserParameterData);
-    void parseSegmentAccountInformation(Segment *segmentaccountInformation);
+    void parseSegmentAccountInformation(Segment *segmentAccountInformation);
+    QVariantMap parseSegmentAccountBalance(Segment *segmentAccountBalance);
     Message *parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage);
 
     DataElementGroup *createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);
@@ -102,6 +114,7 @@ private:
     DataElementGroup *createDegSignatureAlgorithm(FinTsElement *parentElement);
     DataElementGroup *createDegKeyName(FinTsElement *parentElement, const QString &keyType);
     DataElementGroup *createDegEncryptionAlgorithm(FinTsElement *parentElement);
+    DataElementGroup *createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
 
     void insertMessageLength(Message *message);
     QString convertToBinaryFormat(const QString &originalString);

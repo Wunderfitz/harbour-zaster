@@ -47,7 +47,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Welcome to Zaster</source>
+        <source>Account Balance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bank ID: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Account ID: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

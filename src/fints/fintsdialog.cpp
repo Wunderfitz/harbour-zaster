@@ -85,9 +85,34 @@ void FinTsDialog::closeDialog()
 
 }
 
+void FinTsDialog::accountBalance()
+{
+    qDebug() << "FinTsDialog::accountBalance";
+    Message *accountBalanceMessage = this->createMessageAccountBalance();
+    QByteArray serializedAccountBalanceMessage = serializer.serializeAndEncode(accountBalanceMessage);
+
+    // TODO: Use automatially determined endpoint
+    QUrl url = QUrl(FINTS_PLACEHOLDER_ENDPOINT);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    QNetworkReply *reply = networkAccessManager->post(request, serializedAccountBalanceMessage);
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleAccountBalanceError(QNetworkReply::NetworkError)));
+    connect(reply, SIGNAL(finished()), this, SLOT(handleAccountBalanceFinished()));
+}
+
 bool FinTsDialog::supportsPinTan()
 {
     return this->bankParameterData.value(BPD_KEY_PIN_TAN_SUPPORTED, false).toBool();
+}
+
+QString FinTsDialog::getBankCode()
+{
+    return this->bankParameterData.value(BPD_KEY_BANK_CODE).toString();
+}
+
+QString FinTsDialog::getBankName()
+{
+   return this->bankParameterData.value(BPD_KEY_BANK_NAME).toString();
 }
 
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
@@ -140,6 +165,27 @@ void FinTsDialog::handleDialogEndFinished()
     } else {
         emit dialogEndCompleted(false);
     }
+    replyMessage->deleteLater();
+}
+
+void FinTsDialog::handleAccountBalanceError(QNetworkReply::NetworkError error)
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    qWarning() << "FinTsDialog::handleAccountBalanceError:" << (int)error << reply->errorString() << reply->readAll();
+    emit accountBalanceFailed();
+}
+
+void FinTsDialog::handleAccountBalanceFinished()
+{
+    qDebug() << "FinTsDialog::handleAccountBalanceFinished";
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+
+    Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
+    emit accountBalanceCompleted(parseReplyAccountBalance(replyMessage));
     replyMessage->deleteLater();
 }
 
@@ -221,6 +267,36 @@ void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
     }
     this->myDialogId = "0";
     this->myMessageNumber = 0;
+}
+
+Message *FinTsDialog::createMessageAccountBalance()
+{
+    qDebug() << "FinTsDialog::createMessageAccountBalance";
+    Message *accountBalanceMessage = new Message();
+    this->myMessageNumber++;
+    accountBalanceMessage->addSegment(createSegmentMessageHeader(accountBalanceMessage, accountBalanceMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
+    accountBalanceMessage->addSegment(createSegmentSignatureHeader(accountBalanceMessage, accountBalanceMessage->getNextSegmentNumber()));
+    accountBalanceMessage->addSegment(createSegmentAccountBalance(accountBalanceMessage, accountBalanceMessage->getNextSegmentNumber()));
+    accountBalanceMessage->addSegment(createSegmentSignatureFooter(accountBalanceMessage, accountBalanceMessage->getNextSegmentNumber()));
+    accountBalanceMessage->addSegment(createSegmentMessageTermination(accountBalanceMessage, accountBalanceMessage->getNextSegmentNumber(), this->myMessageNumber));
+    return packageMessage(accountBalanceMessage);
+}
+
+QVariantList FinTsDialog::parseReplyAccountBalance(Message *replyMessage)
+{
+    qDebug() << "FinTsDialog::parseReplyAccountBalance";
+    QVariantList accountBalances;
+    QListIterator<Segment *> segmentIterator(replyMessage->getSegments());
+    while (segmentIterator.hasNext()) {
+        Segment *currentSegment = segmentIterator.next();
+        QString segmentIdentifier = currentSegment->getIdentifier();
+        if (segmentIdentifier == SEGMENT_MESSAGE_HEADER_ID) { parseSegmentMessageHeader(currentSegment); }
+        if (segmentIdentifier == SEGMENT_MESSAGE_FEEDBACK_ID) { parseSegmentMessageFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_ACCOUNT_BALANCE_RESPONSE_ID) { accountBalances.append(parseSegmentAccountBalance(currentSegment)); }
+        if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { accountBalances.append(parseReplyAccountBalance(parseSegmentEncryptedMessage(currentSegment))); }
+    }
+    return accountBalances;
 }
 
 // See Formals, page 15
@@ -348,12 +424,12 @@ void FinTsDialog::parseSegmentUserParameterData(Segment *segmentUserParameterDat
 }
 
 // See Formals, page 88
-void FinTsDialog::parseSegmentAccountInformation(Segment *segmentaccountInformation)
+void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformation)
 {
     QVariantMap currentAccount;
     QVariantList allowedTransactions;
 
-    QList<DataElement *> accountInformationElements = segmentaccountInformation->getDataElements();
+    QList<DataElement *> accountInformationElements = segmentAccountInformation->getDataElements();
     if (accountInformationElements.size() >= 6) {
         qDebug() << "[FinTsDialog] === Found account! ===";
         QList<DataElement *> ktvElements = qobject_cast<DataElementGroup *>(accountInformationElements.at(0))->getDataElements();
@@ -411,6 +487,27 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentaccountInformat
     QVariantList accounts = this->userParameterData.value(UPD_KEY_ACCOUNTS, QVariantList()).toList();
     accounts.append(currentAccount);
     this->userParameterData.insert(UPD_KEY_ACCOUNTS, accounts);
+}
+
+// See Geschäftsvorfälle, page 48
+QVariantMap FinTsDialog::parseSegmentAccountBalance(Segment *segmentAccountBalance)
+{
+    QVariantMap accountBalance;
+    QList<DataElement *> accountBalanceElements = segmentAccountBalance->getDataElements();
+    if (accountBalanceElements.size() >= 4) {
+        qDebug() << "[FinTsDialog] === New Account Balance! ===";
+        QList<DataElement *> ktiElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(0))->getDataElements();
+        accountBalance.insert(TRANSACTION_KEY_ACCOUNT_ID, ktiElements.at(2)->getValue());
+        qDebug() << "[FinTsDialog] Account ID: " << ktiElements.at(2)->getValue();
+        QList<DataElement *> valueElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(3))->getDataElements();
+        accountBalance.insert(TRANSACTION_KEY_CREDIT_DEBIT, valueElements.at(0)->getValue());
+        qDebug() << "[FinTsDialog] Credit/Debit: " << valueElements.at(0)->getValue();
+        accountBalance.insert(TRANSACTION_KEY_VALUE, valueElements.at(1)->getValue());
+        qDebug() << "[FinTsDialog] Value: " << valueElements.at(1)->getValue();
+        accountBalance.insert(TRANSACTION_KEY_CURRENCY, valueElements.at(2)->getValue());
+        qDebug() << "[FinTsDialog] Currency: " << valueElements.at(2)->getValue();
+    }
+    return accountBalance;
 }
 
 Message *FinTsDialog::parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage)
@@ -533,6 +630,16 @@ Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, in
     return encryptionDataSegment;
 }
 
+Segment *FinTsDialog::createSegmentAccountBalance(FinTsElement *parentElement, int segmentNumber)
+{
+    Segment *accountBalanceSegment = new Segment(parentElement);
+    accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(segmentNumber), SEGMENT_ACCOUNT_BALANCE_VERSION));
+    QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
+    accountBalanceSegment->addDataElement(createDegAccountId(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_CODE).toString(), firstAccount.value(UPD_KEY_ACCOUNT_ID).toString()));
+    accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "J"));
+    return accountBalanceSegment;
+}
+
 // See Formals, page 123
 DataElementGroup *FinTsDialog::createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion)
 {
@@ -630,6 +737,20 @@ DataElementGroup *FinTsDialog::createDegEncryptionAlgorithm(FinTsElement *parent
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "5"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "1"));
     return encryptionAlgorithm;
+}
+
+// See Geschäftsvorfälle, page 4
+DataElementGroup *FinTsDialog::createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber)
+{
+    DataElementGroup *accountId = new DataElementGroup(parentElement);
+    // IBAN (empty for national accounts)
+    accountId->addDataElement(new DataElement(accountId, ""));
+    // BIC (empty for national accounts)
+    accountId->addDataElement(new DataElement(accountId, ""));
+    accountId->addDataElement(new DataElement(accountId, accountNumber));
+    accountId->addDataElement(new DataElement(accountId, ""));
+    accountId->addDataElement(createDegBankId(accountId, blz));
+    return accountId;
 }
 
 void FinTsDialog::insertMessageLength(Message *message)

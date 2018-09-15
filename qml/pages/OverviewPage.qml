@@ -33,13 +33,25 @@ Page {
     Connections {
         target: finTsDialog
         onDialogInitializationCompleted: {
-            finTsDialog.closeDialog();
+            if (anonymously) {
+                finTsDialog.closeDialog();
+            } else {
+                bankNameText.text = finTsDialog.getBankName();
+                bankCodeText.text = qsTr("Bank ID: %1").arg(finTsDialog.getBankCode());
+                finTsDialog.accountBalance();
+            }
         }
         onDialogEndCompleted: {
             if (anonymously && finTsDialog.supportsPinTan()) {
                 // Reinitialize with user
                 finTsDialog.dialogInitialization();
             }
+        }
+        onAccountBalanceCompleted: {
+            console.log("Retrieved account balances: " + accountBalances.length);
+            accountIdText.text = qsTr("Account ID: %1").arg(accountBalances[0].accountId);
+            accountValueText.text = qsTr("%1 %2").arg(accountBalances[0].value).arg(accountBalances[0].currency);
+            finTsDialog.closeDialog();
         }
     }
 
@@ -60,7 +72,47 @@ Page {
             width: overviewPage.width
             spacing: Theme.paddingMedium
             PageHeader {
-                title: qsTr("Welcome to Zaster")
+                title: qsTr("Account Balance")
+            }
+
+            Text {
+                id: bankNameText
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Theme.fontSizeLarge
+                color: Theme.primaryColor
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Text {
+                id: bankCodeText
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Theme.fontSizeMedium
+                color: Theme.primaryColor
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Text {
+                id: accountIdText
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Theme.fontSizeMedium
+                color: Theme.primaryColor
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Text {
+                id: accountValueText
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Theme.fontSizeExtraLarge
+                color: Theme.highlightColor
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
             }
         }
 
