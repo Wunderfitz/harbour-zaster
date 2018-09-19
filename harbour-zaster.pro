@@ -34,7 +34,8 @@ DISTFILES += qml/*.qml \
     rpm/harbour-zaster.spec \
     rpm/harbour-zaster.yaml \
     translations/*.ts \
-    harbour-zaster.desktop
+    harbour-zaster.desktop \
+    db/*.db
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 
@@ -63,3 +64,8 @@ HEADERS += \
     src/fints/updconstants.h \
     src/fints/messageconstants.h \
     src/fints/transactionconstants.h
+
+database.files = db
+database.path = /usr/share/$${TARGET}
+
+INSTALLS += database
