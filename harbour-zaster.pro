@@ -27,7 +27,8 @@ SOURCES += src/harbour-zaster.cpp \
     src/fints/message.cpp \
     src/fints/fintsserializer.cpp \
     src/fints/fintsdeserializer.cpp \
-    src/fints/fintsdialog.cpp
+    src/fints/fintsdialog.cpp \
+    src/fints/institutessearchworker.cpp
 
 DISTFILES += qml/*.qml \
     rpm/harbour-zaster.changes.in \
@@ -63,7 +64,8 @@ HEADERS += \
     src/fints/bpdconstants.h \
     src/fints/updconstants.h \
     src/fints/messageconstants.h \
-    src/fints/transactionconstants.h
+    src/fints/transactionconstants.h \
+    src/fints/institutessearchworker.h
 
 database.files = db
 database.path = /usr/share/$${TARGET}

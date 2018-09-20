@@ -37,6 +37,7 @@
 #include "bpdconstants.h"
 #include "updconstants.h"
 #include "transactionconstants.h"
+#include "institutessearchworker.h"
 
 // HBCI-Version - always fixed version 3.0, see Formals, page 15
 const char FINTS_VERSION[] = "300";
@@ -57,6 +58,7 @@ public:
     Q_INVOKABLE bool supportsPinTan();
     Q_INVOKABLE QString getBankCode();
     Q_INVOKABLE QString getBankName();
+    Q_INVOKABLE void searchInstitute(const QString &queryString);
 
 signals:
     void dialogInitializationCompleted(const bool &anonymously);
@@ -65,6 +67,7 @@ signals:
     void dialogEndFailed();
     void accountBalanceCompleted(const QVariantList &accountBalances);
     void accountBalanceFailed();
+    void institutesSearchCompleted(const QVariantList &resultList);
 
 public slots:
 
@@ -75,6 +78,7 @@ private slots:
     void handleDialogEndFinished();
     void handleAccountBalanceError(QNetworkReply::NetworkError error);
     void handleAccountBalanceFinished();
+    void handleInstitutesSearchCompleted(const QString &queryString, const QVariantList &resultList);
 
 private:    
 
@@ -128,7 +132,8 @@ private:
     bool anonymousDialog;
     QVariantMap bankParameterData;
     QVariantMap userParameterData;
-
+    QSqlDatabase database;
+    InstitutesSearchWorker institutesSearchWorker;
 };
 
 #endif // FINTSDIALOG_H

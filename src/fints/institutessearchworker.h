@@ -17,16 +17,34 @@
     along with Zaster. If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef BPDCONSTANTS_H
-#define BPDCONSTANTS_H
+#ifndef INSTITUTESSEARCHWORKER_H
+#define INSTITUTESSEARCHWORKER_H
 
-const char BPD_KEY_VERSION[] = "version";
-const char BPD_KEY_COUNTRY_CODE[] = "countryCode";
-const char BPD_KEY_BANK_CODE[] = "bankCode";
-const char BPD_KEY_BANK_NAME[] = "bankName";
-const char BPD_KEY_MAX_TRANSACTIONS[] = "maxTransactions";
-const char BPD_KEY_SUPPORTED_LANGUAGE[] = "suportedLanguage";
-const char BPD_KEY_SUPPORTED_HBCI_VERSION[] = "suportedHBCIVersion";
-const char BPD_KEY_PIN_TAN_SUPPORTED[] = "pinTanSupported";
+#include <QThread>
+#include <QSqlDatabase>
+#include <QSqlQuery>
+#include <QVariantList>
 
-#endif // BPDCONSTANTS_H
+class InstitutesSearchWorker : public QThread
+{
+    Q_OBJECT
+    void run() Q_DECL_OVERRIDE {
+        performSearch();
+    }
+public:
+    explicit InstitutesSearchWorker(QObject *parent = 0);
+    void setParameters(const QSqlDatabase &database, const QString &queryString);
+
+signals:
+    void searchCompleted(const QString &queryString, const QVariantList &resultList);
+
+public slots:
+
+private:
+    QSqlDatabase database;
+    QString queryString;
+
+    void performSearch();
+};
+
+#endif // INSTITUTESSEARCHWORKER_H

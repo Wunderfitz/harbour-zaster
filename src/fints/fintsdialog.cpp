@@ -49,6 +49,16 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     // TODO: Don't use hard-coded user ID
     this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_PLACEHOLDER_CUSTOMER_ID);
 
+    connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString)), this, SLOT(handleInstitutesSearchCompleted(QString)));
+    database = QSqlDatabase::addDatabase("QSQLITE");
+    database.setDatabaseName("/usr/share/harbour-zaster/db/fints_institutes.db");
+
+    if (!database.open()) {
+       qDebug() << "Error: connection with institutes database failed";
+    } else {
+       qDebug() << "Institutes database: Connection OK";
+    }
+
 }
 
 void FinTsDialog::dialogInitialization()
@@ -112,7 +122,16 @@ QString FinTsDialog::getBankCode()
 
 QString FinTsDialog::getBankName()
 {
-   return this->bankParameterData.value(BPD_KEY_BANK_NAME).toString();
+    return this->bankParameterData.value(BPD_KEY_BANK_NAME).toString();
+}
+
+void FinTsDialog::searchInstitute(const QString &queryString)
+{
+    while (this->institutesSearchWorker.isRunning()) {
+        this->institutesSearchWorker.requestInterruption();
+    }
+    this->institutesSearchWorker.setParameters(database, queryString);
+    this->institutesSearchWorker.start();
 }
 
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
@@ -187,6 +206,12 @@ void FinTsDialog::handleAccountBalanceFinished()
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     emit accountBalanceCompleted(parseReplyAccountBalance(replyMessage));
     replyMessage->deleteLater();
+}
+
+void FinTsDialog::handleInstitutesSearchCompleted(const QString &queryString, const QVariantList &resultList)
+{
+    qDebug() << "FinTsDialog::handleInstitutesSearchCompleted" << queryString;
+    emit institutesSearchCompleted(resultList);
 }
 
 Message *FinTsDialog::createMessageDialogInitialization()
