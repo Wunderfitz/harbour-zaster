@@ -41,6 +41,25 @@
     </message>
 </context>
 <context>
+    <name>InstitutesSearchPage</name>
+    <message>
+        <source>Search in database...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find your Bank</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bank ID: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No results found</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>OverviewPage</name>
     <message>
         <source>About Zaster</source>

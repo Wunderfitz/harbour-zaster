@@ -49,7 +49,7 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     // TODO: Don't use hard-coded user ID
     this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_PLACEHOLDER_CUSTOMER_ID);
 
-    connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString)), this, SLOT(handleInstitutesSearchCompleted(QString)));
+    connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString, QVariantList)), this, SLOT(handleInstitutesSearchCompleted(QString, QVariantList)));
     database = QSqlDatabase::addDatabase("QSQLITE");
     database.setDatabaseName("/usr/share/harbour-zaster/db/fints_institutes.db");
 
@@ -127,6 +127,7 @@ QString FinTsDialog::getBankName()
 
 void FinTsDialog::searchInstitute(const QString &queryString)
 {
+    qDebug() << "FinTsDialog::searchInstitute" << queryString;
     while (this->institutesSearchWorker.isRunning()) {
         this->institutesSearchWorker.requestInterruption();
     }

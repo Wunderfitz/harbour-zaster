@@ -1,0 +1,174 @@
+/*
+    Copyright (C) 2018 Sebastian J. Wolf
+
+    This file is part of Zaster.
+
+    Zaster is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Zaster is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Zaster. If not, see <http://www.gnu.org/licenses/>.
+*/
+
+import QtQuick 2.0
+import Sailfish.Silica 1.0
+
+Page {
+    id: institutesSearchPage
+
+    allowedOrientations: Orientation.All
+
+    SilicaFlickable {
+
+        anchors.fill: parent
+        contentHeight: parent.height
+        contentWidth: parent.width
+
+        Column {
+            id: searchColumn
+
+            Behavior on opacity { NumberAnimation {} }
+
+            width: parent.width
+
+            Timer {
+                id: searchTimer
+                interval: 800
+                running: false
+                repeat: false
+                onTriggered: {
+                    finTsDialog.searchInstitute(searchField.text);
+                }
+            }
+
+            Connections {
+                target: finTsDialog
+                onInstitutesSearchCompleted: {
+                    searchListView.model = resultList;
+                    ( searchListView.count === 0 && searchField.text !== "" ) ?  noResultsColumn.visible = true :  noResultsColumn.visible = false;
+                }
+            }
+
+            PageHeader {
+                id: searchHeader
+                title: qsTr("Find your Bank")
+            }
+
+            SearchField {
+                id: searchField
+                width: parent.width
+                placeholderText: qsTr("Search in database...")
+                focus: true
+
+                EnterKey.iconSource: "image://theme/icon-m-enter-close"
+                EnterKey.onClicked: focus = false
+
+                onTextChanged: {
+                    searchTimer.stop()
+                    searchTimer.start()
+                }
+            }
+
+            Column {
+                height: institutesSearchPage.height - searchHeader.height - searchField.height
+                width: parent.width
+
+                id: noResultsColumn
+                Behavior on opacity { NumberAnimation {} }
+                opacity: visible ? 1 : 0
+                visible: false
+
+                Label {
+                    id: noResultsLabel
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    text: qsTr("No results found")
+                    color: Theme.secondaryColor
+                }
+            }
+
+            SilicaListView {
+
+                id: searchListView
+
+                height: institutesSearchPage.height - searchHeader.height - searchField.height
+                width: parent.width
+                anchors.left: parent.left
+                anchors.right: parent.right
+                opacity: ( searchListView.count === 0 && searchField.text !== "" ) ? 0 : 1
+                visible: ( searchListView.count === 0 && searchField.text !== "" ) ? false : true
+
+                Behavior on opacity { NumberAnimation {} }
+
+                clip: true
+
+                delegate: ListItem {
+                    contentHeight: resultColumn.height + Theme.paddingMedium
+                    contentWidth: parent.width
+
+                    onClicked: {
+                        console.log("Selected: " + modelData.name + ", " + modelData.blz + ", " + modelData.url);
+                    }
+
+                    Column {
+                        id: resultColumn
+                        width: parent.width - ( 2 * Theme.horizontalPageMargin )
+                        height: bankNameText.height + bankAdditionalInfoRow.height + Theme.paddingMedium
+                        spacing: Theme.paddingMedium
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Text {
+                            id: bankNameText
+                            font.pixelSize: Theme.fontSizeSmall
+                            color: Theme.primaryColor
+                            text: modelData.name
+                            textFormat: Text.StyledText
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                            width: parent.width
+                            height: Theme.fontSizeMedium
+                        }
+                        Row {
+                            id: bankAdditionalInfoRow
+                            height: Theme.fontSizeMedium
+                            width: parent.width
+                            Text {
+                                id: bankBlzText
+                                width: parent.width / 2
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.secondaryColor
+                                text: qsTr("Bank ID: %1").arg(modelData.blz)
+                                textFormat: Text.StyledText
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+                            Text {
+                                id: bankLocationText
+                                width: parent.width / 2
+                                font.pixelSize: Theme.fontSizeExtraSmall
+                                color: Theme.secondaryColor
+                                text: modelData.location
+                                textFormat: Text.StyledText
+                                elide: Text.ElideRight
+                                maximumLineCount: 1
+                            }
+                        }
+                    }
+
+                }
+
+                VerticalScrollDecorator {}
+
+            }
+
+        }
+
+    }
+
+}
