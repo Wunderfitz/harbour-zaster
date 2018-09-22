@@ -42,12 +42,10 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     // Country code according to  ISO 3166-1, 280 is fixed for Germany (instead of 276), see Geschäftsvorfälle page 613
     this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, "280");
 
+    this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_DUMMY_USER_ID);
+
     // User Parameter Data (UPD) version, TODO: make it adopting to received UPD
-    this->userParameterData.insert(UPD_KEY_VERSION, "0");    
-    // TODO: Don't use hard-coded BLZ/bank ID
-    this->userParameterData.insert(UPD_KEY_BANK_ID, FINTS_PLACEHOLDER_BLZ);
-    // TODO: Don't use hard-coded user ID
-    this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_PLACEHOLDER_CUSTOMER_ID);
+    this->userParameterData.insert(UPD_KEY_VERSION, "0");
 
     connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString, QVariantList)), this, SLOT(handleInstitutesSearchCompleted(QString, QVariantList)));
     database = QSqlDatabase::addDatabase("QSQLITE");
@@ -67,12 +65,7 @@ void FinTsDialog::dialogInitialization()
     Message *dialogInitializationMessage = this->createMessageDialogInitialization();
     QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
 
-    // TODO: Use automatially determined endpoint
-    QUrl url = QUrl(FINTS_PLACEHOLDER_ENDPOINT);
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-    qDebug() << "Dialog Initialization Message " << serializedInitializationMessage;
-    QNetworkReply *reply = networkAccessManager->post(request, serializedInitializationMessage);
+    QNetworkReply *reply = sendMessage(serializedInitializationMessage);
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleDialogInitializationError(QNetworkReply::NetworkError)));
     connect(reply, SIGNAL(finished()), this, SLOT(handleDialogInitializationFinished()));
 
@@ -85,11 +78,7 @@ void FinTsDialog::closeDialog()
     Message *closeDialogMessage = this->createMessageCloseDialog();
     QByteArray serializedCloseDialogMessage = serializer.serializeAndEncode(closeDialogMessage);
 
-    // TODO: Use automatially determined endpoint
-    QUrl url = QUrl(FINTS_PLACEHOLDER_ENDPOINT);
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-    QNetworkReply *reply = networkAccessManager->post(request, serializedCloseDialogMessage);
+    QNetworkReply *reply = sendMessage(serializedCloseDialogMessage);
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleDialogEndError(QNetworkReply::NetworkError)));
     connect(reply, SIGNAL(finished()), this, SLOT(handleDialogEndFinished()));
 
@@ -101,11 +90,7 @@ void FinTsDialog::accountBalance()
     Message *accountBalanceMessage = this->createMessageAccountBalance();
     QByteArray serializedAccountBalanceMessage = serializer.serializeAndEncode(accountBalanceMessage);
 
-    // TODO: Use automatially determined endpoint
-    QUrl url = QUrl(FINTS_PLACEHOLDER_ENDPOINT);
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-    QNetworkReply *reply = networkAccessManager->post(request, serializedAccountBalanceMessage);
+    QNetworkReply *reply = sendMessage(serializedAccountBalanceMessage);
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleAccountBalanceError(QNetworkReply::NetworkError)));
     connect(reply, SIGNAL(finished()), this, SLOT(handleAccountBalanceFinished()));
 }
@@ -115,14 +100,27 @@ bool FinTsDialog::supportsPinTan()
     return this->bankParameterData.value(BPD_KEY_PIN_TAN_SUPPORTED, false).toBool();
 }
 
-QString FinTsDialog::getBankCode()
+QString FinTsDialog::getBankId()
 {
-    return this->bankParameterData.value(BPD_KEY_BANK_CODE).toString();
+    return this->bankParameterData.value(BPD_KEY_BANK_ID).toString();
 }
 
 QString FinTsDialog::getBankName()
 {
     return this->bankParameterData.value(BPD_KEY_BANK_NAME).toString();
+}
+
+void FinTsDialog::setBankData(const QString &bankId, const QString &bankName, const QString &url)
+{
+    this->bankParameterData.insert(BPD_KEY_BANK_ID, bankId);
+    this->bankParameterData.insert(BPD_KEY_BANK_NAME, bankName);
+    this->bankParameterData.insert(BPD_KEY_FINTS_URL, url);
+}
+
+void FinTsDialog::setUserData(const QString &userId, const QString &pin)
+{
+    this->userParameterData.insert(UPD_KEY_USER_ID, userId);
+    this->userParameterData.insert(UPD_KEY_PIN, pin);
 }
 
 void FinTsDialog::searchInstitute(const QString &queryString)
@@ -215,6 +213,14 @@ void FinTsDialog::handleInstitutesSearchCompleted(const QString &queryString, co
     emit institutesSearchCompleted(resultList);
 }
 
+QNetworkReply *FinTsDialog::sendMessage(const QByteArray &serializedMessage)
+{
+    QUrl url = QUrl(this->bankParameterData.value(BPD_KEY_FINTS_URL).toString());
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+    return networkAccessManager->post(request, serializedMessage);
+}
+
 Message *FinTsDialog::createMessageDialogInitialization()
 {
     qDebug() << "FinTsDialog::createMessageDialogInitialization" << this->anonymousDialog;
@@ -225,7 +231,7 @@ Message *FinTsDialog::createMessageDialogInitialization()
         dialogInitializationMessage->addSegment(createSegmentSignatureHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
     }
     // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
-    dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->userParameterData.value(UPD_KEY_BANK_ID).toString()));
+    dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
     if (!this->anonymousDialog) {
         dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
@@ -396,9 +402,9 @@ void FinTsDialog::parseSegmentBankParameter(Segment *segmentBankParameter)
         QString countryCode = kikElements.at(0)->getValue();
         this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, countryCode);
         qDebug() << "[FinTsDialog] Bank country code: " << countryCode;
-        QString bankCode = kikElements.at(1)->getValue();
-        this->bankParameterData.insert(BPD_KEY_BANK_CODE, bankCode);
-        qDebug() << "[FinTsDialog] Bank code: " << bankCode;
+        QString bankId = kikElements.at(1)->getValue();
+        this->bankParameterData.insert(BPD_KEY_BANK_ID, bankId);
+        qDebug() << "[FinTsDialog] Bank ID: " << bankId;
         QString bankName = bankParameterElements.at(2)->getValue();
         this->bankParameterData.insert(BPD_KEY_BANK_NAME, bankName);
         qDebug() << "[FinTsDialog] Bank name: " << bankName;
@@ -461,7 +467,7 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
         QList<DataElement *> ktvElements = qobject_cast<DataElementGroup *>(accountInformationElements.at(0))->getDataElements();
         currentAccount.insert(UPD_KEY_ACCOUNT_ID, ktvElements.at(0)->getValue());
         qDebug() << "[FinTsDialog] Account ID: " << ktvElements.at(0)->getValue();
-        currentAccount.insert(UPD_KEY_BANK_ID, ktvElements.at(3)->getValue());
+        currentAccount.insert(BPD_KEY_BANK_ID, ktvElements.at(3)->getValue());
         qDebug() << "[FinTsDialog] Bank ID: " << ktvElements.at(3)->getValue();
         currentAccount.insert(UPD_KEY_IBAN, accountInformationElements.at(1)->getValue());
         qDebug() << "[FinTsDialog] IBAN: " << accountInformationElements.at(1)->getValue();
@@ -627,7 +633,7 @@ Segment *FinTsDialog::createSegmentSignatureFooter(FinTsElement *parentElement, 
     signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, SIGNATURE_CONTROL_REFERENCE));
     signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, ""));
     // See PIN/TAN, page 59
-    signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, FINTS_PLACEHOLDER_CUSTOMER_PIN));
+    signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, this->userParameterData.value(UPD_KEY_PIN).toString()));
     return signatureFooterSegment;
 }
 
@@ -661,7 +667,7 @@ Segment *FinTsDialog::createSegmentAccountBalance(FinTsElement *parentElement, i
     Segment *accountBalanceSegment = new Segment(parentElement);
     accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(segmentNumber), SEGMENT_ACCOUNT_BALANCE_VERSION));
     QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
-    accountBalanceSegment->addDataElement(createDegAccountId(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_CODE).toString(), firstAccount.value(UPD_KEY_ACCOUNT_ID).toString()));
+    accountBalanceSegment->addDataElement(createDegAccountId(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), firstAccount.value(UPD_KEY_ACCOUNT_ID).toString()));
     accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "J"));
     return accountBalanceSegment;
 }
@@ -744,7 +750,7 @@ DataElementGroup *FinTsDialog::createDegSignatureAlgorithm(FinTsElement *parentE
 DataElementGroup *FinTsDialog::createDegKeyName(FinTsElement *parentElement, const QString &keyType)
 {
     DataElementGroup *keyName = new DataElementGroup(parentElement);
-    keyName->addDataElement(createDegBankId(keyName, this->userParameterData.value(UPD_KEY_BANK_ID).toString()));
+    keyName->addDataElement(createDegBankId(keyName, this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
     keyName->addDataElement(new DataElement(keyName, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
     keyName->addDataElement(new DataElement(keyName, keyType));
     keyName->addDataElement(new DataElement(keyName, "0"));

@@ -21,8 +21,8 @@
 #define UPDCONSTANTS_H
 
 const char UPD_KEY_VERSION[] = "version";
-const char UPD_KEY_BANK_ID[] = "blz";
 const char UPD_KEY_USER_ID[] = "userId";
+const char UPD_KEY_PIN[] = "pin";
 const char UPD_KEY_ACCOUNT_ID[] = "accountId";
 const char UPD_KEY_IBAN[] = "iban";
 const char UPD_KEY_ACCOUNT_KIND[] = "kind";

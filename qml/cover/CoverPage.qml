@@ -23,15 +23,6 @@ import Sailfish.Silica 1.0
 
 CoverBackground {
 
-    CoverActionList {
-        CoverAction {
-            iconSource: "image://theme/icon-cover-refresh"
-            onTriggered: {
-                console.log("Refresh triggered");
-            }
-        }
-    }
-
     Image {
         source: "../../images/background.png"
         anchors {

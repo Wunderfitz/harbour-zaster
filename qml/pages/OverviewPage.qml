@@ -33,19 +33,12 @@ Page {
     Connections {
         target: finTsDialog
         onDialogInitializationCompleted: {
-            if (anonymously) {
-                finTsDialog.closeDialog();
-            } else {
-                bankNameText.text = finTsDialog.getBankName();
-                bankCodeText.text = qsTr("Bank ID: %1").arg(finTsDialog.getBankCode());
-                finTsDialog.accountBalance();
-            }
+            bankNameText.text = finTsDialog.getBankName();
+            bankCodeText.text = qsTr("Bank ID: %1").arg(finTsDialog.getBankId());
+            finTsDialog.accountBalance();
         }
         onDialogEndCompleted: {
-            if (anonymously && finTsDialog.supportsPinTan()) {
-                // Reinitialize with user
-                finTsDialog.dialogInitialization();
-            }
+
         }
         onAccountBalanceCompleted: {
             console.log("Retrieved account balances: " + accountBalances.length);

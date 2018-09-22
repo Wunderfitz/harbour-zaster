@@ -58,13 +58,13 @@ Page {
 
             PageHeader {
                 id: searchHeader
-                title: qsTr("Find your Bank")
+                title: qsTr("Welcome to Zaster")
             }
 
             SearchField {
                 id: searchField
                 width: parent.width
-                placeholderText: qsTr("Search in database...")
+                placeholderText: qsTr("Find your bank...")
                 focus: true
 
                 EnterKey.iconSource: "image://theme/icon-m-enter-close"
@@ -114,6 +114,8 @@ Page {
 
                     onClicked: {
                         console.log("Selected: " + modelData.name + ", " + modelData.blz + ", " + modelData.url);
+                        finTsDialog.setBankData(modelData.blz, modelData.name, modelData.url);
+                        pageStack.push(Qt.resolvedUrl("CredentialsPage.qml"));
                     }
 
                     Column {

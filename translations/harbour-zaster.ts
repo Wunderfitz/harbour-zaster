@@ -41,21 +41,72 @@
     </message>
 </context>
 <context>
+    <name>CredentialsPage</name>
+    <message>
+        <source>Your bank doesn&apos;t seem to support FinTS PIN/TAN. Please contact your bank for assistance!</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to connect to your bank. Please ensure that your internet connection works properly and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saying hello to your bank...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter your Credentials</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Login</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>User name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>PIN or Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your Bank</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bank ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your Credentials</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>InstitutesSearchPage</name>
-    <message>
-        <source>Search in database...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Find your Bank</source>
-        <translation type="unfinished"></translation>
-    </message>
     <message>
         <source>Bank ID: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>No results found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Welcome to Zaster</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find your bank...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

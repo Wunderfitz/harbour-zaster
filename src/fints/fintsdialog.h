@@ -56,8 +56,10 @@ public:
     Q_INVOKABLE void closeDialog();
     Q_INVOKABLE void accountBalance();
     Q_INVOKABLE bool supportsPinTan();
-    Q_INVOKABLE QString getBankCode();
+    Q_INVOKABLE QString getBankId();
     Q_INVOKABLE QString getBankName();
+    Q_INVOKABLE void setBankData(const QString &bankId, const QString &bankName, const QString &url);
+    Q_INVOKABLE void setUserData(const QString &userId, const QString &pin);
     Q_INVOKABLE void searchInstitute(const QString &queryString);
 
 signals:
@@ -81,6 +83,8 @@ private slots:
     void handleInstitutesSearchCompleted(const QString &queryString, const QVariantList &resultList);
 
 private:    
+
+    QNetworkReply *sendMessage(const QByteArray &serializedMessage);
 
     Message *createMessageDialogInitialization();
     void parseReplyDialogInitialization(Message *replyMessage);
