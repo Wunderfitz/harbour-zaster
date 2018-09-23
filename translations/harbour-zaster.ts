@@ -132,5 +132,13 @@
         <source>%1 %2</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Please enter your PIN or Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>

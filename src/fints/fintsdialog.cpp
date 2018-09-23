@@ -23,6 +23,7 @@
 #include <QTimeZone>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSettings>
 
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
@@ -55,6 +56,18 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
        qDebug() << "Error: connection with institutes database failed";
     } else {
        qDebug() << "Institutes database: Connection OK";
+    }
+
+    QSettings finTsSettings("harbour-zaster", "finTsSettings");
+    QVariant storedBankParameterData = finTsSettings.value("bankParameterData");
+    if (storedBankParameterData.isValid()) {
+        this->bankParameterData = storedBankParameterData.toMap();
+    }
+
+    QVariant storedUserParameterData = finTsSettings.value("userParameterData");
+    if (storedUserParameterData.isValid()) {
+        this->userParameterData = storedUserParameterData.toMap();
+        this->anonymousDialog = false;
     }
 
 }
@@ -120,7 +133,12 @@ void FinTsDialog::setBankData(const QString &bankId, const QString &bankName, co
 void FinTsDialog::setUserData(const QString &userId, const QString &pin)
 {
     this->userParameterData.insert(UPD_KEY_USER_ID, userId);
-    this->userParameterData.insert(UPD_KEY_PIN, pin);
+    this->myPin = pin;
+}
+
+void FinTsDialog::setPin(const QString &pin)
+{
+    this->myPin = pin;
 }
 
 void FinTsDialog::searchInstitute(const QString &queryString)
@@ -131,6 +149,24 @@ void FinTsDialog::searchInstitute(const QString &queryString)
     }
     this->institutesSearchWorker.setParameters(database, queryString);
     this->institutesSearchWorker.start();
+}
+
+void FinTsDialog::storeParameterData()
+{
+    qDebug() << "FinTsDialog::storeParameterData";
+    QSettings finTsSettings("harbour-zaster", "finTsSettings");
+    finTsSettings.setValue("bankParameterData", this->bankParameterData);
+    finTsSettings.setValue("userParameterData", this->userParameterData);
+}
+
+bool FinTsDialog::isPinSet()
+{
+    return !this->myPin.isEmpty();
+}
+
+bool FinTsDialog::isInitialized()
+{
+    return !this->anonymousDialog;
 }
 
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
@@ -633,7 +669,7 @@ Segment *FinTsDialog::createSegmentSignatureFooter(FinTsElement *parentElement, 
     signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, SIGNATURE_CONTROL_REFERENCE));
     signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, ""));
     // See PIN/TAN, page 59
-    signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, this->userParameterData.value(UPD_KEY_PIN).toString()));
+    signatureFooterSegment->addDataElement(new DataElement(signatureFooterSegment, this->myPin));
     return signatureFooterSegment;
 }
 

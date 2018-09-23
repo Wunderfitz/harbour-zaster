@@ -60,7 +60,11 @@ public:
     Q_INVOKABLE QString getBankName();
     Q_INVOKABLE void setBankData(const QString &bankId, const QString &bankName, const QString &url);
     Q_INVOKABLE void setUserData(const QString &userId, const QString &pin);
+    Q_INVOKABLE void setPin(const QString &pin);
     Q_INVOKABLE void searchInstitute(const QString &queryString);
+    Q_INVOKABLE void storeParameterData();
+    Q_INVOKABLE bool isPinSet();
+    Q_INVOKABLE bool isInitialized();
 
 signals:
     void dialogInitializationCompleted(const bool &anonymously);
@@ -132,6 +136,7 @@ private:
     FinTsSerializer serializer;
     FinTsDeserializer deserializer;
     QString myDialogId;
+    QString myPin;
     int myMessageNumber;
     bool anonymousDialog;
     QVariantMap bankParameterData;

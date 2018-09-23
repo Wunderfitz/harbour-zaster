@@ -27,7 +27,11 @@ Page {
     allowedOrientations: Orientation.All
 
     Component.onCompleted: {
-        finTsDialog.dialogInitialization();
+        if (finTsDialog.isPinSet()) {
+            finTsDialog.dialogInitialization();
+        } else {
+            overviewFlickable.visible = false;
+        }
     }
 
     Connections {
@@ -35,6 +39,7 @@ Page {
         onDialogInitializationCompleted: {
             bankNameText.text = finTsDialog.getBankName();
             bankCodeText.text = qsTr("Bank ID: %1").arg(finTsDialog.getBankId());
+            finTsDialog.storeParameterData();
             finTsDialog.accountBalance();
         }
         onDialogEndCompleted: {
@@ -48,7 +53,62 @@ Page {
         }
     }
 
+    Column {
+
+        id: enterPinColumn
+
+        width: parent.width
+        spacing: Theme.paddingMedium
+        anchors.verticalCenter: parent.verticalCenter
+
+        Behavior on opacity { NumberAnimation {} }
+        opacity: visible ? 1 : 0
+        visible: !overviewFlickable.visible
+
+        Image {
+            id: zasterImage
+            source: "../../images/zaster.svg"
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+            }
+
+            fillMode: Image.PreserveAspectFit
+            width: 1/2 * parent.width
+        }
+
+        InfoLabel {
+            id: pinInfoLabel
+            font.pixelSize: Theme.fontSizeLarge
+            text: qsTr("Please enter your PIN or Password")
+        }
+
+        PasswordField {
+            id: enterPinField
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+            }
+            font.pixelSize: Theme.fontSizeLarge
+            width: parent.width
+            horizontalAlignment: TextInput.AlignHCenter
+        }
+
+        Button {
+            id: pinOkButton
+            text: qsTr("OK")
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+            }
+            onClicked: {
+                finTsDialog.setPin(enterPinField.text);
+                overviewFlickable.visible = true;
+                finTsDialog.dialogInitialization();
+            }
+        }
+    }
+
+
     SilicaFlickable {
+        id: overviewFlickable
         anchors.fill: parent
         contentHeight: overviewColumn.height
 

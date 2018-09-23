@@ -34,7 +34,18 @@ import "pages"
 
 ApplicationWindow
 {
-    initialPage: Component { InstitutesSearchPage { } }
+    Component {
+        id: overviewPage
+        OverviewPage { }
+    }
+
+    Component {
+        id: institutesSearchPage
+        InstitutesSearchPage { }
+    }
+
+
+    initialPage: finTsDialog.isInitialized() ? overviewPage : institutesSearchPage
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: defaultAllowedOrientations
 }
