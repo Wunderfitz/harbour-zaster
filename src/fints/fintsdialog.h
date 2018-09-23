@@ -74,6 +74,7 @@ signals:
     void accountBalanceCompleted(const QVariantList &accountBalances);
     void accountBalanceFailed();
     void institutesSearchCompleted(const QVariantList &resultList);
+    void errorOccurred();
 
 public slots:
 

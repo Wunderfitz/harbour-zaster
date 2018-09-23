@@ -25,12 +25,15 @@ Page {
     id: overviewPage
 
     allowedOrientations: Orientation.All
+    property bool inErrorStatus: false
 
     Component.onCompleted: {
         if (finTsDialog.isPinSet()) {
             finTsDialog.dialogInitialization();
+            loadingColumn.visible = true;
         } else {
             overviewFlickable.visible = false;
+            enterPinColumn.visible = true;
         }
     }
 
@@ -39,17 +42,92 @@ Page {
         onDialogInitializationCompleted: {
             bankNameText.text = finTsDialog.getBankName();
             bankCodeText.text = qsTr("Bank ID: %1").arg(finTsDialog.getBankId());
-            finTsDialog.storeParameterData();
-            finTsDialog.accountBalance();
+            if (!overviewPage.inErrorStatus) {
+                finTsDialog.storeParameterData();
+                finTsDialog.accountBalance();
+            }
         }
         onDialogEndCompleted: {
 
         }
         onAccountBalanceCompleted: {
             console.log("Retrieved account balances: " + accountBalances.length);
-            accountIdText.text = qsTr("Account ID: %1").arg(accountBalances[0].accountId);
-            accountValueText.text = qsTr("%1 %2").arg(accountBalances[0].value).arg(accountBalances[0].currency);
+            accountsListView.model = accountBalances;
             finTsDialog.closeDialog();
+            loadingColumn.visible = false;
+            overviewFlickable.visible = true;
+        }
+        onErrorOccurred: {
+            overviewPage.inErrorStatus = true;
+            errorColumn.visible = true;
+            enterPinColumn.visible = false;
+            overviewFlickable.visible = false;
+            loadingColumn.visible = false;
+        }
+    }
+
+    Column {
+        id: loadingColumn
+        width: parent.width
+        spacing: Theme.paddingMedium
+        anchors.verticalCenter: parent.verticalCenter
+
+        Behavior on opacity { NumberAnimation {} }
+        opacity: visible ? 1 : 0
+        visible: false
+
+        InfoLabel {
+            id: loadingLabel
+            text: qsTr("Retrieving information...")
+        }
+
+        BusyIndicator {
+            id: loadingBusyIndicator
+            anchors.horizontalCenter: parent.horizontalCenter
+            running: loadingColumn.visible
+            size: BusyIndicatorSize.Large
+        }
+    }
+
+    Column {
+
+        id: errorColumn
+        width: parent.width
+        spacing: Theme.paddingMedium
+        anchors.verticalCenter: parent.verticalCenter
+
+        Behavior on opacity { NumberAnimation {} }
+        opacity: visible ? 1 : 0
+        visible: false
+
+        Image {
+            id: zasterErrorImage
+            source: "../../images/zaster.svg"
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+            }
+
+            fillMode: Image.PreserveAspectFit
+            width: 1/2 * parent.width
+        }
+
+        InfoLabel {
+            id: errorInfoLabel
+            font.pixelSize: Theme.fontSizeLarge
+            text: qsTr("Unable to retrieve account information. Please ensure that you entered proper credentials and try again.")
+        }
+
+        Button {
+            id: errorOkButton
+            text: qsTr("OK")
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+            }
+            onClicked: {
+                overviewPage.inErrorStatus = false;
+                errorColumn.visible = false;
+                enterPinColumn.visible = true;
+            }
         }
     }
 
@@ -63,7 +141,7 @@ Page {
 
         Behavior on opacity { NumberAnimation {} }
         opacity: visible ? 1 : 0
-        visible: !overviewFlickable.visible
+        visible: false
 
         Image {
             id: zasterImage
@@ -79,7 +157,7 @@ Page {
         InfoLabel {
             id: pinInfoLabel
             font.pixelSize: Theme.fontSizeLarge
-            text: qsTr("Please enter your PIN or Password")
+            text: qsTr("Authentication required")
         }
 
         PasswordField {
@@ -90,18 +168,22 @@ Page {
             font.pixelSize: Theme.fontSizeLarge
             width: parent.width
             horizontalAlignment: TextInput.AlignHCenter
+            labelVisible: false
+            placeholderText: qsTr("Your PIN or Password")
         }
 
         Button {
             id: pinOkButton
             text: qsTr("OK")
+            enabled: enterPinField.text !== ""
             anchors {
                 horizontalCenter: parent.horizontalCenter
             }
             onClicked: {
                 finTsDialog.setPin(enterPinField.text);
-                overviewFlickable.visible = true;
                 finTsDialog.dialogInitialization();
+                enterPinColumn.visible = false;
+                loadingColumn.visible = true;
             }
         }
     }
@@ -111,6 +193,10 @@ Page {
         id: overviewFlickable
         anchors.fill: parent
         contentHeight: overviewColumn.height
+
+        Behavior on opacity { NumberAnimation {} }
+        opacity: visible ? 1 : 0
+        visible: false
 
         PullDownMenu {
             MenuItem {
@@ -125,6 +211,7 @@ Page {
             width: overviewPage.width
             spacing: Theme.paddingMedium
             PageHeader {
+                id: accountsHeader
                 title: qsTr("Account Balance")
             }
 
@@ -148,25 +235,64 @@ Page {
                 }
             }
 
-            Text {
-                id: accountIdText
-                horizontalAlignment: Text.AlignHCenter
-                font.pixelSize: Theme.fontSizeMedium
-                color: Theme.primaryColor
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
+            SilicaListView {
+
+                id: accountsListView
+
+                height: overviewPage.height - accountsHeader.height - bankNameText.height - bankCodeText.height - ( 3 * Theme.paddingMedium )
+                width: parent.width
+                anchors.left: parent.left
+                anchors.right: parent.right
+
+                clip: true
+
+                delegate: ListItem {
+                    contentHeight: resultRow.height + Theme.paddingMedium
+                    contentWidth: parent.width
+
+                    onClicked: {
+                        console.log("Selected: " + modelData.accountId);
+                    }
+
+                    Row {
+                        id: resultRow
+                        width: parent.width - ( 2 * Theme.horizontalPageMargin )
+                        spacing: Theme.paddingMedium
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Column {
+                            width: parent.width / 2 - Theme.paddingSmall
+                            Text {
+                                id: accountIdText
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.primaryColor
+                                text: modelData.accountId
+                            }
+                            Text {
+                                id: accountDescriptionText
+                                font.pixelSize: Theme.fontSizeSmall
+                                color: Theme.primaryColor
+                                text: modelData.accountDescription
+                            }
+                        }
+                        Text {
+                            id: accountValueText
+                            width: parent.width / 2 - Theme.paddingSmall
+                            height: parent.height
+                            horizontalAlignment: Text.AlignRight
+                            verticalAlignment: Text.AlignVCenter
+                            font.pixelSize: Theme.fontSizeMedium
+                            color: Theme.highlightColor
+                            text: (modelData.creditDebit === "D" ? "- " : "") + modelData.value + " " + modelData.currency
+                        }
+                    }
+
                 }
+
+                VerticalScrollDecorator {}
+
             }
 
-            Text {
-                id: accountValueText
-                horizontalAlignment: Text.AlignHCenter
-                font.pixelSize: Theme.fontSizeExtraLarge
-                color: Theme.highlightColor
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                }
-            }
         }
 
     }

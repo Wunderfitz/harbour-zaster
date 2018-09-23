@@ -399,7 +399,11 @@ void FinTsDialog::parseSegmentMessageFeedback(Segment *segmentMessageFeedback)
             DataElementGroup *feedbackGroup = qobject_cast<DataElementGroup *>(feedbackElement);
             QList<DataElement *> feedbackElements = feedbackGroup->getDataElements();
             if (feedbackElements.size() >= 3) {
-                qDebug() << "[FinTsDialog] Feedback for message: " << feedbackElements.at(0)->getValue() << feedbackElements.at(2)->getValue();
+                QString messageFeedbackCode = feedbackElements.at(0)->getValue();
+                qDebug() << "[FinTsDialog] Feedback for message: " << messageFeedbackCode << feedbackElements.at(2)->getValue();
+                if (messageFeedbackCode.startsWith("9")) {
+                    emit errorOccurred();
+                }
             }
         }
     }
@@ -567,6 +571,8 @@ QVariantMap FinTsDialog::parseSegmentAccountBalance(Segment *segmentAccountBalan
         QList<DataElement *> ktiElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(0))->getDataElements();
         accountBalance.insert(TRANSACTION_KEY_ACCOUNT_ID, ktiElements.at(2)->getValue());
         qDebug() << "[FinTsDialog] Account ID: " << ktiElements.at(2)->getValue();
+        accountBalance.insert(TRANSACTION_KEY_ACCOUNT_DESCRIPTION, accountBalanceElements.at(1)->getValue());
+        qDebug() << "[FinTsDialog] Account Description: " << accountBalanceElements.at(1)->getValue();
         QList<DataElement *> valueElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(3))->getDataElements();
         accountBalance.insert(TRANSACTION_KEY_CREDIT_DEBIT, valueElements.at(0)->getValue());
         qDebug() << "[FinTsDialog] Credit/Debit: " << valueElements.at(0)->getValue();

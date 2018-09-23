@@ -125,19 +125,23 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Account ID: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Please enter your PIN or Password</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to retrieve account information. Please ensure that you entered proper credentials and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retrieving information...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Authentication required</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your PIN or Password</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
