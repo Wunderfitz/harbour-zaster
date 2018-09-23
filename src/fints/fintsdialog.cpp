@@ -24,6 +24,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QSettings>
+#include <QLocale>
 
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
@@ -576,8 +577,10 @@ QVariantMap FinTsDialog::parseSegmentAccountBalance(Segment *segmentAccountBalan
         QList<DataElement *> valueElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(3))->getDataElements();
         accountBalance.insert(TRANSACTION_KEY_CREDIT_DEBIT, valueElements.at(0)->getValue());
         qDebug() << "[FinTsDialog] Credit/Debit: " << valueElements.at(0)->getValue();
-        accountBalance.insert(TRANSACTION_KEY_VALUE, valueElements.at(1)->getValue());
-        qDebug() << "[FinTsDialog] Value: " << valueElements.at(1)->getValue();
+        QLocale germanLocale("de");
+        float floatValue = germanLocale.toFloat(valueElements.at(1)->getValue());
+        accountBalance.insert(TRANSACTION_KEY_VALUE, floatValue);
+        qDebug() << "[FinTsDialog] Value: " << floatValue;
         accountBalance.insert(TRANSACTION_KEY_CURRENCY, valueElements.at(2)->getValue());
         qDebug() << "[FinTsDialog] Currency: " << valueElements.at(2)->getValue();
     }

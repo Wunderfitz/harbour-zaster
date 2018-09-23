@@ -283,7 +283,7 @@ Page {
                             verticalAlignment: Text.AlignVCenter
                             font.pixelSize: Theme.fontSizeMedium
                             color: Theme.highlightColor
-                            text: (modelData.creditDebit === "D" ? "- " : "") + modelData.value + " " + modelData.currency
+                            text: (modelData.creditDebit === "D" ? "- " : "") + Number(modelData.value).toLocaleString(Qt.locale(), "f", 2) + " " + modelData.currency
                         }
                     }
 
