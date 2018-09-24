@@ -131,6 +131,7 @@ Page {
                         loadingColumn.visible = true;
                     } else {
                         errorColumn.visible = false;
+                        finTsDialog.initializeParameters();
                         pageStack.pop();
                     }
 

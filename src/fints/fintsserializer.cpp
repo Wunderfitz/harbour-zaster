@@ -51,6 +51,7 @@ QString FinTsSerializer::serialize(Message *message, const bool &coreOnly)
         serializedMessage.append(serialize(nextSegment));
         serializedMessage.append("'");
     }
+    qDebug() << "My message: " << serializedMessage;
     return serializedMessage;
 }
 

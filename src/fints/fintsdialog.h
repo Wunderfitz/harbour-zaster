@@ -41,10 +41,6 @@
 
 // HBCI-Version - always fixed version 3.0, see Formals, page 15
 const char FINTS_VERSION[] = "300";
-// Customer system ID must be 0 for PIN/TAN, see Formals page 116
-const char CUSTOMER_SYSTEM_ID[] = "0";
-// Customer system status, needs to be "1", see Formals page 117
-const char CUSTOMER_SYSTEM_STATUS[] = "1";
 
 class FinTsDialog : public QObject
 {
@@ -52,6 +48,7 @@ class FinTsDialog : public QObject
 public:
     explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0);
 
+    Q_INVOKABLE void initializeParameters();
     Q_INVOKABLE void dialogInitialization();
     Q_INVOKABLE void closeDialog();
     Q_INVOKABLE void accountBalance();
@@ -101,6 +98,7 @@ private:
     Segment *createSegmentMessageHeader(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);
     Segment *createSegmentIdentification(FinTsElement *parentElement, int segmentNumber, const QString &blz);
     Segment *createSegmentProcessPreparation(FinTsElement *parentElement, int segmentNumber);
+    Segment *createSegmentSynchronization(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentMessageTermination(FinTsElement *parentElement, int segmentNumber, int messageNumber);
     Segment *createSegmentDialogEnd(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentSignatureHeader(FinTsElement *parentElement, int segmentNumber);
@@ -113,7 +111,9 @@ private:
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
     void parseSegmentBankParameter(Segment *segmentBankParameter);
     void parseSegmentSecurityProcedure(Segment *segmentSecurityProcedure);
+    void parseSegmentPinTanInformation(Segment *segmentPinTanInformation);
     void parseSegmentUserParameterData(Segment *segmentUserParameterData);
+    void parseSegmentSynchronizationResponse(Segment *segmentSynchronizationResponse);
     void parseSegmentAccountInformation(Segment *segmentAccountInformation);
     QVariantMap parseSegmentAccountBalance(Segment *segmentAccountBalance);
     Message *parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage);
@@ -132,6 +132,7 @@ private:
     void insertMessageLength(Message *message);
     QString convertToBinaryFormat(const QString &originalString);
     Message *packageMessage(Message *originalMessage);
+    void setAnonymousDialog(const bool &isAnonymous);
 
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;

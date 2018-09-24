@@ -30,24 +30,7 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
 {
     this->networkAccessManager = networkAccessManager;
 
-    // Dialog-ID - first message is always "0", see Formals, page 109, TODO: use the received ID from bank later!
-    this->myDialogId = "0";
-    // Message number - first message is always "1", but is increased at message creation, see Formals, page 120 // TODO: increment later!
-    this->myMessageNumber = 0;
-    // We always start with an anonymous dialog to check if PIN/TAN is supported
-    this->anonymousDialog = true;
-
-    // Dialog language, needs to be "0" for Standard, see Formals page 109
-    this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, "0");
-    // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45, TODO: make it adopting to received BPD
-    this->bankParameterData.insert(BPD_KEY_VERSION, "0");
-    // Country code according to  ISO 3166-1, 280 is fixed for Germany (instead of 276), see Geschäftsvorfälle page 613
-    this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, "280");
-
-    this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_DUMMY_USER_ID);
-
-    // User Parameter Data (UPD) version, TODO: make it adopting to received UPD
-    this->userParameterData.insert(UPD_KEY_VERSION, "0");
+    this->initializeParameters();
 
     connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString, QVariantList)), this, SLOT(handleInstitutesSearchCompleted(QString, QVariantList)));
     database = QSqlDatabase::addDatabase("QSQLITE");
@@ -271,6 +254,8 @@ Message *FinTsDialog::createMessageDialogInitialization()
     dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
     if (!this->anonymousDialog) {
+        // TODO: Probably don't get customer ID if we already have one :D
+        dialogInitializationMessage->addSegment(createSegmentSynchronization(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
         dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
     }
     dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myMessageNumber));
@@ -295,7 +280,9 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
         if (segmentIdentifier == SEGMENT_BANK_PARAMETER_ID) { parseSegmentBankParameter(currentSegment); }
         if (segmentIdentifier == SEGMENT_SECURITY_PROCEDURE_ID) { parseSegmentSecurityProcedure(currentSegment); }
+        if (segmentIdentifier == SEGMENT_PIN_TAN_INFORMATION_ID) { parseSegmentPinTanInformation(currentSegment); }
         if (segmentIdentifier == SEGMENT_USER_PARAMETER_DATA_ID) { parseSegmentUserParameterData(currentSegment); }
+        if (segmentIdentifier == SEGMENT_SYNCHRONIZATION_RESPONSE_ID) { parseSegmentSynchronizationResponse(currentSegment); }
         if (segmentIdentifier == SEGMENT_ACCOUNT_INFORMATION_ID) { parseSegmentAccountInformation(currentSegment); }
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
@@ -479,7 +466,16 @@ void FinTsDialog::parseSegmentSecurityProcedure(Segment *segmentSecurityProcedur
         }
     }
     this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, pinTanSupported);
-    qDebug() << "[FinTsDialog] PIN/TAN supported: " << pinTanSupported;
+    qDebug() << "[FinTsDialog] PIN/TAN explicitly supported: " << pinTanSupported;
+}
+
+void FinTsDialog::parseSegmentPinTanInformation(Segment *segmentPinTanInformation)
+{
+    QList<DataElement *> segmentPinTanInformationElements = segmentPinTanInformation->getDataElements();
+    if (segmentPinTanInformationElements.size() > 0) {
+        this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, true);
+        qDebug() << "[FinTsDialog] PIN/TAN implicitly supported by PIN/TAN information segment";
+    }
 }
 
 // See Formals, page 87
@@ -493,6 +489,16 @@ void FinTsDialog::parseSegmentUserParameterData(Segment *segmentUserParameterDat
         QString updVersion = userParameterElements.at(1)->getValue();
         this->userParameterData.insert(UPD_KEY_VERSION, updVersion);
         qDebug() << "[FinTsDialog] User Parameter Data (UPD) version: " << updVersion;
+    }
+}
+
+void FinTsDialog::parseSegmentSynchronizationResponse(Segment *segmentSynchronizationResponse)
+{
+    QList<DataElement *> synchronizationResponseElements = segmentSynchronizationResponse->getDataElements();
+    if (synchronizationResponseElements.size() > 0) {
+        QString newCustomerSystemId = synchronizationResponseElements.at(0)->getValue();
+        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_ID, newCustomerSystemId);
+        qDebug() << "[FinTsDialog] New Customer System ID: " << newCustomerSystemId;
     }
 }
 
@@ -606,8 +612,13 @@ Segment *FinTsDialog::createSegmentIdentification(FinTsElement *parentElement, i
 
     messageIdentificationSegment->addDataElement(createDegBankId(messageIdentificationSegment, blz));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
-    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, CUSTOMER_SYSTEM_ID));
-    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, CUSTOMER_SYSTEM_STATUS));
+    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_ID).toString()));
+    if (this->anonymousDialog) {
+        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "0");
+    } else {
+        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "1");
+    }
+    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_STATUS).toString()));
     return messageIdentificationSegment;
 }
 
@@ -623,6 +634,15 @@ Segment *FinTsDialog::createSegmentProcessPreparation(FinTsElement *parentElemen
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_ID));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_VERSION));
     return processPreparationSegment;
+}
+
+Segment *FinTsDialog::createSegmentSynchronization(FinTsElement *parentElement, int segmentNumber)
+{
+    Segment *synchronizationSegment = new Segment(parentElement);
+    synchronizationSegment->setHeader(createDegSegmentHeader(synchronizationSegment, SEGMENT_SYNCHRONIZATION_ID, QString::number(segmentNumber), SEGMENT_SYNCHRONIZATION_VERSION));
+
+    synchronizationSegment->addDataElement(new DataElement(synchronizationSegment, "0"));
+    return synchronizationSegment;
 }
 
 // See Formals, page 15/16
@@ -661,7 +681,7 @@ Segment *FinTsDialog::createSegmentSignatureHeader(FinTsElement *parentElement, 
     signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
     signatureHeaderSegment->addDataElement(createDegSecurityIdentificationDetails(signatureHeaderSegment));
     // Security Reference Number, if I interpret the docs correctly it's simply the user ID here, could also be 0
-    // signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
+    //signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
     signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
     signatureHeaderSegment->addDataElement(createDegDateTime(signatureHeaderSegment));
     signatureHeaderSegment->addDataElement(createDegHashAlgorithm(signatureHeaderSegment));
@@ -753,9 +773,8 @@ DataElementGroup *FinTsDialog::createDegSecurityIdentificationDetails(FinTsEleme
     DataElementGroup *securityDetails = new DataElementGroup(parentElement);
     // We are the message sender
     securityDetails->addDataElement(new DataElement(securityDetails, "1"));
-    // Empty CID
     securityDetails->addDataElement(new DataElement(securityDetails, ""));
-    securityDetails->addDataElement(new DataElement(securityDetails, SYSTEM_IDENTIFICATION));
+    securityDetails->addDataElement(new DataElement(securityDetails, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_ID).toString()));
     return securityDetails;
 }
 
@@ -861,4 +880,37 @@ Message *FinTsDialog::packageMessage(Message *originalMessage)
     originalMessage->deleteLater();
     insertMessageLength(packagedMessage);
     return packagedMessage;
+}
+
+void FinTsDialog::setAnonymousDialog(const bool &isAnonymous)
+{
+    this->anonymousDialog = isAnonymous;
+}
+
+void FinTsDialog::initializeParameters()
+{
+    // Dialog-ID - first message is always "0", see Formals, page 109, TODO: use the received ID from bank later!
+    this->myDialogId = "0";
+    // Message number - first message is always "1", but is increased at message creation, see Formals, page 120 // TODO: increment later!
+    this->myMessageNumber = 0;
+    // We always start with an anonymous dialog to check if PIN/TAN is supported
+    this->anonymousDialog = true;
+
+    // Dialog language, needs to be "0" for Standard, see Formals page 109
+    this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, "0");
+    // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45, TODO: make it adopting to received BPD
+    this->bankParameterData.insert(BPD_KEY_VERSION, "0");
+    // Country code according to  ISO 3166-1, 280 is fixed for Germany (instead of 276), see Geschäftsvorfälle page 613
+    this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, "280");
+
+    // Customer system ID must be 0 for PIN/TAN, see Formals page 116
+    this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_ID, "0");
+    // Customer system status, is "0" for anonymous dialog, see Formals page 55
+    // Needs to be "1" for a standard dialog, see Formals page 117
+    this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "0");
+
+    this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_DUMMY_USER_ID);
+
+    // User Parameter Data (UPD) version, TODO: make it adopting to received UPD
+    this->userParameterData.insert(UPD_KEY_VERSION, "0");
 }
