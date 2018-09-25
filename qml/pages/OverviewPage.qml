@@ -26,10 +26,11 @@ Page {
 
     allowedOrientations: Orientation.All
     property bool inErrorStatus: false
+    property bool balanceRetrieved: false
 
     Component.onCompleted: {
         if (finTsDialog.isPinSet()) {
-            finTsDialog.dialogInitialization();
+            finTsDialog.synchronization();
             loadingColumn.visible = true;
         } else {
             overviewFlickable.visible = false;
@@ -48,7 +49,9 @@ Page {
             }
         }
         onDialogEndCompleted: {
-
+            if (!overviewPage.balanceRetrieved) {
+                finTsDialog.dialogInitialization();
+            }
         }
         onAccountBalanceCompleted: {
             console.log("Retrieved account balances: " + accountBalances.length);
@@ -56,6 +59,7 @@ Page {
             finTsDialog.closeDialog();
             loadingColumn.visible = false;
             overviewFlickable.visible = true;
+            overviewPage.balanceRetrieved = true;
         }
         onErrorOccurred: {
             overviewPage.inErrorStatus = true;
@@ -63,6 +67,9 @@ Page {
             enterPinColumn.visible = false;
             overviewFlickable.visible = false;
             loadingColumn.visible = false;
+        }
+        onSynchronizationCompleted: {
+            finTsDialog.closeDialog();
         }
     }
 

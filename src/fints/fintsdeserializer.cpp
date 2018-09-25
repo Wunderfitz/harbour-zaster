@@ -26,13 +26,13 @@ FinTsDeserializer::FinTsDeserializer(QObject *parent) : QObject(parent)
 
 Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray &encodedMessage)
 {
-    return deserialize(QString::fromLatin1(QByteArray::fromBase64(encodedMessage)));
+    return deserialize(QByteArray::fromBase64(encodedMessage));
 }
 
-Message *FinTsDeserializer::deserialize(const QString &decodedMessage)
+Message *FinTsDeserializer::deserialize(const QByteArray &decodedMessage)
 {
     Message *newMessage = new Message();
-    qDebug() << "[FinTsDeserializer] Raw Message: " << decodedMessage;
+    qDebug() << "[FinTsDeserializer] Raw Message: " << QString::fromLatin1(decodedMessage);
     bool inEscape = false;
     bool inGroup = false;
     bool inBinaryLength = false;
@@ -44,7 +44,7 @@ Message *FinTsDeserializer::deserialize(const QString &decodedMessage)
     QString currentValue;
     DataElementGroup *segmentHeader = new DataElementGroup(newMessage);
     for (int i = 0; i < decodedMessage.size(); i++) {
-        QChar currentCharacter = decodedMessage.at(i);
+        QChar currentCharacter(decodedMessage.at(i));
         if (inEscape) {
             currentValue.append(currentCharacter);
             inEscape = false;
@@ -60,7 +60,11 @@ Message *FinTsDeserializer::deserialize(const QString &decodedMessage)
             continue;
         }
         if (binaryLength > 0) {
-            currentValue.append(currentCharacter);
+            if (currentCharacter.isNonCharacter()) {
+                currentValue.append("X");
+            } else {
+                currentValue.append(currentCharacter);
+            }
             binaryLength--;
             continue;
         }

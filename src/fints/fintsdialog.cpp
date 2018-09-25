@@ -69,6 +69,19 @@ void FinTsDialog::dialogInitialization()
     dialogInitializationMessage->deleteLater();
 }
 
+void FinTsDialog::synchronization()
+{
+    qDebug() << "FinTsDialog::synchronization";
+    Message *synchronizationMessage = this->createMessageSynchronization();
+    QByteArray serializedSynchronizationMessage = serializer.serializeAndEncode(synchronizationMessage);
+
+    QNetworkReply *reply = sendMessage(serializedSynchronizationMessage);
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handleSynchronizationError(QNetworkReply::NetworkError)));
+    connect(reply, SIGNAL(finished()), this, SLOT(handleSynchronizationFinished()));
+
+    synchronizationMessage->deleteLater();
+}
+
 void FinTsDialog::closeDialog()
 {
     qDebug() << "FinTsDialog::closeDialog";
@@ -179,6 +192,32 @@ void FinTsDialog::handleDialogInitializationFinished()
     replyMessage->deleteLater();
 }
 
+void FinTsDialog::handleSynchronizationError(QNetworkReply::NetworkError error)
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    qWarning() << "FinTsDialog::handleSynchronizationError:" << (int)error << reply->errorString() << reply->readAll();
+    emit synchronizationFailed();
+}
+
+void FinTsDialog::handleSynchronizationFinished()
+{
+    qDebug() << "FinTsDialog::handleSynchronizationFinished";
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+
+    Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
+    parseReplyDialogInitialization(replyMessage);
+    if (this->anonymousDialog) {
+        emit synchronizationCompleted();
+    } else {
+        emit synchronizationCompleted();
+    }
+    replyMessage->deleteLater();
+}
+
 void FinTsDialog::handleDialogEndError(QNetworkReply::NetworkError error)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -254,8 +293,6 @@ Message *FinTsDialog::createMessageDialogInitialization()
     dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
     if (!this->anonymousDialog) {
-        // TODO: Probably don't get customer ID if we already have one :D
-        dialogInitializationMessage->addSegment(createSegmentSynchronization(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
         dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
     }
     dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myMessageNumber));
@@ -266,6 +303,26 @@ Message *FinTsDialog::createMessageDialogInitialization()
     } else {
         return packageMessage(dialogInitializationMessage);
     }
+}
+
+Message *FinTsDialog::createMessageSynchronization()
+{
+    qDebug() << "FinTsDialog::createMessageSynchronization";
+    this->myMessageNumber++;
+    Message *dialogInitializationMessage = new Message();
+    dialogInitializationMessage->addSegment(createSegmentMessageHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myDialogId, this->myMessageNumber));
+    dialogInitializationMessage->addSegment(createSegmentSignatureHeader(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+
+    // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
+    dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
+    dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+
+    // TODO: Probably don't get customer ID if we already have one :D
+    dialogInitializationMessage->addSegment(createSegmentSynchronization(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+    dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber()));
+    dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage, dialogInitializationMessage->getNextSegmentNumber(), this->myMessageNumber));
+
+    return packageMessage(dialogInitializationMessage);
 }
 
 void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
@@ -497,7 +554,7 @@ void FinTsDialog::parseSegmentSynchronizationResponse(Segment *segmentSynchroniz
     QList<DataElement *> synchronizationResponseElements = segmentSynchronizationResponse->getDataElements();
     if (synchronizationResponseElements.size() > 0) {
         QString newCustomerSystemId = synchronizationResponseElements.at(0)->getValue();
-        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_ID, newCustomerSystemId);
+        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_ID, newCustomerSystemId.replace("+", "?+"));
         qDebug() << "[FinTsDialog] New Customer System ID: " << newCustomerSystemId;
     }
 }
@@ -597,7 +654,7 @@ Message *FinTsDialog::parseSegmentEncryptedMessage(Segment *segmentEncryptedMess
 {
     QList<DataElement *> encryptedMessageElements = segmentEncryptedMessage->getDataElements();
     if (encryptedMessageElements.size() >= 1) {
-        return deserializer.deserialize(encryptedMessageElements.at(0)->getValue());
+        return deserializer.deserialize(encryptedMessageElements.at(0)->getValue().toLatin1());
     } else {
         qDebug() << "[FinTsDialog] ERROR: Unable to decrypt message!";
         return 0;

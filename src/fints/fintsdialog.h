@@ -50,6 +50,7 @@ public:
 
     Q_INVOKABLE void initializeParameters();
     Q_INVOKABLE void dialogInitialization();
+    Q_INVOKABLE void synchronization();
     Q_INVOKABLE void closeDialog();
     Q_INVOKABLE void accountBalance();
     Q_INVOKABLE bool supportsPinTan();
@@ -66,6 +67,8 @@ public:
 signals:
     void dialogInitializationCompleted(const bool &anonymously);
     void dialogInitializationFailed();
+    void synchronizationCompleted();
+    void synchronizationFailed();
     void dialogEndCompleted(const bool &anonymously);
     void dialogEndFailed();
     void accountBalanceCompleted(const QVariantList &accountBalances);
@@ -78,6 +81,8 @@ public slots:
 private slots:
     void handleDialogInitializationError(QNetworkReply::NetworkError error);
     void handleDialogInitializationFinished();
+    void handleSynchronizationError(QNetworkReply::NetworkError error);
+    void handleSynchronizationFinished();
     void handleDialogEndError(QNetworkReply::NetworkError error);
     void handleDialogEndFinished();
     void handleAccountBalanceError(QNetworkReply::NetworkError error);
@@ -89,6 +94,7 @@ private:
     QNetworkReply *sendMessage(const QByteArray &serializedMessage);
 
     Message *createMessageDialogInitialization();
+    Message *createMessageSynchronization();
     void parseReplyDialogInitialization(Message *replyMessage);
     Message *createMessageCloseDialog();
     void parseReplyCloseDialog(Message *replyMessage);
