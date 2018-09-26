@@ -53,6 +53,7 @@ public:
     Q_INVOKABLE void synchronization();
     Q_INVOKABLE void closeDialog();
     Q_INVOKABLE void accountBalance();
+    Q_INVOKABLE void accountTransactions(const QString &accountId);
     Q_INVOKABLE bool supportsPinTan();
     Q_INVOKABLE QString getBankId();
     Q_INVOKABLE QString getBankName();
@@ -73,6 +74,8 @@ signals:
     void dialogEndFailed();
     void accountBalanceCompleted(const QVariantList &accountBalances);
     void accountBalanceFailed();
+    void accountTransactionsCompleted(const QVariantList &accountTransactions);
+    void accountTransactionsFailed();
     void institutesSearchCompleted(const QVariantList &resultList);
     void errorOccurred();
 
@@ -87,6 +90,8 @@ private slots:
     void handleDialogEndFinished();
     void handleAccountBalanceError(QNetworkReply::NetworkError error);
     void handleAccountBalanceFinished();
+    void handleAccountTransactionsError(QNetworkReply::NetworkError error);
+    void handleAccountTransactionsFinished();
     void handleInstitutesSearchCompleted(const QString &queryString, const QVariantList &resultList);
 
 private:    
@@ -100,6 +105,8 @@ private:
     void parseReplyCloseDialog(Message *replyMessage);
     Message *createMessageAccountBalance();
     QVariantList parseReplyAccountBalance(Message *replyMessage);
+    Message *createMessageAccountTransactions(const QString &accountId);
+    QVariantList parseReplyAccountTransactions(Message *replyMessage);
 
     Segment *createSegmentMessageHeader(FinTsElement *parentElement, int segmentNumber, QString dialogId, int messageNumber);
     Segment *createSegmentIdentification(FinTsElement *parentElement, int segmentNumber, const QString &blz);
@@ -112,6 +119,7 @@ private:
     Segment *createSegmentEncryptionHeader(FinTsElement *parentElement, int segmentNumber);
     Segment *createSegmentEncryptedData(FinTsElement *parentElement, int segmentNumber, const QString &encryptedData);
     Segment *createSegmentAccountBalance(FinTsElement *parentElement, int segmentNumber);
+    Segment *createSegmentAccountTransactions(FinTsElement *parentElement, int segmentNumber, const QString &blz, const QString &accountId);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
@@ -134,6 +142,7 @@ private:
     DataElementGroup *createDegKeyName(FinTsElement *parentElement, const QString &keyType);
     DataElementGroup *createDegEncryptionAlgorithm(FinTsElement *parentElement);
     DataElementGroup *createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
+    DataElementGroup *createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
 
     void insertMessageLength(Message *message);
     QString convertToBinaryFormat(const QString &originalString);

@@ -21,8 +21,10 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 Page {
-    id: credentialsPage
+    id: transactionsPage
     allowedOrientations: Orientation.All
+
+    property string accountId;
 
     Component.onCompleted: {
         finTsDialog.dialogInitialization();
@@ -32,15 +34,7 @@ Page {
     Connections {
         target: finTsDialog
         onDialogInitializationCompleted: {
-            loadingColumn.visible = false;
-            if (finTsDialog.supportsPinTan()) {
-                finTsDialog.closeDialog();
-                credentialsColumn.visible = true;
-            } else {
-               errorColumn.retryPossible = false;
-               errorColumn.visible = true;
-               errorInfoLabel.text = qsTr("Your bank doesn't seem to support FinTS PIN/TAN. Please contact your bank for assistance!");
-            }
+            finTsDialog.accountTransactions(transactionsPage.accountId);
         }
         onDialogInitializationFailed: {
             loadingColumn.visible = false;
@@ -48,11 +42,20 @@ Page {
             errorColumn.visible = true;
             errorInfoLabel.text = qsTr("Unable to connect to your bank. Please ensure that your internet connection works properly and try again.");
         }
+        onAccountTransactionsCompleted: {
+            finTsDialog.closeDialog();
+        }
+        onAccountTransactionsFailed: {
+            loadingColumn.visible = false;
+            errorColumn.retryPossible = true;
+            errorColumn.visible = true;
+            errorInfoLabel.text = qsTr("Unable to connect to your bank. Please ensure that your internet connection works properly and try again.");
+        }
         onDialogEndCompleted: {
-            console.log("Anonymous dialog successfully terminated.");
+            console.log("Dialog successfully terminated.");
         }
         onDialogEndFailed: {
-            console.log("Error terminating anonymous dialog.");
+            console.log("Error terminating dialog.");
         }
     }
 
@@ -139,7 +142,7 @@ Page {
         }
 
         Column {
-            id: credentialsColumn
+            id: transactionsColumn
             width: parent.width
             spacing: Theme.paddingMedium
 
@@ -149,67 +152,12 @@ Page {
 
             PageHeader {
                 id: searchHeader
-                title: qsTr("Enter your Credentials")
+                title: qsTr("Transactions")
             }
-
-            SectionHeader {
-                text: qsTr("Your Bank")
-            }
-
-            DetailItem {
-                label: qsTr("Name")
-                value: finTsDialog.getBankName()
-            }
-
-            DetailItem {
-                label: qsTr("Bank ID")
-                value: finTsDialog.getBankId()
-            }
-
-            SectionHeader {
-                text: qsTr("Your Credentials")
-            }
-
-            TextField {
-                id: userNameField
-                width: parent.width
-                placeholderText: qsTr("User name")
-                labelVisible: false
-            }
-
-            PasswordField {
-                id: pinField
-                width: parent.width
-                placeholderText: qsTr("PIN or Password")
-                labelVisible: false
-            }
-
-            Button {
-                id: loginButton
-                text: qsTr("Login")
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                }
-                enabled: ( userNameField.text !== "" && pinField.text !== "" )
-                onClicked: {
-                    finTsDialog.setUserData(userNameField.text, pinField.text);
-                    pageStack.clear();
-                    pageStack.push(Qt.resolvedUrl("OverviewPage.qml"));
-                }
-            }
-
-            Label {
-                id: separatorLabel
-                width: parent.width
-                font.pixelSize: Theme.fontSizeExtraSmall
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                }
-            }
-
 
         }
 
     }
 
 }
+

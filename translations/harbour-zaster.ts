@@ -41,6 +41,25 @@
     </message>
 </context>
 <context>
+    <name>AccountTransactionsPage</name>
+    <message>
+        <source>Unable to connect to your bank. Please ensure that your internet connection works properly and try again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saying hello to your bank...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transactions</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>CredentialsPage</name>
     <message>
         <source>Your bank doesn&apos;t seem to support FinTS PIN/TAN. Please contact your bank for assistance!</source>

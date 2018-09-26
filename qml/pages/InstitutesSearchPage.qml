@@ -114,6 +114,7 @@ Page {
 
                     onClicked: {
                         console.log("Selected: " + modelData.name + ", " + modelData.blz + ", " + modelData.url);
+                        finTsDialog.initializeParameters();
                         finTsDialog.setBankData(modelData.blz, modelData.name, modelData.url);
                         pageStack.push(Qt.resolvedUrl("CredentialsPage.qml"));
                     }

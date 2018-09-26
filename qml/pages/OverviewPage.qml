@@ -43,7 +43,7 @@ Page {
         onDialogInitializationCompleted: {
             bankNameText.text = finTsDialog.getBankName();
             bankCodeText.text = qsTr("Bank ID: %1").arg(finTsDialog.getBankId());
-            if (!overviewPage.inErrorStatus) {
+            if (!overviewPage.inErrorStatus && !overviewPage.balanceRetrieved) {
                 finTsDialog.storeParameterData();
                 finTsDialog.accountBalance();
             }
@@ -259,6 +259,7 @@ Page {
 
                     onClicked: {
                         console.log("Selected: " + modelData.accountId);
+                        pageStack.push(Qt.resolvedUrl("AccountTransactionsPage.qml"), {"accountId": modelData.accountId})
                     }
 
                     Row {

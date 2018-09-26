@@ -20,6 +20,7 @@
 #include "fintsserializer.h"
 #include <QListIterator>
 #include <QDebug>
+#include <QRegExp>
 
 FinTsSerializer::FinTsSerializer(QObject *parent) : QObject(parent)
 {
