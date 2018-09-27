@@ -47,15 +47,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Saying hello to your bank...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Transactions</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retrieving transactions...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

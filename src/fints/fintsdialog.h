@@ -129,6 +129,7 @@ private:
     void parseSegmentUserParameterData(Segment *segmentUserParameterData);
     void parseSegmentSynchronizationResponse(Segment *segmentSynchronizationResponse);
     void parseSegmentAccountInformation(Segment *segmentAccountInformation);
+    QVariantList parseSegmentAccountTransactions(Segment *segmentAccountTransactions);
     QVariantMap parseSegmentAccountBalance(Segment *segmentAccountBalance);
     Message *parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage);
 

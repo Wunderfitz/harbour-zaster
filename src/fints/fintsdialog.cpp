@@ -459,9 +459,18 @@ Message *FinTsDialog::createMessageAccountTransactions(const QString &accountId)
 
 QVariantList FinTsDialog::parseReplyAccountTransactions(Message *replyMessage)
 {
-    qDebug() << "FinTsDialog::parseReplyAccountBalance";
+    qDebug() << "FinTsDialog::parseReplyAccountTransactions";
     QVariantList accountTransactions;
-
+    QListIterator<Segment *> segmentIterator(replyMessage->getSegments());
+    while (segmentIterator.hasNext()) {
+        Segment *currentSegment = segmentIterator.next();
+        QString segmentIdentifier = currentSegment->getIdentifier();
+        if (segmentIdentifier == SEGMENT_MESSAGE_HEADER_ID) { parseSegmentMessageHeader(currentSegment); }
+        if (segmentIdentifier == SEGMENT_MESSAGE_FEEDBACK_ID) { parseSegmentMessageFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_TRANSACTIONS_RESPONSE_ID) { accountTransactions.append(parseSegmentAccountTransactions(currentSegment)); }
+        if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { accountTransactions.append(parseReplyAccountTransactions(parseSegmentEncryptedMessage(currentSegment))); }
+    }
     return accountTransactions;
 }
 
@@ -618,9 +627,15 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
     QVariantMap currentAccount;
     QVariantList allowedTransactions;
 
+    bool realAccountFound = false;
+
     QList<DataElement *> accountInformationElements = segmentAccountInformation->getDataElements();
     if (accountInformationElements.size() >= 6) {
         qDebug() << "[FinTsDialog] === Found account! ===";
+        if (accountInformationElements.at(0)->getType() == FinTsElement::DE) {
+            // Obviously generic information about this user, ignoring...
+            return;
+        }
         QList<DataElement *> ktvElements = qobject_cast<DataElementGroup *>(accountInformationElements.at(0))->getDataElements();
         currentAccount.insert(UPD_KEY_ACCOUNT_ID, ktvElements.at(0)->getValue());
         qDebug() << "[FinTsDialog] Account ID: " << ktvElements.at(0)->getValue();
@@ -656,12 +671,22 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
             if (rawTransactionElement->getType() == FinTsElement::DEG) {
                 QList<DataElement *> allowedTransactionElements = qobject_cast<DataElementGroup *>(rawTransactionElement)->getDataElements();
                 allowedTransactions.append(allowedTransactionElements.at(0)->getValue());
+                if (allowedTransactionElements.at(0)->getValue() == SEGMENT_ACCOUNT_BALANCE_ID) {
+                    qDebug() << "[FinTsDialog] This is a REAL account...";
+                    realAccountFound = true;
+                }
                 qDebug() << "[FinTsDialog] Allowed Transaction: " << allowedTransactionElements.at(0)->getValue();
             }
         } else {
             break;
         }
     }
+
+    if (!realAccountFound) {
+        qDebug() << "[FinTsDialog] NOT a real account...";
+        return;
+    }
+
     if (accountInformationElements.size() >= 1009) {
         QJsonDocument accountExtensionJson = QJsonDocument::fromJson( accountInformationElements.at(1008)->getValue().toLatin1() );
         currentAccount.insert(UPD_KEY_ACCOUNT_EXTENSION, accountExtensionJson.toVariant());
@@ -676,6 +701,16 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
     QVariantList accounts = this->userParameterData.value(UPD_KEY_ACCOUNTS, QVariantList()).toList();
     accounts.append(currentAccount);
     this->userParameterData.insert(UPD_KEY_ACCOUNTS, accounts);
+}
+
+QVariantList FinTsDialog::parseSegmentAccountTransactions(Segment *segmentAccountTransactions)
+{
+    QVariantList accountTransactions;
+    // TODO: Parse stupid SWIFT format...
+    QString rawTransactions = segmentAccountTransactions->getDataElements().at(0)->getValue();
+    accountTransactions.append(rawTransactions);
+    qDebug() << "[FinTsDialog] Raw Transactions: " << rawTransactions;
+    return accountTransactions;
 }
 
 // See Geschäftsvorfälle, page 48
@@ -851,7 +886,7 @@ Segment *FinTsDialog::createSegmentAccountTransactions(FinTsElement *parentEleme
 {
     Segment *accountTransactionsSegment = new Segment(parentElement);
     accountTransactionsSegment->setHeader(createDegSegmentHeader(accountTransactionsSegment, SEGMENT_TRANSACTIONS_REQUEST_ID, QString::number(segmentNumber), SEGMENT_TRANSACTIONS_REQUEST_VERSION));
-    accountTransactionsSegment->addDataElement(createDegAccountId(accountTransactionsSegment, blz, accountId));
+    accountTransactionsSegment->addDataElement(createDegAccountIdInternational(accountTransactionsSegment, blz, accountId));
     accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
     return accountTransactionsSegment;
 }

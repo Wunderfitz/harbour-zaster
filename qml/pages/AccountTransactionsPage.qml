@@ -44,6 +44,9 @@ Page {
         }
         onAccountTransactionsCompleted: {
             finTsDialog.closeDialog();
+            textContent.text = accountTransactions[0];
+            loadingColumn.visible = false;
+            transactionsColumn.visible = true;
         }
         onAccountTransactionsFailed: {
             loadingColumn.visible = false;
@@ -63,7 +66,7 @@ Page {
 
         anchors.fill: parent
         contentWidth: parent.width
-        contentHeight: credentialsColumn.visible ? credentialsColumn.height : parent.height
+        contentHeight: transactionsColumn.visible ? transactionsColumn.height : parent.height
 
         Column {
             id: loadingColumn
@@ -78,7 +81,7 @@ Page {
 
             InfoLabel {
                 id: loadingLabel
-                text: qsTr("Saying hello to your bank...")
+                text: qsTr("Retrieving transactions...")
             }
 
             BusyIndicator {
@@ -154,6 +157,19 @@ Page {
                 id: searchHeader
                 title: qsTr("Transactions")
             }
+
+            Text {
+                id: textContent
+                width: parent.width - 2 * Theme.horizontalPageMargin
+                anchors.horizontalCenter: parent.horizontalCenter
+                font.pixelSize: Theme.fontSizeExtraSmall
+                color: Theme.primaryColor
+                linkColor: Theme.highlightColor
+                wrapMode: Text.Wrap
+                textFormat: Text.PlainText
+            }
+
+            VerticalScrollDecorator {}
 
         }
 
