@@ -21,6 +21,7 @@
 #include <QListIterator>
 #include <QRegExp>
 #include <QDate>
+#include <QLocale>
 
 FinTsDeserializer::FinTsDeserializer(QObject *parent) : QObject(parent)
 {
@@ -130,6 +131,11 @@ Message *FinTsDeserializer::deserialize(const QByteArray &decodedMessage)
     return newMessage;
 }
 
+bool transactionSorter(const QVariant &transaction1, const QVariant &transaction2)
+ {
+     return transaction1.toMap().value("volume").toMap().value("date").toDate() > transaction2.toMap().value("volume").toMap().value("date").toDate();
+ }
+
 QVariantList FinTsDeserializer::deserializeSwift(const QString &rawSwiftMessage)
 {
     QVariantList messageComponentList;
@@ -178,7 +184,9 @@ QVariantList FinTsDeserializer::deserializeSwift(const QString &rawSwiftMessage)
                 }
                 QRegExp actualVolume("(\\d+,\\d+)");
                 if (nextSwiftComponent.indexOf(actualVolume, offset) != -1) {
-                    volumeMap.insert("volume", actualVolume.cap(1));
+                    QLocale germanLocale("de");
+                    float floatValue = germanLocale.toFloat(actualVolume.cap(1));
+                    volumeMap.insert("value", floatValue);
                 }
                 currentTransaction.insert("volume", volumeMap);
             }
@@ -193,8 +201,7 @@ QVariantList FinTsDeserializer::deserializeSwift(const QString &rawSwiftMessage)
             }
         }
     }
-    qDebug() << "PARSED TRANSACTIONS: " << messageComponentList;
-    qDebug() << "NUMBER OF TRANSACTIONS: " << messageComponentList.size();
+    qSort(messageComponentList.begin(), messageComponentList.end(), transactionSorter);
     return messageComponentList;
 }
 

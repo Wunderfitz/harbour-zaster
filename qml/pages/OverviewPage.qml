@@ -254,7 +254,7 @@ Page {
                 clip: true
 
                 delegate: ListItem {
-                    contentHeight: resultRow.height + Theme.paddingMedium
+                    contentHeight: resultItem.height + Theme.paddingMedium
                     contentWidth: parent.width
 
                     onClicked: {
@@ -262,36 +262,52 @@ Page {
                         pageStack.push(Qt.resolvedUrl("AccountTransactionsPage.qml"), {"accountId": modelData.accountId})
                     }
 
-                    Row {
-                        id: resultRow
-                        width: parent.width - ( 2 * Theme.horizontalPageMargin )
-                        spacing: Theme.paddingMedium
-                        anchors.verticalCenter: parent.verticalCenter
-                        anchors.horizontalCenter: parent.horizontalCenter
-                        Column {
-                            width: parent.width / 2 - Theme.paddingSmall
-                            Text {
-                                id: accountIdText
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.primaryColor
-                                text: modelData.accountId
+                    Item {
+                        id: resultItem
+                        width: parent.width
+                        height: resultRow.height + accountSeparator.height + Theme.paddingMedium
+
+                        Row {
+                            id: resultRow
+                            width: parent.width - ( 2 * Theme.horizontalPageMargin )
+                            spacing: Theme.paddingMedium
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            Column {
+                                width: parent.width / 2 - Theme.paddingSmall
+                                Text {
+                                    id: accountIdText
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: Theme.primaryColor
+                                    text: modelData.accountId
+                                }
+                                Text {
+                                    id: accountDescriptionText
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    color: Theme.primaryColor
+                                    text: modelData.accountDescription
+                                }
                             }
                             Text {
-                                id: accountDescriptionText
-                                font.pixelSize: Theme.fontSizeSmall
-                                color: Theme.primaryColor
-                                text: modelData.accountDescription
+                                id: accountValueText
+                                width: parent.width / 2 - Theme.paddingSmall
+                                height: parent.height
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: Theme.fontSizeMedium
+                                color: Theme.highlightColor
+                                text: (modelData.creditDebit === "D" ? "- " : "") + Number(modelData.value).toLocaleString(Qt.locale(), "f", 2) + " " + modelData.currency
                             }
                         }
-                        Text {
-                            id: accountValueText
-                            width: parent.width / 2 - Theme.paddingSmall
-                            height: parent.height
-                            horizontalAlignment: Text.AlignRight
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: Theme.fontSizeMedium
-                            color: Theme.highlightColor
-                            text: (modelData.creditDebit === "D" ? "- " : "") + Number(modelData.value).toLocaleString(Qt.locale(), "f", 2) + " " + modelData.currency
+
+                        Separator {
+                            id: accountSeparator
+                            anchors.top : resultRow.bottom
+                            anchors.topMargin: Theme.paddingMedium
+
+                            width: parent.width
+                            color: Theme.primaryColor
+                            horizontalAlignment: Qt.AlignHCenter
                         }
                     }
 

@@ -44,9 +44,9 @@ Page {
         }
         onAccountTransactionsCompleted: {
             finTsDialog.closeDialog();
-            textContent.text = accountTransactions[0];
             loadingColumn.visible = false;
             transactionsColumn.visible = true;
+            transactionsListView.model = accountTransactions;
         }
         onAccountTransactionsFailed: {
             loadingColumn.visible = false;
@@ -154,22 +154,108 @@ Page {
             visible: false
 
             PageHeader {
-                id: searchHeader
+                id: transactionsHeader
                 title: qsTr("Transactions")
             }
 
-            Text {
-                id: textContent
-                width: parent.width - 2 * Theme.horizontalPageMargin
-                anchors.horizontalCenter: parent.horizontalCenter
-                font.pixelSize: Theme.fontSizeExtraSmall
-                color: Theme.primaryColor
-                linkColor: Theme.highlightColor
-                wrapMode: Text.Wrap
-                textFormat: Text.PlainText
+            SilicaListView {
+
+                id: transactionsListView
+
+                height: transactionsPage.height - transactionsHeader.height - ( Theme.paddingMedium )
+                width: parent.width
+                anchors.left: parent.left
+                anchors.right: parent.right
+
+                clip: true
+
+                delegate: ListItem {
+                    contentHeight: resultItem.height + ( 2 * Theme.paddingMedium )
+                    contentWidth: parent.width
+
+                    enabled: false
+
+                    Item {
+                        id: resultItem
+                        width: parent.width
+                        height: resultRow.height + transactionSeparator.height + Theme.paddingMedium
+
+                        Row {
+                            id: resultRow
+                            width: parent.width - ( 2 * Theme.horizontalPageMargin )
+                            spacing: Theme.paddingMedium
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.horizontalCenter: parent.horizontalCenter
+                            Column {
+                                width: parent.width / 3 * 2 - Theme.paddingSmall
+                                Text {
+                                    id: transactionDateText
+                                    width: parent.width
+                                    font.pixelSize: Theme.fontSizeTiny
+                                    color: Theme.secondaryColor
+                                    text: modelData.volume.date.toLocaleDateString(Locale.ShortFormat)
+                                }
+                                Text {
+                                    id: otherPartyNameText
+                                    width: parent.width
+                                    font.pixelSize: Theme.fontSizeSmall
+                                    font.bold: true
+                                    color: Theme.primaryColor
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 2
+                                    wrapMode: Text.Wrap
+                                    visible: text ? true : false
+                                    text: modelData.details.otherPartyName
+                                }
+                                Text {
+                                    id: transactionTextText
+                                    width: parent.width
+                                    font.pixelSize: Theme.fontSizeTiny
+                                    color: Theme.secondaryHighlightColor
+                                    text: modelData.details.transactionText
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 1
+                                }
+                                Text {
+                                    id: transactionPurposeText
+                                    width: parent.width
+                                    font.pixelSize: Theme.fontSizeExtraSmall
+                                    color: Theme.primaryColor
+                                    text: modelData.details.transactionPurpose
+                                    wrapMode: Text.Wrap
+                                    elide: Text.ElideRight
+                                    maximumLineCount: 4
+                                }
+                            }
+                            Text {
+                                id: accountValueText
+                                width: parent.width / 3 * 1 - Theme.paddingSmall
+                                height: parent.height
+                                horizontalAlignment: Text.AlignRight
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: Theme.fontSizeMedium
+                                color: Theme.highlightColor
+                                text: (modelData.volume.creditDebit === "D" ? "- " : "") + Number(modelData.volume.value).toLocaleString(Qt.locale(), "f", 2)
+                            }
+                        }
+
+                        Separator {
+                            id: transactionSeparator
+                            anchors.top : resultRow.bottom
+                            anchors.topMargin: Theme.paddingMedium
+
+                            width: parent.width
+                            color: Theme.primaryColor
+                            horizontalAlignment: Qt.AlignHCenter
+                        }
+                    }
+
+                }
+
+                VerticalScrollDecorator {}
+
             }
 
-            VerticalScrollDecorator {}
 
         }
 

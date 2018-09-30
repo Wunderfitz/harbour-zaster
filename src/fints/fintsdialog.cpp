@@ -705,13 +705,9 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
 
 QVariantList FinTsDialog::parseSegmentAccountTransactions(Segment *segmentAccountTransactions)
 {
-    QVariantList accountTransactions;
-    // TODO: Parse stupid SWIFT format...
     QString rawTransactions = segmentAccountTransactions->getDataElements().at(0)->getValue();
-    accountTransactions.append(rawTransactions);
     qDebug() << "[FinTsDialog] Raw Transactions: " << rawTransactions;
-    deserializer.deserializeSwift(rawTransactions);
-    return accountTransactions;
+    return deserializer.deserializeSwift(rawTransactions);
 }
 
 // See Geschäftsvorfälle, page 48
