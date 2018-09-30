@@ -18,6 +18,9 @@
 */
 
 #include "fintsdeserializer.h"
+#include <QListIterator>
+#include <QRegExp>
+#include <QDate>
 
 FinTsDeserializer::FinTsDeserializer(QObject *parent) : QObject(parent)
 {
@@ -127,6 +130,74 @@ Message *FinTsDeserializer::deserialize(const QByteArray &decodedMessage)
     return newMessage;
 }
 
+QVariantList FinTsDeserializer::deserializeSwift(const QString &rawSwiftMessage)
+{
+    QVariantList messageComponentList;
+    QStringList swiftComponents = rawSwiftMessage.split(QRegExp("\r\n"));
+    QListIterator<QString> swiftComponentIterator(swiftComponents);
+    QRegExp swiftIdentifierRegEx("\\:([a-zA-Z0-9]+)\\:");
+    bool inMultiFunction = false;
+    QString multiFunctionField;
+    QVariantMap currentTransaction;
+    while (swiftComponentIterator.hasNext()) {
+        QString nextSwiftComponent = swiftComponentIterator.next();
+        if (nextSwiftComponent.indexOf(swiftIdentifierRegEx) == 0) {
+            // SWIFT Identifier
+            inMultiFunction = false;
+            if (!multiFunctionField.isEmpty()) {
+                currentTransaction.insert("details", parseSwiftMultiFunctionField(multiFunctionField));
+                messageComponentList.append(currentTransaction);
+                currentTransaction.clear();
+            }
+            multiFunctionField.clear();
+            int offset = 0;
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_TRANSACTION_VOLUME) {
+                QVariantMap volumeMap;
+                // We will need to check that code latest in year 2079!
+                int year = nextSwiftComponent.mid(4, 2).toInt();
+                if (year > 79) {
+                    year = 1900 + year;
+                } else {
+                    year = 2000 + year;
+                }
+                QDate transactionDate(year, nextSwiftComponent.mid(6, 2).toInt(), nextSwiftComponent.mid(8, 2).toInt());
+                volumeMap.insert("date", transactionDate);
+                offset = 10;
+                while (nextSwiftComponent.at(offset).isDigit()) {
+                    offset++;
+                }
+                volumeMap.insert("reversal", false);
+                if (nextSwiftComponent.mid(offset, 1) == "R") {
+                    volumeMap.insert("reversal", true);
+                    offset++;
+                }
+                volumeMap.insert("creditDebit", nextSwiftComponent.mid(offset, 1));
+                offset++;
+                if (!nextSwiftComponent.at(offset).isDigit()) {
+                    offset++;
+                }
+                QRegExp actualVolume("(\\d+,\\d+)");
+                if (nextSwiftComponent.indexOf(actualVolume, offset) != -1) {
+                    volumeMap.insert("volume", actualVolume.cap(1));
+                }
+                currentTransaction.insert("volume", volumeMap);
+            }
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_MULTI_FUNCTION) {
+                inMultiFunction = true;
+                multiFunctionField.append(nextSwiftComponent.mid(4));
+            }
+        } else {
+            // Other stuff
+            if (nextSwiftComponent != "-" && inMultiFunction) {
+                multiFunctionField.append(nextSwiftComponent);
+            }
+        }
+    }
+    qDebug() << "PARSED TRANSACTIONS: " << messageComponentList;
+    qDebug() << "NUMBER OF TRANSACTIONS: " << messageComponentList.size();
+    return messageComponentList;
+}
+
 void FinTsDeserializer::debugOut(Message *message)
 {
     QListIterator<Segment *> segmentIterator(message->getSegments());
@@ -177,4 +248,39 @@ Segment *FinTsDeserializer::createSegment(FinTsElement *parentElement, DataEleme
     segment->setHeader(header);
     segment->setDataElements(dataElements);
     return segment;
+}
+
+QVariantMap FinTsDeserializer::parseSwiftMultiFunctionField(const QString &multiFunctionField)
+{
+    QVariantMap multiFunctionMap;
+    QStringList multiFunctionComponents = multiFunctionField.split("?");
+    if (multiFunctionComponents.size() > 1) {
+        QString transactionPurpose;
+        QString otherPartyName;
+        QListIterator<QString> multiFunctionComponentIterator(multiFunctionComponents);
+        multiFunctionComponentIterator.next();
+        // We start with the second element as the first one doesn't contain any valuable stuff
+        while (multiFunctionComponentIterator.hasNext()) {
+            QString multiFunctionElement = multiFunctionComponentIterator.next();
+            QString elementIdentifier = multiFunctionElement.left(2);
+            if (elementIdentifier == "00") {
+                multiFunctionMap.insert("transactionText", multiFunctionElement.mid(2));
+            }
+            if (elementIdentifier.at(0) == '2' || elementIdentifier.at(0) == '6') {
+                transactionPurpose.append(multiFunctionElement.mid(2));
+            }
+            if (elementIdentifier == "30") {
+                multiFunctionMap.insert("otherPartyBankId", multiFunctionElement.mid(2));
+            }
+            if (elementIdentifier == "31") {
+                multiFunctionMap.insert("otherPartyAccountId", multiFunctionElement.mid(2));
+            }
+            if (elementIdentifier == "32" || elementIdentifier == "33") {
+                otherPartyName.append(multiFunctionElement.mid(2));
+            }
+        }
+        multiFunctionMap.insert("transactionPurpose", transactionPurpose);
+        multiFunctionMap.insert("otherPartyName", otherPartyName);
+    }
+    return multiFunctionMap;
 }

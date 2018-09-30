@@ -27,6 +27,9 @@
 #include "dataelement.h"
 #include "dataelementgroup.h"
 
+const char SWIFT_TRANSACTION_VOLUME[] = "61";
+const char SWIFT_MULTI_FUNCTION[] = "86";
+
 class FinTsDeserializer : public QObject
 {
     Q_OBJECT
@@ -34,6 +37,7 @@ public:
     explicit FinTsDeserializer(QObject *parent = 0);
     Message *decodeAndDeserialize(const QByteArray &encodedMessage);
     Message *deserialize(const QByteArray &decodedMessage);
+    QVariantList deserializeSwift(const QString &rawSwiftMessage);
     void debugOut(Message *message);
 
 signals:
@@ -44,6 +48,7 @@ private:
     DataElement *createDataElement(FinTsElement *parentElement, const QString &dataElementValue);
     DataElementGroup *createDataElementGroup(FinTsElement *parentElement, const QList<DataElement *> &dataElements);
     Segment *createSegment(FinTsElement *parentElement, DataElementGroup *header, const QList<DataElement *> &dataElements);
+    QVariantMap parseSwiftMultiFunctionField(const QString &multiFunctionField);
 };
 
 #endif // FINTSDESERIALIZER_H

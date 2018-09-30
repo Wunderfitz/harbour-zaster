@@ -710,6 +710,7 @@ QVariantList FinTsDialog::parseSegmentAccountTransactions(Segment *segmentAccoun
     QString rawTransactions = segmentAccountTransactions->getDataElements().at(0)->getValue();
     accountTransactions.append(rawTransactions);
     qDebug() << "[FinTsDialog] Raw Transactions: " << rawTransactions;
+    deserializer.deserializeSwift(rawTransactions);
     return accountTransactions;
 }
 
