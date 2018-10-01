@@ -29,5 +29,7 @@ const char BPD_KEY_MAX_TRANSACTIONS[] = "maxTransactions";
 const char BPD_KEY_SUPPORTED_LANGUAGE[] = "suportedLanguage";
 const char BPD_KEY_SUPPORTED_HBCI_VERSION[] = "suportedHBCIVersion";
 const char BPD_KEY_PIN_TAN_SUPPORTED[] = "pinTanSupported";
+const char BPD_KEY_ONE_STEP_ALLOWED[] = "oneStepAllowed";
+const char BPD_KEY_PIN_TAN_METHOD[] = "pinTanMethod";
 
 #endif // BPDCONSTANTS_H

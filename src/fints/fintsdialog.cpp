@@ -359,7 +359,7 @@ Message *FinTsDialog::createMessageSynchronization()
 
 void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
 {
-    qDebug() << "FinTsDialog::parseDialogInitializationReply";
+    qDebug() << "FinTsDialog::parseReplyDialogInitialization";
     QListIterator<Segment *> segmentIterator(replyMessage->getSegments());
     while (segmentIterator.hasNext()) {
         Segment *currentSegment = segmentIterator.next();
@@ -370,11 +370,14 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_BANK_PARAMETER_ID) { parseSegmentBankParameter(currentSegment); }
         if (segmentIdentifier == SEGMENT_SECURITY_PROCEDURE_ID) { parseSegmentSecurityProcedure(currentSegment); }
         if (segmentIdentifier == SEGMENT_PIN_TAN_INFORMATION_ID) { parseSegmentPinTanInformation(currentSegment); }
+        if (segmentIdentifier == SEGMENT_TAN_TWO_STEP_INFORMATION_ID) { parseSegmentTanTwoStepInformation(currentSegment); }
         if (segmentIdentifier == SEGMENT_USER_PARAMETER_DATA_ID) { parseSegmentUserParameterData(currentSegment); }
         if (segmentIdentifier == SEGMENT_SYNCHRONIZATION_RESPONSE_ID) { parseSegmentSynchronizationResponse(currentSegment); }
         if (segmentIdentifier == SEGMENT_ACCOUNT_INFORMATION_ID) { parseSegmentAccountInformation(currentSegment); }
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
+    // EVIL: Some banks don't support an anonymous dialog, trying without it...
+    this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, true);
 }
 
 Message *FinTsDialog::createMessageCloseDialog()
@@ -533,6 +536,10 @@ void FinTsDialog::parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback)
             if (feedbackElements.size() >= 3) {
                 qDebug() << "[FinTsDialog] Feedback for segment " << referenceSegmentNumber << ":" << feedbackElements.at(0)->getValue() << feedbackElements.at(2)->getValue();
             }
+            if (feedbackElements.at(0)->getValue() == "3920" && feedbackElements.size() >= 4) {
+                this->bankParameterData.insert(BPD_KEY_PIN_TAN_METHOD, feedbackElements.at(3)->getValue());
+                qDebug() << "[FinTsDialog] Bank told us to use PIN/TAN method: " << feedbackElements.at(3)->getValue();
+            }
         }
     }
 }
@@ -594,6 +601,21 @@ void FinTsDialog::parseSegmentPinTanInformation(Segment *segmentPinTanInformatio
     if (segmentPinTanInformationElements.size() > 0) {
         this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, true);
         qDebug() << "[FinTsDialog] PIN/TAN implicitly supported by PIN/TAN information segment";
+    }
+}
+
+void FinTsDialog::parseSegmentTanTwoStepInformation(Segment *segmentTanTwoStepInformation)
+{
+    QList<DataElement *> segmentTanInformationElements = segmentTanTwoStepInformation->getDataElements();
+    if (segmentTanInformationElements.size() >= 4) {
+        QList<DataElement *> twoStepProcedureInfo = qobject_cast<DataElementGroup *>(segmentTanInformationElements.at(3))->getDataElements();
+        QString rawOneStepPinAllowed = twoStepProcedureInfo.at(0)->getValue();
+        qDebug() << "[FinTsDialog] One-step PIN/TAN supported: " << rawOneStepPinAllowed;
+        if (rawOneStepPinAllowed == "J") {
+            this->bankParameterData.insert(BPD_KEY_ONE_STEP_ALLOWED, true);
+        } else {
+            this->bankParameterData.insert(BPD_KEY_ONE_STEP_ALLOWED, false);
+        }
     }
 }
 
@@ -815,7 +837,8 @@ Segment *FinTsDialog::createSegmentSignatureHeader(FinTsElement *parentElement, 
 
     signatureHeaderSegment->addDataElement(createDegSecurityProfile(signatureHeaderSegment));
     // See PIN/TAN, page 58
-    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "999"));
+    QString pinTanMethod = this->bankParameterData.value(BPD_KEY_PIN_TAN_METHOD, "999").toString();
+    signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, pinTanMethod));
     signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, SIGNATURE_CONTROL_REFERENCE));
     // See HBCI, page 50
     signatureHeaderSegment->addDataElement(new DataElement(signatureHeaderSegment, "1"));
@@ -872,7 +895,7 @@ Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, in
 Segment *FinTsDialog::createSegmentAccountBalance(FinTsElement *parentElement, int segmentNumber)
 {
     Segment *accountBalanceSegment = new Segment(parentElement);
-    accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(segmentNumber), SEGMENT_ACCOUNT_BALANCE_VERSION));
+    accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(segmentNumber), "4"));
     QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
     accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), firstAccount.value(UPD_KEY_ACCOUNT_ID).toString()));
     accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "J"));
@@ -913,8 +936,12 @@ DataElementGroup *FinTsDialog::createDegSecurityProfile(FinTsElement *parentElem
 {
     DataElementGroup *securityProfile = new DataElementGroup(parentElement);
     securityProfile->addDataElement(new DataElement(securityProfile, "PIN"));
-    // One-step for now, as we don't do transactions yet
-    securityProfile->addDataElement(new DataElement(securityProfile, "1"));
+    QString pinTanMethod = this->bankParameterData.value(BPD_KEY_PIN_TAN_METHOD, "999").toString();
+    if (pinTanMethod == "999") {
+        securityProfile->addDataElement(new DataElement(securityProfile, "1"));
+    } else {
+        securityProfile->addDataElement(new DataElement(securityProfile, "2"));
+    }
     return securityProfile;
 }
 

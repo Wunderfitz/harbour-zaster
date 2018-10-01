@@ -126,6 +126,7 @@ private:
     void parseSegmentBankParameter(Segment *segmentBankParameter);
     void parseSegmentSecurityProcedure(Segment *segmentSecurityProcedure);
     void parseSegmentPinTanInformation(Segment *segmentPinTanInformation);
+    void parseSegmentTanTwoStepInformation(Segment *segmentTanTwoStepInformation);
     void parseSegmentUserParameterData(Segment *segmentUserParameterData);
     void parseSegmentSynchronizationResponse(Segment *segmentSynchronizationResponse);
     void parseSegmentAccountInformation(Segment *segmentAccountInformation);
