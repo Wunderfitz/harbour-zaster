@@ -39,17 +39,6 @@ CoverBackground {
         opacity: 0.2
     }
 
-    Label {
-        id: statusText
-        horizontalAlignment: Text.AlignHCenter
-        font.pixelSize: Theme.fontSizeExtraLarge
-        text: "Zaster"
-        anchors {
-            horizontalCenter: parent.horizontalCenter
-            verticalCenter: parent.verticalCenter
-        }
-    }
-
 }
 
 

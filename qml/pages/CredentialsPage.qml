@@ -102,7 +102,7 @@ Page {
 
             Image {
                 id: zasterErrorImage
-                source: "../../images/zaster.svg"
+                source: "../../images/zaster.png"
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                 }

@@ -70,4 +70,7 @@ HEADERS += \
 database.files = db
 database.path = /usr/share/$${TARGET}
 
-INSTALLS += database
+images.files = images
+images.path = /usr/share/$${TARGET}
+
+INSTALLS += database images
