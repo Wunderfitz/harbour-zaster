@@ -38,6 +38,13 @@ Page {
         }
     }
 
+    function enterPin() {
+        finTsDialog.setPin(enterPinField.text);
+        finTsDialog.dialogInitialization();
+        enterPinColumn.visible = false;
+        loadingColumn.visible = true;
+    }
+
     Connections {
         target: finTsDialog
         onDialogInitializationCompleted: {
@@ -177,6 +184,17 @@ Page {
             horizontalAlignment: TextInput.AlignHCenter
             labelVisible: false
             placeholderText: qsTr("Your PIN or Password")
+            focus: enterPinColumn.visible
+            Keys.onEnterPressed: {
+                if (pinOkButton.enabled) {
+                    enterPin();
+                }
+            }
+            Keys.onReturnPressed: {
+                if (pinOkButton.enabled) {
+                    enterPin();
+                }
+            }
         }
 
         Button {
@@ -187,10 +205,7 @@ Page {
                 horizontalCenter: parent.horizontalCenter
             }
             onClicked: {
-                finTsDialog.setPin(enterPinField.text);
-                finTsDialog.dialogInitialization();
-                enterPinColumn.visible = false;
-                loadingColumn.visible = true;
+
             }
         }
     }
