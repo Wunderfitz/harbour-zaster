@@ -36,7 +36,8 @@ DISTFILES += qml/*.qml \
     rpm/harbour-zaster.yaml \
     translations/*.ts \
     harbour-zaster.desktop \
-    db/*.db
+    db/*.db \
+    qml/pages/SingleTransactionPage.qml
 
 SAILFISHAPP_ICONS = 86x86 108x108 128x128
 

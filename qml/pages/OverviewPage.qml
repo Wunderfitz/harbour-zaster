@@ -90,6 +90,17 @@ Page {
         opacity: visible ? 1 : 0
         visible: false
 
+        Image {
+            id: zasterLoadingImage
+            source: "../../images/zaster.png"
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+            }
+
+            fillMode: Image.PreserveAspectFit
+            width: 1/2 * parent.width
+        }
+
         InfoLabel {
             id: loadingLabel
             text: qsTr("Retrieving information...")
@@ -205,7 +216,7 @@ Page {
                 horizontalCenter: parent.horizontalCenter
             }
             onClicked: {
-
+                enterPin();
             }
         }
     }

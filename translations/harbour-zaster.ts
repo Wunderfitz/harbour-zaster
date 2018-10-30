@@ -164,4 +164,11 @@
         <translation type="unfinished"></translation>
     </message>
 </context>
+<context>
+    <name>SingleTransactionPage</name>
+    <message>
+        <source>Transaction</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
 </TS>

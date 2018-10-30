@@ -5,163 +5,170 @@
     <name>AboutPage</name>
     <message>
         <source>About Zaster</source>
-        <translation type="unfinished"></translation>
+        <translation>Über Zaster</translation>
     </message>
     <message>
         <source>A banking client for Sailfish OS</source>
-        <translation type="unfinished"></translation>
+        <translation>Eine Bank-Anwendung für Sailfish OS</translation>
     </message>
     <message>
         <source>By Sebastian J. Wolf</source>
-        <translation type="unfinished"></translation>
+        <translation>Von Sebastian J. Wolf</translation>
     </message>
     <message>
         <source>Send E-Mail</source>
-        <translation type="unfinished"></translation>
+        <translation>E-Mail verschicken</translation>
     </message>
     <message>
         <source>This product uses &lt;a href=&quot;https://werkwolf.eu/terms.html#wagnis&quot;&gt;Wagnis&lt;/a&gt; and is distributed by &lt;a href=&quot;https://werkwolf.eu&quot;&gt;WerkWolf OÜ&lt;/a&gt;.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dieses Produkt nutzt &lt;a href=&quot;https://werkwolf.eu/terms.html#wagnis&quot;&gt;Wagnis&lt;/a&gt; und wird von &lt;a href=&quot;https://werkwolf.eu&quot;&gt;WerkWolf OÜ&lt;/a&gt; vertrieben.</translation>
     </message>
     <message>
         <source>Licensed under GNU GPLv3</source>
-        <translation type="unfinished"></translation>
+        <translation>Lizenziert unter der GNU GPLv3</translation>
     </message>
     <message>
         <source>Sources on GitHub</source>
-        <translation type="unfinished"></translation>
+        <translation>Quelltexte auf GitHub</translation>
     </message>
     <message>
         <source>Wagnis ID: </source>
-        <translation type="unfinished"></translation>
+        <translation>Wagnis-ID:</translation>
     </message>
     <message>
         <source>Show Wagnis ID</source>
-        <translation type="unfinished"></translation>
+        <translation>Wagnis-ID anzeigen</translation>
     </message>
 </context>
 <context>
     <name>AccountTransactionsPage</name>
     <message>
         <source>Unable to connect to your bank. Please ensure that your internet connection works properly and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbindung zur Bank nicht möglich. Bitte stellen Sie sicher, dass Ihre Internetverbindung funktioniert und versuchen Sie es nochmal.</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Transactions</source>
-        <translation type="unfinished"></translation>
+        <translation>Transaktionen</translation>
     </message>
     <message>
         <source>Retrieving transactions...</source>
-        <translation type="unfinished"></translation>
+        <translation>Transaktionen abrufen...</translation>
     </message>
 </context>
 <context>
     <name>CredentialsPage</name>
     <message>
         <source>Your bank doesn&apos;t seem to support FinTS PIN/TAN. Please contact your bank for assistance!</source>
-        <translation type="unfinished"></translation>
+        <translation>Ihre Bank scheint kein FinTS PIN/TAN zu unterstützen. Bitte kontaktieren Sie Ihre Bank für Unterstützung!</translation>
     </message>
     <message>
         <source>Unable to connect to your bank. Please ensure that your internet connection works properly and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verbindung zur Bank nicht möglich. Bitte stellen Sie sicher, dass Ihre Internetverbindung funktioniert und versuchen Sie es nochmal.</translation>
     </message>
     <message>
         <source>Saying hello to your bank...</source>
-        <translation type="unfinished"></translation>
+        <translation>Sagt hallo zu Ihrer Bank...</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Enter your Credentials</source>
-        <translation type="unfinished"></translation>
+        <translation>Anmeldedaten eingeben</translation>
     </message>
     <message>
         <source>Name</source>
-        <translation type="unfinished"></translation>
+        <translation>Name</translation>
     </message>
     <message>
         <source>Login</source>
-        <translation type="unfinished"></translation>
+        <translation>Login</translation>
     </message>
     <message>
         <source>User name</source>
-        <translation type="unfinished"></translation>
+        <translation>Benutzername</translation>
     </message>
     <message>
         <source>PIN or Password</source>
-        <translation type="unfinished"></translation>
+        <translation>PIN oder Passwort</translation>
     </message>
     <message>
         <source>Your Bank</source>
-        <translation type="unfinished"></translation>
+        <translation>Ihre Bank</translation>
     </message>
     <message>
         <source>Bank ID</source>
-        <translation type="unfinished"></translation>
+        <translation>BLZ</translation>
     </message>
     <message>
         <source>Your Credentials</source>
-        <translation type="unfinished"></translation>
+        <translation>Ihre Anmeldedaten</translation>
     </message>
 </context>
 <context>
     <name>InstitutesSearchPage</name>
     <message>
         <source>Bank ID: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>BLZ: %1</translation>
     </message>
     <message>
         <source>No results found</source>
-        <translation type="unfinished"></translation>
+        <translation>Keine Ergebnisse gefunden</translation>
     </message>
     <message>
         <source>Welcome to Zaster</source>
-        <translation type="unfinished"></translation>
+        <translation>Willkommen bei Zaster</translation>
     </message>
     <message>
         <source>Find your bank...</source>
-        <translation type="unfinished"></translation>
+        <translation>Finden Sie Ihre Bank...</translation>
     </message>
 </context>
 <context>
     <name>OverviewPage</name>
     <message>
         <source>About Zaster</source>
-        <translation type="unfinished"></translation>
+        <translation>Über Zaster</translation>
     </message>
     <message>
         <source>Account Balance</source>
-        <translation type="unfinished"></translation>
+        <translation>Kontostand</translation>
     </message>
     <message>
         <source>Bank ID: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>BLZ: %1</translation>
     </message>
     <message>
         <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Unable to retrieve account information. Please ensure that you entered proper credentials and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>Abruf der Kontoinformationen nicht möglich. Bitte stellen Sie sicher, dass Sie korrekte Anmeldedaten eingegeben haben und versuchen Sie es nochmal.</translation>
     </message>
     <message>
         <source>Retrieving information...</source>
-        <translation type="unfinished"></translation>
+        <translation>Informationen abrufen...</translation>
     </message>
     <message>
         <source>Authentication required</source>
-        <translation type="unfinished"></translation>
+        <translation>Anmeldung erforderlich</translation>
     </message>
     <message>
         <source>Your PIN or Password</source>
-        <translation type="unfinished"></translation>
+        <translation>PIN oder Passwort</translation>
+    </message>
+</context>
+<context>
+    <name>SingleTransactionPage</name>
+    <message>
+        <source>Transaction</source>
+        <translation>Transaktion</translation>
     </message>
 </context>
 </TS>

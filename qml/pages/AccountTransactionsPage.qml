@@ -71,13 +71,24 @@ Page {
         Column {
             id: loadingColumn
             width: parent.width
-            height: loadingLabel.height + loadingBusyIndicator.height + Theme.paddingMedium
+            height: loadingLabel.height + loadingBusyIndicator.height + zasterLoadingImage.height + ( 2 * Theme.paddingMedium )
             spacing: Theme.paddingMedium
             anchors.verticalCenter: parent.verticalCenter
 
             Behavior on opacity { NumberAnimation {} }
             opacity: visible ? 1 : 0
             visible: false
+
+            Image {
+                id: zasterLoadingImage
+                source: "../../images/zaster.png"
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+
+                fillMode: Image.PreserveAspectFit
+                width: 1/2 * parent.width
+            }
 
             InfoLabel {
                 id: loadingLabel
@@ -162,7 +173,7 @@ Page {
 
                 id: transactionsListView
 
-                height: transactionsPage.height - transactionsHeader.height - ( Theme.paddingMedium )
+                height: transactionsPage.height - transactionsHeader.height - Theme.paddingMedium
                 width: parent.width
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -173,12 +184,15 @@ Page {
                     contentHeight: resultItem.height + ( 2 * Theme.paddingMedium )
                     contentWidth: parent.width
 
-                    enabled: false
+                    onClicked: {
+                        pageStack.push(Qt.resolvedUrl("SingleTransactionPage.qml"), {"singleTransaction": modelData })
+                    }
 
                     Item {
                         id: resultItem
                         width: parent.width
-                        height: resultRow.height + transactionSeparator.height + Theme.paddingMedium
+                        height: resultRow.height + transactionSeparator.height
+                        y: Theme.paddingMedium
 
                         Row {
                             id: resultRow
