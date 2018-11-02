@@ -44,7 +44,6 @@ ApplicationWindow
         InstitutesSearchPage { }
     }
 
-
     initialPage: finTsDialog.isInitialized() ? overviewPage : institutesSearchPage
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: defaultAllowedOrientations

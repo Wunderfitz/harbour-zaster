@@ -21,7 +21,7 @@ import QtQuick 2.0
 import Sailfish.Silica 1.0
 
 Page {
-    id: transactionsPage
+    id: transactionPage
     allowedOrientations: Orientation.All
 
     property variant singleTransaction;
@@ -86,7 +86,6 @@ Page {
                 Text {
                     id: accountValueText
                     width: parent.width
-                    height: parent.height
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: Theme.fontSizeLarge
                     color: Theme.highlightColor

@@ -23,6 +23,19 @@ import Sailfish.Silica 1.0
 
 CoverBackground {
 
+    id: coverBackground
+
+    property bool balancesRetrieved: false;
+
+    Connections {
+        target: finTsDialog
+        onAccountBalanceCompleted: {
+            accountsListView.model = accountBalances;
+            bankNameText.text = finTsDialog.getBankName();
+            balancesRetrieved = true;
+        }
+    }
+
     Image {
         source: "../../images/background.png"
         anchors {
@@ -37,6 +50,91 @@ CoverBackground {
 
         fillMode: Image.PreserveAspectFit
         opacity: 0.2
+    }
+
+    Column {
+        id: coverColumn
+
+        visible: coverBackground.balancesRetrieved
+        spacing: Theme.paddingMedium
+
+        anchors {
+            top: parent.top
+            topMargin: Theme.paddingMedium
+            left: parent.left
+            //leftMargin: Theme.paddingMedium
+            right: parent.right
+            rightMargin: Theme.paddingMedium
+            bottom: parent.bottom
+        }
+
+        Text {
+            id: bankNameText
+            width: parent.width
+            horizontalAlignment: Text.AlignHCenter
+            maximumLineCount: 2
+            color: Theme.primaryColor
+            font.pixelSize: Theme.fontSizeMedium
+            font.bold: true
+            textFormat: Text.StyledText
+            elide: Text.ElideRight
+            wrapMode: Text.Wrap
+        }
+
+        SilicaListView {
+
+            id: accountsListView
+
+            height: parent.height - bankNameText.height - Theme.paddingMedium
+            width: parent.width
+            anchors.left: parent.left
+            anchors.right: parent.right
+
+            clip: true
+
+            delegate: ListItem {
+                contentHeight: resultItem.height + Theme.paddingMedium
+                contentWidth: parent.width
+
+                opacity: index < 3 ? 1.0 - index * 0.3 : 0.0
+
+                Item {
+                    id: resultItem
+                    width: parent.width
+                    height: resultColumn.height + Theme.paddingMedium
+
+                    Column {
+                        id: resultColumn
+                        width: parent.width
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        Text {
+                            id: accountIdText
+                            width: parent.width
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            color: Theme.primaryColor
+                            text: modelData.accountId
+                        }
+                        Text {
+                            id: accountValueText
+                            width: parent.width
+                            horizontalAlignment: Text.AlignHCenter
+                            font.pixelSize: Theme.fontSizeSmall
+                            font.bold: true
+                            color: Theme.highlightColor
+                            text: (modelData.creditDebit === "D" ? "- " : "") + Number(modelData.value).toLocaleString(Qt.locale(), "f", 2) + " " + modelData.currency
+                        }
+                    }
+                }
+
+            }
+
+            VerticalScrollDecorator {}
+
+        }
+
+
     }
 
 }
