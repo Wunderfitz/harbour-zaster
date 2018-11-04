@@ -84,7 +84,11 @@ QString FinTsSerializer::serialize(DataElement *dataElement)
             }
         }
     } else {
-        serializedDataElement.append(dataElement->getValue());
+        QString dataElementValue = dataElement->getValue();
+        if (!dataElement->isBinary()) {
+            dataElementValue = dataElementValue.replace(QRegExp("([\\'\\?\\@\\:\\+])"), "?\\1");
+        }
+        serializedDataElement.append(dataElementValue);
     }
     return serializedDataElement;
 }

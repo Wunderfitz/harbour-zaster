@@ -24,128 +24,16 @@ Page {
     id: credentialsPage
     allowedOrientations: Orientation.All
 
-    Component.onCompleted: {
-        finTsDialog.dialogInitialization();
-        loadingColumn.visible = true;
-    }
-
-    Connections {
-        target: finTsDialog
-        onDialogInitializationCompleted: {
-            loadingColumn.visible = false;
-            if (finTsDialog.supportsPinTan()) {
-                finTsDialog.closeDialog();
-                credentialsColumn.visible = true;
-            } else {
-               errorColumn.retryPossible = false;
-               errorColumn.visible = true;
-               errorInfoLabel.text = qsTr("Your bank doesn't seem to support FinTS PIN/TAN. Please contact your bank for assistance!");
-            }
-        }
-        onDialogInitializationFailed: {
-            loadingColumn.visible = false;
-            errorColumn.retryPossible = true;
-            errorColumn.visible = true;
-            errorInfoLabel.text = qsTr("Unable to connect to your bank. Please ensure that your internet connection works properly and try again.");
-        }
-        onDialogEndCompleted: {
-            console.log("Anonymous dialog successfully terminated.");
-        }
-        onDialogEndFailed: {
-            console.log("Error terminating anonymous dialog.");
-        }
-    }
-
     SilicaFlickable {
 
         anchors.fill: parent
         contentWidth: parent.width
-        contentHeight: credentialsColumn.visible ? credentialsColumn.height : parent.height
-
-        Column {
-            id: loadingColumn
-            width: parent.width
-            height: loadingLabel.height + loadingBusyIndicator.height + Theme.paddingMedium
-            spacing: Theme.paddingMedium
-            anchors.verticalCenter: parent.verticalCenter
-
-            Behavior on opacity { NumberAnimation {} }
-            opacity: visible ? 1 : 0
-            visible: false
-
-            InfoLabel {
-                id: loadingLabel
-                text: qsTr("Saying hello to your bank...")
-            }
-
-            BusyIndicator {
-                id: loadingBusyIndicator
-                anchors.horizontalCenter: parent.horizontalCenter
-                running: loadingColumn.visible
-                size: BusyIndicatorSize.Large
-            }
-        }
-
-        Column {
-
-            property bool retryPossible: false
-
-            id: errorColumn
-            height: errorInfoLabel.height + zasterErrorImage.height + errorOkButton.height + ( 3 * Theme.paddingMedium )
-            width: parent.width
-            spacing: Theme.paddingMedium
-            anchors.verticalCenter: parent.verticalCenter
-
-            Behavior on opacity { NumberAnimation {} }
-            opacity: visible ? 1 : 0
-            visible: false
-
-            Image {
-                id: zasterErrorImage
-                source: "../../images/zaster.png"
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                }
-
-                fillMode: Image.PreserveAspectFit
-                width: 1/2 * parent.width
-            }
-
-            InfoLabel {
-                id: errorInfoLabel
-                font.pixelSize: Theme.fontSizeLarge
-                text: ""
-            }
-
-            Button {
-                id: errorOkButton
-                text: qsTr("OK")
-                anchors {
-                    horizontalCenter: parent.horizontalCenter
-                }
-                onClicked: {
-
-                    if (errorColumn.retryPossible) {
-                        errorColumn.visible = false;
-                        finTsDialog.dialogInitialization();
-                        loadingColumn.visible = true;
-                    } else {
-                        errorColumn.visible = false;
-                        pageStack.pop();
-                    }
-
-                }
-            }
-        }
+        contentHeight: credentialsColumn.height
 
         Column {
             id: credentialsColumn
             width: parent.width
             spacing: Theme.paddingMedium
-
-            Behavior on opacity { NumberAnimation {} }
-            opacity: visible ? 1 : 0
-            visible: false
 
             PageHeader {
                 id: searchHeader
@@ -206,7 +94,6 @@ Page {
                     horizontalCenter: parent.horizontalCenter
                 }
             }
-
 
         }
 

@@ -31,6 +31,8 @@ public:
     ~DataElement();
     void setValue(const QString &newValue);
     QString getValue();
+    bool isBinary();
+    void setBinary(const bool &binary);
     int getCompleteLength();
 
 signals:
@@ -40,6 +42,7 @@ public slots:
 
 private:
     QString value;
+    bool binary;
 
 };
 

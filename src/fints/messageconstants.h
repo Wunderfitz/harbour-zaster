@@ -22,6 +22,8 @@
 
 // Placeholder message length, that will be changed when we completed the whole message
 const char MESSAGE_LENGTH_PLACEHOLDER[] = "000000000000";
+// HBCI-Version - always fixed version 3.0, see Formals, page 15
+const char FINTS_VERSION[] = "300";
 const char SIGNATURE_CONTROL_REFERENCE[] = "4242";
 const char SYSTEM_IDENTIFICATION[] = "0";
 const char SEGMENT_MESSAGE_HEADER_ID[] = "HNHBK";

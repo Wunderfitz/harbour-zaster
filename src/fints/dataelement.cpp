@@ -24,6 +24,7 @@ DataElement::DataElement(FinTsElement *parent, const QString &myValue) : FinTsEl
 {
     this->type = FinTsElement::DE;
     this->value = myValue;
+    this->binary = false;
 }
 
 DataElement::~DataElement()
@@ -40,6 +41,16 @@ void DataElement::setValue(const QString &newValue)
 QString DataElement::getValue()
 {
     return this->value;
+}
+
+bool DataElement::isBinary()
+{
+    return this->binary;
+}
+
+void DataElement::setBinary(const bool &binary)
+{
+    this->binary = binary;
 }
 
 int DataElement::getCompleteLength()

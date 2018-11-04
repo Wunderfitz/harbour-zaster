@@ -62,22 +62,6 @@
 <context>
     <name>CredentialsPage</name>
     <message>
-        <source>Your bank doesn&apos;t seem to support FinTS PIN/TAN. Please contact your bank for assistance!</source>
-        <translation>Ihre Bank scheint kein FinTS PIN/TAN zu unterstützen. Bitte kontaktieren Sie Ihre Bank für Unterstützung!</translation>
-    </message>
-    <message>
-        <source>Unable to connect to your bank. Please ensure that your internet connection works properly and try again.</source>
-        <translation>Verbindung zur Bank nicht möglich. Bitte stellen Sie sicher, dass Ihre Internetverbindung funktioniert und versuchen Sie es nochmal.</translation>
-    </message>
-    <message>
-        <source>Saying hello to your bank...</source>
-        <translation>Sagt hallo zu Ihrer Bank...</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation>OK</translation>
-    </message>
-    <message>
         <source>Enter your Credentials</source>
         <translation>Anmeldedaten eingeben</translation>
     </message>

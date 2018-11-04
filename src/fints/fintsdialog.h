@@ -39,8 +39,8 @@
 #include "transactionconstants.h"
 #include "institutessearchworker.h"
 
-// HBCI-Version - always fixed version 3.0, see Formals, page 15
-const char FINTS_VERSION[] = "300";
+// Settings version (to check compatibility)
+const int SETTINGS_VERSION = 1;
 
 class FinTsDialog : public QObject
 {
@@ -67,11 +67,11 @@ public:
     Q_INVOKABLE bool isInitialized();
 
 signals:
-    void dialogInitializationCompleted(const bool &anonymously);
+    void dialogInitializationCompleted();
     void dialogInitializationFailed();
     void synchronizationCompleted();
     void synchronizationFailed();
-    void dialogEndCompleted(const bool &anonymously);
+    void dialogEndCompleted();
     void dialogEndFailed();
     void accountBalanceCompleted(const QVariantList &accountBalances);
     void accountBalanceFailed();
@@ -157,7 +157,6 @@ private:
     void insertMessageLength(Message *message);
     QString convertToBinaryFormat(const QString &originalString);
     Message *packageMessage(Message *originalMessage);
-    void setAnonymousDialog(const bool &isAnonymous);
 
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;
@@ -165,7 +164,7 @@ private:
     QString myDialogId;
     QString myPin;
     int myMessageNumber;
-    bool anonymousDialog;
+    bool initialized;
     QVariantMap bankParameterData;
     QVariantMap userParameterData;
     QSqlDatabase database;

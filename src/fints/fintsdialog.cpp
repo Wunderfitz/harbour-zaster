@@ -43,15 +43,19 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     }
 
     QSettings finTsSettings("harbour-zaster", "finTsSettings");
-    QVariant storedBankParameterData = finTsSettings.value("bankParameterData");
-    if (storedBankParameterData.isValid()) {
-        this->bankParameterData = storedBankParameterData.toMap();
-    }
 
-    QVariant storedUserParameterData = finTsSettings.value("userParameterData");
-    if (storedUserParameterData.isValid()) {
-        this->userParameterData = storedUserParameterData.toMap();
-        this->anonymousDialog = false;
+    int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
+    if (settingsVersion >= SETTINGS_VERSION) {
+        QVariant storedBankParameterData = finTsSettings.value("bankParameterData");
+        if (storedBankParameterData.isValid()) {
+            this->bankParameterData = storedBankParameterData.toMap();
+        }
+
+        QVariant storedUserParameterData = finTsSettings.value("userParameterData");
+        if (storedUserParameterData.isValid()) {
+            this->userParameterData = storedUserParameterData.toMap();
+            this->initialized = true;
+        }
     }
 
 }
@@ -185,7 +189,7 @@ bool FinTsDialog::isPinSet()
 
 bool FinTsDialog::isInitialized()
 {
-    return !this->anonymousDialog;
+    return this->initialized;
 }
 
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
@@ -206,10 +210,10 @@ void FinTsDialog::handleDialogInitializationFinished()
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyDialogInitialization(replyMessage);
-    if (this->anonymousDialog) {
-        emit dialogInitializationCompleted(true);
+    if (this->initialized) {
+        emit dialogInitializationCompleted();
     } else {
-        emit dialogInitializationCompleted(false);
+        emit dialogInitializationFailed();
     }
     replyMessage->deleteLater();
 }
@@ -232,11 +236,7 @@ void FinTsDialog::handleSynchronizationFinished()
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyDialogInitialization(replyMessage);
-    if (this->anonymousDialog) {
-        emit synchronizationCompleted();
-    } else {
-        emit synchronizationCompleted();
-    }
+    emit synchronizationCompleted();
     replyMessage->deleteLater();
 }
 
@@ -258,12 +258,7 @@ void FinTsDialog::handleDialogEndFinished()
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyCloseDialog(replyMessage);
-    if (this->anonymousDialog) {
-        this->anonymousDialog = false;
-        emit dialogEndCompleted(true);
-    } else {
-        emit dialogEndCompleted(false);
-    }
+    emit dialogEndCompleted();
     replyMessage->deleteLater();
 }
 
@@ -346,27 +341,16 @@ QNetworkReply *FinTsDialog::sendMessage(const QByteArray &serializedMessage)
 
 Message *FinTsDialog::createMessageDialogInitialization()
 {
-    qDebug() << "FinTsDialog::createMessageDialogInitialization" << this->anonymousDialog;
+    qDebug() << "FinTsDialog::createMessageDialogInitialization";
     this->myMessageNumber++;
     Message *dialogInitializationMessage = new Message();
     dialogInitializationMessage->addSegment(createSegmentMessageHeader(dialogInitializationMessage));
-    if (!this->anonymousDialog) {
-        dialogInitializationMessage->addSegment(createSegmentSignatureHeader(dialogInitializationMessage));
-    }
-    // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
+    dialogInitializationMessage->addSegment(createSegmentSignatureHeader(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage));
-    if (!this->anonymousDialog) {
-        dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage));
-    }
+    dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage));
-
-    if (this->anonymousDialog) {
-        insertMessageLength(dialogInitializationMessage);
-        return dialogInitializationMessage;
-    } else {
-        return packageMessage(dialogInitializationMessage);
-    }
+    return packageMessage(dialogInitializationMessage);
 }
 
 Message *FinTsDialog::createMessageSynchronization()
@@ -408,8 +392,6 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_ACCOUNT_INFORMATION_ID) { parseSegmentAccountInformation(currentSegment); }
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
-    // EVIL: Some banks don't support an anonymous dialog, trying without it...
-    this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, true);
 }
 
 Message *FinTsDialog::createMessageCloseDialog()
@@ -418,21 +400,11 @@ Message *FinTsDialog::createMessageCloseDialog()
     Message *closeDialogMessage = new Message();
     this->myMessageNumber++;
     closeDialogMessage->addSegment(createSegmentMessageHeader(closeDialogMessage));
-    if (!this->anonymousDialog) {
-        closeDialogMessage->addSegment(createSegmentSignatureHeader(closeDialogMessage));
-    }
+    closeDialogMessage->addSegment(createSegmentSignatureHeader(closeDialogMessage));
     closeDialogMessage->addSegment(createSegmentDialogEnd(closeDialogMessage));
-    if (!this->anonymousDialog) {
-        closeDialogMessage->addSegment(createSegmentSignatureFooter(closeDialogMessage));
-    }
+    closeDialogMessage->addSegment(createSegmentSignatureFooter(closeDialogMessage));
     closeDialogMessage->addSegment(createSegmentMessageTermination(closeDialogMessage));
-
-    if (this->anonymousDialog) {
-        insertMessageLength(closeDialogMessage);
-        return closeDialogMessage;
-    } else {
-        return packageMessage(closeDialogMessage);
-    }
+    return packageMessage(closeDialogMessage);
 }
 
 void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
@@ -690,7 +662,7 @@ void FinTsDialog::parseSegmentSynchronizationResponse(Segment *segmentSynchroniz
     QList<DataElement *> synchronizationResponseElements = segmentSynchronizationResponse->getDataElements();
     if (synchronizationResponseElements.size() > 0) {
         QString newCustomerSystemId = synchronizationResponseElements.at(0)->getValue();
-        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_ID, newCustomerSystemId.replace(QRegExp("([\\'\\?\\@\\:\\+])"), "?\1"));
+        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_ID, newCustomerSystemId);
         qDebug() << "[FinTsDialog] New Customer System ID: " << newCustomerSystemId;
     }
 }
@@ -825,11 +797,11 @@ Segment *FinTsDialog::createSegmentIdentification(Message *parentMessage)
 {
     Segment *messageIdentificationSegment = new Segment(parentMessage);
     messageIdentificationSegment->setHeader(createDegSegmentHeader(messageIdentificationSegment, SEGMENT_IDENTIFICATION_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_IDENTIFICATION_VERSION));
-
+    // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
     messageIdentificationSegment->addDataElement(createDegBankId(messageIdentificationSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_ID).toString()));
-    if (this->anonymousDialog) {
+    if (this->initialized) {
         this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "0");
     } else {
         this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "1");
@@ -940,7 +912,9 @@ Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, co
 {
     Segment *encryptionDataSegment = new Segment(parentElement);
     encryptionDataSegment->setHeader(createDegSegmentHeader(encryptionDataSegment, SEGMENT_ENCRYPTED_DATA_ID, "999", SEGMENT_ENCRYPTED_DATA_VERSION));
-    encryptionDataSegment->addDataElement(new DataElement(encryptionDataSegment, encryptedData));
+    DataElement *encryptedDataElement = new DataElement(encryptionDataSegment, encryptedData);
+    encryptedDataElement->setBinary(true);
+    encryptionDataSegment->addDataElement(encryptedDataElement);
     return encryptionDataSegment;
 }
 
@@ -1024,7 +998,8 @@ DataElementGroup *FinTsDialog::createDegDateTime(FinTsElement *parentElement)
     QDateTime currentDateTime = QDateTime::currentDateTime();
     QTimeZone timezone("Europe/Berlin");
     currentDateTime.setTimeZone(timezone);
-    dateTime->addDataElement(new DataElement(dateTime, currentDateTime.toString("yyyyMMdd:hhmmss")));
+    dateTime->addDataElement(new DataElement(dateTime, currentDateTime.toString("yyyyMMdd")));
+    dateTime->addDataElement(new DataElement(dateTime, currentDateTime.toString("hhmmss")));
     return dateTime;
 }
 
@@ -1067,7 +1042,9 @@ DataElementGroup *FinTsDialog::createDegEncryptionAlgorithm(FinTsElement *parent
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "2"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "2"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "13"));
-    encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "@1@X"));
+    DataElement *paddingDataElement = new DataElement(encryptionAlgorithm, "@1@X");
+    paddingDataElement->setBinary(true);
+    encryptionAlgorithm->addDataElement(paddingDataElement);
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "5"));
     encryptionAlgorithm->addDataElement(new DataElement(encryptionAlgorithm, "1"));
     return encryptionAlgorithm;
@@ -1129,24 +1106,20 @@ Message *FinTsDialog::packageMessage(Message *originalMessage)
     return packagedMessage;
 }
 
-void FinTsDialog::setAnonymousDialog(const bool &isAnonymous)
-{
-    this->anonymousDialog = isAnonymous;
-}
-
 void FinTsDialog::initializeParameters()
 {
     qDebug() << "FinTsDialog::initializeParameters";
+
+    this->initialized = false;
+
     // Dialog-ID - first message is always "0", see Formals, page 109
     this->myDialogId = "0";
     // Message number - first message is always "1", but is increased at message creation, see Formals, page 120
     this->myMessageNumber = 0;
-    // We always start with an anonymous dialog to check if PIN/TAN is supported
-    this->anonymousDialog = true;
 
     // Dialog language, needs to be "0" for Standard, see Formals page 109
     this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, "0");
-    // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45, TODO: make it adopting to received BPD
+    // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45
     this->bankParameterData.insert(BPD_KEY_VERSION, "0");
     // Country code according to  ISO 3166-1, 280 is fixed for Germany (instead of 276), see Geschäftsvorfälle page 613
     this->bankParameterData.insert(BPD_KEY_COUNTRY_CODE, "280");
@@ -1159,6 +1132,6 @@ void FinTsDialog::initializeParameters()
 
     this->userParameterData.insert(UPD_KEY_USER_ID, FINTS_DUMMY_USER_ID);
 
-    // User Parameter Data (UPD) version, TODO: make it adopting to received UPD
+    // User Parameter Data (UPD) version
     this->userParameterData.insert(UPD_KEY_VERSION, "0");
 }
