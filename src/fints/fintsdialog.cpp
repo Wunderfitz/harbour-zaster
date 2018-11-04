@@ -116,6 +116,17 @@ void FinTsDialog::accountTransactions(const QString &accountId)
     connect(reply, SIGNAL(finished()), this, SLOT(handleAccountTransactionsFinished()));
 }
 
+void FinTsDialog::portfolioInfo(const QString &portfolioId)
+{
+    qDebug() << "FinTsDialog::portfolioInfo" << portfolioId;
+    Message *portfolioInfoMessage = this->createMessagePortfolioInfo(portfolioId);
+    QByteArray serializedPortfolioInfoMessage = serializer.serializeAndEncode(portfolioInfoMessage);
+
+    QNetworkReply *reply = sendMessage(serializedPortfolioInfoMessage);
+    connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handlePortfolioInfoError(QNetworkReply::NetworkError)));
+    connect(reply, SIGNAL(finished()), this, SLOT(handlePortfolioInfoFinished()));
+}
+
 bool FinTsDialog::supportsPinTan()
 {
     return this->bankParameterData.value(BPD_KEY_PIN_TAN_SUPPORTED, false).toBool();
@@ -304,6 +315,27 @@ void FinTsDialog::handleInstitutesSearchCompleted(const QString &queryString, co
     emit institutesSearchCompleted(resultList);
 }
 
+void FinTsDialog::handlePortfolioInfoError(QNetworkReply::NetworkError error)
+{
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    qWarning() << "FinTsDialog::handlePortfolioInfoError:" << (int)error << reply->errorString() << reply->readAll();
+    emit portfolioInfoFailed();
+}
+
+void FinTsDialog::handlePortfolioInfoFinished()
+{
+    qDebug() << "FinTsDialog::handlePortfolioInfoFinished";
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    reply->deleteLater();
+    if (reply->error() != QNetworkReply::NoError) {
+        return;
+    }
+
+    Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
+    //emit accountTransactionsCompleted(parseReplyAccountTransactions(replyMessage));
+    replyMessage->deleteLater();
+}
+
 QNetworkReply *FinTsDialog::sendMessage(const QByteArray &serializedMessage)
 {
     QUrl url = QUrl(this->bankParameterData.value(BPD_KEY_FINTS_URL).toString());
@@ -475,6 +507,26 @@ QVariantList FinTsDialog::parseReplyAccountTransactions(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { accountTransactions.append(parseReplyAccountTransactions(parseSegmentEncryptedMessage(currentSegment))); }
     }
     return accountTransactions;
+}
+
+Message *FinTsDialog::createMessagePortfolioInfo(const QString &portfolioId)
+{
+    qDebug() << "FinTsDialog::createMessagePortfolioInfo" << portfolioId;
+    Message *portfolioInfoMessage = new Message();
+    this->myMessageNumber++;
+    portfolioInfoMessage->addSegment(createSegmentMessageHeader(portfolioInfoMessage));
+    portfolioInfoMessage->addSegment(createSegmentSignatureHeader(portfolioInfoMessage));
+    portfolioInfoMessage->addSegment(createSegmentPortfolioInfo(portfolioInfoMessage, portfolioId));
+    portfolioInfoMessage->addSegment(createSegmentSignatureFooter(portfolioInfoMessage));
+    portfolioInfoMessage->addSegment(createSegmentMessageTermination(portfolioInfoMessage));
+    return packageMessage(portfolioInfoMessage);
+}
+
+QVariantMap FinTsDialog::parseReplyPortfolioInfo(Message *replyMessage)
+{
+    QVariantMap portfolioInfo;
+
+    return portfolioInfo;
 }
 
 // See Formals, page 15
@@ -909,6 +961,14 @@ Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, c
     accountTransactionsSegment->addDataElement(createDegAccountIdInternational(accountTransactionsSegment, this->getBankId(), accountId));
     accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
     return accountTransactionsSegment;
+}
+
+Segment *FinTsDialog::createSegmentPortfolioInfo(Message *parentMessage, const QString &portfolioId)
+{
+    Segment *portfolioInfoSegment = new Segment(parentMessage);
+    portfolioInfoSegment->setHeader(createDegSegmentHeader(portfolioInfoSegment, SEGMENT_PORTFOLIO_INFO_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_PORTFOLIO_INFO_REQUEST_VERSION));
+    portfolioInfoSegment->addDataElement(createDegAccountId(portfolioInfoSegment, this->getBankId(), portfolioId));
+    return portfolioInfoSegment;
 }
 
 // See Formals, page 123

@@ -54,6 +54,7 @@ public:
     Q_INVOKABLE void closeDialog();
     Q_INVOKABLE void accountBalance();
     Q_INVOKABLE void accountTransactions(const QString &accountId);
+    Q_INVOKABLE void portfolioInfo(const QString &portfolioId);
     Q_INVOKABLE bool supportsPinTan();
     Q_INVOKABLE QString getBankId();
     Q_INVOKABLE QString getBankName();
@@ -78,6 +79,8 @@ signals:
     void accountTransactionsFailed();
     void institutesSearchCompleted(const QVariantList &resultList);
     void errorOccurred();
+    void portfolioInfoCompleted(const QVariantMap &portfolioInfo);
+    void portfolioInfoFailed();
 
 public slots:
 
@@ -93,6 +96,8 @@ private slots:
     void handleAccountTransactionsError(QNetworkReply::NetworkError error);
     void handleAccountTransactionsFinished();
     void handleInstitutesSearchCompleted(const QString &queryString, const QVariantList &resultList);
+    void handlePortfolioInfoError(QNetworkReply::NetworkError error);
+    void handlePortfolioInfoFinished();
 
 private:    
 
@@ -107,6 +112,8 @@ private:
     QVariantList parseReplyAccountBalance(Message *replyMessage);
     Message *createMessageAccountTransactions(const QString &accountId);
     QVariantList parseReplyAccountTransactions(Message *replyMessage);
+    Message *createMessagePortfolioInfo(const QString &portfolioId);
+    QVariantMap parseReplyPortfolioInfo(Message *replyMessage);
 
     Segment *createSegmentMessageHeader(Message *parentMessage);
     Segment *createSegmentIdentification(Message *parentMessage);
@@ -120,6 +127,7 @@ private:
     Segment *createSegmentEncryptedData(FinTsElement *parentElement, const QString &encryptedData);
     Segment *createSegmentAccountBalance(Message *parentMessage);
     Segment *createSegmentAccountTransactions(Message *parentMessage, const QString &accountId);
+    Segment *createSegmentPortfolioInfo(Message *parentMessage, const QString &portfolioId);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
     void parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback);
