@@ -180,6 +180,7 @@ void FinTsDialog::storeParameterData()
     QSettings finTsSettings("harbour-zaster", "finTsSettings");
     finTsSettings.setValue("bankParameterData", this->bankParameterData);
     finTsSettings.setValue("userParameterData", this->userParameterData);
+    finTsSettings.setValue("settingsVersion", SETTINGS_VERSION);
 }
 
 bool FinTsDialog::isPinSet()
@@ -211,8 +212,10 @@ void FinTsDialog::handleDialogInitializationFinished()
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyDialogInitialization(replyMessage);
     if (this->initialized) {
+        qDebug() << "Dialog initialization completed";
         emit dialogInitializationCompleted();
     } else {
+        qDebug() << "Dialog initialization failed";
         emit dialogInitializationFailed();
     }
     replyMessage->deleteLater();
@@ -392,6 +395,8 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_ACCOUNT_INFORMATION_ID) { parseSegmentAccountInformation(currentSegment); }
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
+    // TODO: React on error messages here... We need an error handler!
+    this->initialized = true;
 }
 
 Message *FinTsDialog::createMessageCloseDialog()

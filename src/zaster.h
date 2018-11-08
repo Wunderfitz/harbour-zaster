@@ -25,6 +25,7 @@
 #include <QSettings>
 #include "wagnis/wagnis.h"
 #include "fints/fintsdialog.h"
+#include "fints/fintsbalances.h"
 
 class Zaster : public QObject
 {
@@ -34,6 +35,7 @@ public:
     ~Zaster();
     Wagnis *getWagnis();
     FinTsDialog *getFinTsDialog();
+    FinTsBalances *getFinTsBalances();
 
 signals:
 
@@ -44,8 +46,8 @@ private:
     Wagnis *wagnis;
     QSettings settings;
     FinTsDialog *finTsDialog;
+    FinTsBalances *finTsBalances;
 
-    void doStupidTests();
 };
 
 #endif // ZASTER_H
