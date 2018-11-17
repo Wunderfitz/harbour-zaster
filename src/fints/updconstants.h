@@ -36,5 +36,7 @@ const char UPD_KEY_ACCOUNT_ALLOWED_TRANSACTIONS[] = "allowedTransactions";
 const char UPD_KEY_ACCOUNT_EXTENSION[] = "extension";
 const char UPD_KEY_ACCOUNT_CHANGED_AT[] = "changedAt";
 const char UPD_KEY_ACCOUNTS[] = "accounts";
+const char UPD_KEY_CAN_RETRIEVE_TRANSACTIONS[] = "canRetrieveTransactions";
+const char UPD_KEY_CAN_RETRIEVE_PORTFOLIO_INFO[] = "canRetrievePortfolioInfo";
 
 #endif // UPDCONSTANTS_H

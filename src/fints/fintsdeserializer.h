@@ -29,6 +29,13 @@
 
 const char SWIFT_TRANSACTION_VOLUME[] = "61";
 const char SWIFT_MULTI_FUNCTION[] = "86";
+const char SWIFT_BLOCK_BEGIN[] = "16R";
+const char SWIFT_BLOCK_END[] = "16S";
+const char SWIFT_BLOCK_IDENTIFIER[] = "FIN";
+const char SWIFT_PORTFOLIO_ITEM_ID[] = "35B";
+const char SWIFT_PORTFOLIO_ITEM_PRICE[] = "90B";
+const char SWIFT_PORTFOLIO_ITEM_AMOUNT[] = "93C";
+const char SWIFT_PORTFOLIO_ITEM_VALUE[] = "19A";
 
 class FinTsDeserializer : public QObject
 {
@@ -37,7 +44,8 @@ public:
     explicit FinTsDeserializer(QObject *parent = 0);
     Message *decodeAndDeserialize(const QByteArray &encodedMessage);
     Message *deserialize(const QByteArray &decodedMessage);
-    QVariantList deserializeSwift(const QString &rawSwiftMessage);
+    QVariantList deserializeSwiftTransactions(const QString &rawSwiftMessage);
+    QVariantList deserializeSwiftPortfolioInfo(const QString &rawSwiftMessage);
     void debugOut(Message *message);
 
 signals:

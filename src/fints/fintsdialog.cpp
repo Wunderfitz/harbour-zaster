@@ -198,6 +198,30 @@ bool FinTsDialog::isInitialized()
     return this->initialized;
 }
 
+bool FinTsDialog::canRetrieveTransactions(const QString &accountId)
+{
+    QListIterator<QVariant> myAccountsIterator = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList();
+    while (myAccountsIterator.hasNext()) {
+        QVariantMap myAccount = myAccountsIterator.next().toMap();
+        if (myAccount.value(UPD_KEY_ACCOUNT_ID) == accountId) {
+            return myAccount.value(UPD_KEY_CAN_RETRIEVE_TRANSACTIONS, false).toBool();
+        }
+    }
+    return false;
+}
+
+bool FinTsDialog::canRetrievePortfolioInfo(const QString &accountId)
+{
+    QListIterator<QVariant> myAccountsIterator = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList();
+    while (myAccountsIterator.hasNext()) {
+        QVariantMap myAccount = myAccountsIterator.next().toMap();
+        if (myAccount.value(UPD_KEY_ACCOUNT_ID) == accountId) {
+            return myAccount.value(UPD_KEY_CAN_RETRIEVE_PORTFOLIO_INFO, false).toBool();
+        }
+    }
+    return false;
+}
+
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -336,7 +360,7 @@ void FinTsDialog::handlePortfolioInfoFinished()
     }
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
-    //emit accountTransactionsCompleted(parseReplyAccountTransactions(replyMessage));
+    emit portfolioInfoCompleted(parseReplyPortfolioInfo(replyMessage));
     replyMessage->deleteLater();
 }
 
@@ -505,11 +529,21 @@ Message *FinTsDialog::createMessagePortfolioInfo(const QString &portfolioId)
     return packageMessage(portfolioInfoMessage);
 }
 
-QVariantMap FinTsDialog::parseReplyPortfolioInfo(Message *replyMessage)
+QVariantList FinTsDialog::parseReplyPortfolioInfo(Message *replyMessage)
 {
-    QVariantMap portfolioInfo;
-
-    return portfolioInfo;
+    qDebug() << "FinTsDialog::parseReplyPortfolioInfo";
+    QVariantList portfolioItems;
+    QListIterator<Segment *> segmentIterator(replyMessage->getSegments());
+    while (segmentIterator.hasNext()) {
+        Segment *currentSegment = segmentIterator.next();
+        QString segmentIdentifier = currentSegment->getIdentifier();
+        if (segmentIdentifier == SEGMENT_MESSAGE_HEADER_ID) { parseSegmentMessageHeader(currentSegment); }
+        if (segmentIdentifier == SEGMENT_MESSAGE_FEEDBACK_ID) { parseSegmentMessageFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_SEGMENT_FEEDBACK_ID) { parseSegmentSegmentFeedback(currentSegment); }
+        if (segmentIdentifier == SEGMENT_PORTFOLIO_INFO_RESPONSE_ID) { portfolioItems.append(parseSegmentPortfolioInfo(currentSegment)); }
+        if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { portfolioItems.append(parseReplyPortfolioInfo(parseSegmentEncryptedMessage(currentSegment))); }
+    }
+    return portfolioItems;
 }
 
 // See Formals, page 15
@@ -728,11 +762,18 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
             if (rawTransactionElement->getType() == FinTsElement::DEG) {
                 QList<DataElement *> allowedTransactionElements = qobject_cast<DataElementGroup *>(rawTransactionElement)->getDataElements();
                 allowedTransactions.append(allowedTransactionElements.at(0)->getValue());
-                if (allowedTransactionElements.at(0)->getValue() == SEGMENT_ACCOUNT_BALANCE_ID) {
+                QString allowedTransactionId = allowedTransactionElements.at(0)->getValue();
+                if (allowedTransactionId == SEGMENT_ACCOUNT_BALANCE_ID) {
                     qDebug() << "[FinTsDialog] This is a REAL account...";
                     realAccountFound = true;
                 }
-                qDebug() << "[FinTsDialog] Allowed Transaction: " << allowedTransactionElements.at(0)->getValue();
+                qDebug() << "[FinTsDialog] Allowed Transaction: " << allowedTransactionId;
+                if (allowedTransactionId == SEGMENT_TRANSACTIONS_REQUEST_ID) {
+                    currentAccount.insert(UPD_KEY_CAN_RETRIEVE_TRANSACTIONS, true);
+                }
+                if (allowedTransactionId == SEGMENT_PORTFOLIO_INFO_REQUEST_ID) {
+                    currentAccount.insert(UPD_KEY_CAN_RETRIEVE_PORTFOLIO_INFO, true);
+                }
             }
         } else {
             break;
@@ -764,7 +805,7 @@ QVariantList FinTsDialog::parseSegmentAccountTransactions(Segment *segmentAccoun
 {
     QString rawTransactions = segmentAccountTransactions->getDataElements().at(0)->getValue();
     qDebug() << "[FinTsDialog] Raw Transactions: " << rawTransactions;
-    return deserializer.deserializeSwift(rawTransactions);
+    return deserializer.deserializeSwiftTransactions(rawTransactions);
 }
 
 // See Geschäftsvorfälle, page 48
@@ -790,6 +831,13 @@ QVariantMap FinTsDialog::parseSegmentAccountBalance(Segment *segmentAccountBalan
         qDebug() << "[FinTsDialog] Currency: " << valueElements.at(2)->getValue();
     }
     return accountBalance;
+}
+
+QVariantList FinTsDialog::parseSegmentPortfolioInfo(Segment *segmentPortfolioInfo)
+{
+    QString rawPortfolioInfo = segmentPortfolioInfo->getDataElements().at(0)->getValue();
+    qDebug() << "[FinTsDialog] Raw Portfolio Info: " << rawPortfolioInfo;
+    return deserializer.deserializeSwiftPortfolioInfo(rawPortfolioInfo);
 }
 
 Message *FinTsDialog::parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage)

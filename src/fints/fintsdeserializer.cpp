@@ -136,7 +136,7 @@ bool transactionSorter(const QVariant &transaction1, const QVariant &transaction
      return transaction1.toMap().value("volume").toMap().value("date").toDate() > transaction2.toMap().value("volume").toMap().value("date").toDate();
  }
 
-QVariantList FinTsDeserializer::deserializeSwift(const QString &rawSwiftMessage)
+QVariantList FinTsDeserializer::deserializeSwiftTransactions(const QString &rawSwiftMessage)
 {
     QVariantList messageComponentList;
     QStringList swiftComponents = rawSwiftMessage.split(QRegExp("\r\n"));
@@ -203,6 +203,84 @@ QVariantList FinTsDeserializer::deserializeSwift(const QString &rawSwiftMessage)
     }
     qSort(messageComponentList.begin(), messageComponentList.end(), transactionSorter);
     return messageComponentList;
+}
+
+QVariantList FinTsDeserializer::deserializeSwiftPortfolioInfo(const QString &rawSwiftMessage)
+{
+    QVariantList portfolioItems;
+    QStringList swiftComponents = rawSwiftMessage.split(QRegExp("\r\n"));
+    QListIterator<QString> swiftComponentIterator(swiftComponents);
+    QRegExp swiftIdentifierRegEx("\\:([a-zA-Z0-9]+)\\:");
+    QVariantMap currentPortfolioItem;
+    bool inPortfolioItemId = false;
+    QString portfolioItemId;
+    QLocale germanLocale("de");
+    while (swiftComponentIterator.hasNext()) {
+        QString nextSwiftComponent = swiftComponentIterator.next();
+        if (nextSwiftComponent.indexOf(swiftIdentifierRegEx) == 0) {
+            if (inPortfolioItemId) {
+                currentPortfolioItem.insert("itemId", portfolioItemId);
+                inPortfolioItemId = false;
+            }
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_BLOCK_BEGIN) {
+                if (nextSwiftComponent.mid(5) == SWIFT_BLOCK_IDENTIFIER) {
+                    currentPortfolioItem.clear();
+                }
+            }
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_BLOCK_END) {
+                if (nextSwiftComponent.mid(5) == SWIFT_BLOCK_IDENTIFIER) {
+                    portfolioItems.append(currentPortfolioItem);
+                }
+            }
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_PORTFOLIO_ITEM_ID) {
+                portfolioItemId = nextSwiftComponent.mid(5);
+                inPortfolioItemId = true;
+            }
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_PORTFOLIO_ITEM_PRICE) {
+                int currencyOffset = nextSwiftComponent.indexOf("//ACTU/");
+                if (currencyOffset > -1 && nextSwiftComponent.length() > (currencyOffset + 10)) {
+                    currencyOffset += 7;
+                    currentPortfolioItem.insert("priceCurrency", nextSwiftComponent.mid(currencyOffset, 3));
+                    float floatPrice = germanLocale.toFloat(nextSwiftComponent.mid(currencyOffset + 3));
+                    currentPortfolioItem.insert("price", floatPrice);
+                }
+
+            }
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_PORTFOLIO_ITEM_AMOUNT) {
+                QRegExp actualAmountRegEx("(\\w{4})\\/\\/(\\w{4})\\/(\\w{4})\\/(.+)");
+                if (nextSwiftComponent.indexOf(actualAmountRegEx) != -1) {
+                    float floatAmount;
+                    if (actualAmountRegEx.cap(4).at(0) == 'N') {
+                        floatAmount = germanLocale.toFloat(actualAmountRegEx.cap(4).mid(1));
+                        currentPortfolioItem.insert("amountNegative", true);
+                    } else {
+                        floatAmount = germanLocale.toFloat(actualAmountRegEx.cap(4));
+                        currentPortfolioItem.insert("amountNegative", false);
+                    }
+                    currentPortfolioItem.insert("amount", floatAmount);
+                }
+            }
+            if (swiftIdentifierRegEx.cap(1) == SWIFT_PORTFOLIO_ITEM_VALUE) {
+                int valueOffset = nextSwiftComponent.indexOf("HOLD//");
+                if (valueOffset > -1 && nextSwiftComponent.length() > (valueOffset + 9)) {
+                    valueOffset += 6;
+                    if (nextSwiftComponent.at(valueOffset) == 'N') {
+                        currentPortfolioItem.insert("valueNegative", true);
+                        valueOffset++;
+                    } else {
+                        currentPortfolioItem.insert("valueNegative", false);
+                    }
+                    currentPortfolioItem.insert("valueCurrency", nextSwiftComponent.mid(valueOffset, 3));
+                    float floatValue = germanLocale.toFloat(nextSwiftComponent.mid(valueOffset + 3));
+                    currentPortfolioItem.insert("value", floatValue);
+                }
+            }
+        } else if (inPortfolioItemId) {
+            portfolioItemId.append("<br>");
+            portfolioItemId.append(nextSwiftComponent);
+        }
+    }
+    return portfolioItems;
 }
 
 void FinTsDeserializer::debugOut(Message *message)

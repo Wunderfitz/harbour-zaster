@@ -55,7 +55,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Retrieving transactions...</source>
+        <source>Portfolio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Retrieving information...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Amount: &lt;/b&gt; %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Price: &lt;/b&gt; %1 %2</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

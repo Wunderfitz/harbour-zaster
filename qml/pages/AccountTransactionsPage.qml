@@ -25,6 +25,7 @@ Page {
     allowedOrientations: Orientation.All
 
     property string accountId;
+    property bool isPortfolio: false
 
     Component.onCompleted: {
         finTsDialog.dialogInitialization();
@@ -34,7 +35,14 @@ Page {
     Connections {
         target: finTsDialog
         onDialogInitializationCompleted: {
-            finTsDialog.accountTransactions(transactionsPage.accountId);
+            if (finTsDialog.canRetrieveTransactions(transactionsPage.accountId)) {
+                transactionsHeader.title = qsTr("Transactions");
+                finTsDialog.accountTransactions(transactionsPage.accountId);
+            } else if (finTsDialog.canRetrievePortfolioInfo(transactionsPage.accountId)) {
+                transactionsHeader.title = qsTr("Portfolio");
+                transactionsPage.isPortfolio = true;
+                finTsDialog.portfolioInfo(transactionsPage.accountId);
+            }
         }
         onDialogInitializationFailed: {
             loadingColumn.visible = false;
@@ -49,6 +57,18 @@ Page {
             transactionsListView.model = accountTransactions;
         }
         onAccountTransactionsFailed: {
+            loadingColumn.visible = false;
+            errorColumn.retryPossible = true;
+            errorColumn.visible = true;
+            errorInfoLabel.text = qsTr("Unable to connect to your bank. Please ensure that your internet connection works properly and try again.");
+        }
+        onPortfolioInfoCompleted: {
+            finTsDialog.closeDialog();
+            loadingColumn.visible = false;
+            transactionsColumn.visible = true;
+            transactionsListView.model = portfolioItems;
+        }
+        onPortfolioInfoFailed: {
             loadingColumn.visible = false;
             errorColumn.retryPossible = true;
             errorColumn.visible = true;
@@ -92,7 +112,7 @@ Page {
 
             InfoLabel {
                 id: loadingLabel
-                text: qsTr("Retrieving transactions...")
+                text: qsTr("Retrieving information...")
             }
 
             BusyIndicator {
@@ -166,7 +186,6 @@ Page {
 
             PageHeader {
                 id: transactionsHeader
-                title: qsTr("Transactions")
             }
 
             SilicaListView {
@@ -207,7 +226,8 @@ Page {
                                     width: parent.width
                                     font.pixelSize: Theme.fontSizeTiny
                                     color: Theme.secondaryColor
-                                    text: modelData.volume.date.toLocaleDateString(Locale.ShortFormat)
+                                    visible: !transactionsPage.isPortfolio
+                                    text: transactionsPage.isPortfolio ? "" : modelData.volume.date.toLocaleDateString(Locale.ShortFormat)
                                 }
                                 Text {
                                     id: otherPartyNameText
@@ -219,23 +239,26 @@ Page {
                                     maximumLineCount: 2
                                     wrapMode: Text.Wrap
                                     visible: text ? true : false
-                                    text: modelData.details.otherPartyName
+                                    text: transactionsPage.isPortfolio ? modelData.itemId : modelData.details.otherPartyName
+                                    textFormat: Text.StyledText
                                 }
                                 Text {
                                     id: transactionTextText
                                     width: parent.width
                                     font.pixelSize: Theme.fontSizeTiny
                                     color: Theme.secondaryHighlightColor
-                                    text: modelData.details.transactionText
+                                    text: transactionsPage.isPortfolio ? "" : modelData.details.transactionText
+                                    textFormat: Text.StyledText
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
+                                    visible: !transactionsPage.isPortfolio
                                 }
                                 Text {
                                     id: transactionPurposeText
                                     width: parent.width
                                     font.pixelSize: Theme.fontSizeExtraSmall
                                     color: Theme.primaryColor
-                                    text: modelData.details.transactionPurpose
+                                    text: transactionsPage.isPortfolio ? ( qsTr("<b>Amount: </b> %1").arg((modelData.amountNegative ? "-" : "") + Number(modelData.amount).toLocaleString(Qt.locale(), "f", 2)) + "<br>" + qsTr("<b>Price: </b> %1 %2").arg(Number(modelData.price).toLocaleString(Qt.locale(), "f", 2)).arg(modelData.priceCurrency) ) : modelData.details.transactionPurpose
                                     wrapMode: Text.Wrap
                                     elide: Text.ElideRight
                                     maximumLineCount: 4
@@ -249,7 +272,7 @@ Page {
                                 verticalAlignment: Text.AlignVCenter
                                 font.pixelSize: Theme.fontSizeMedium
                                 color: Theme.highlightColor
-                                text: (modelData.volume.creditDebit === "D" ? "- " : "") + Number(modelData.volume.value).toLocaleString(Qt.locale(), "f", 2)
+                                text: transactionsPage.isPortfolio ? ((modelData.valueNegative ? "-" : "") +  Number(modelData.value).toLocaleString(Qt.locale(), "f", 2) + " " + modelData.valueCurrency ) : (modelData.volume.creditDebit === "D" ? "- " : "") + Number(modelData.volume.value).toLocaleString(Qt.locale(), "f", 2)
                             }
                         }
 

@@ -28,8 +28,8 @@ CoverBackground {
     property bool balancesRetrieved: false;
 
     Connections {
-        target: finTsDialog
-        onAccountBalanceCompleted: {
+        target: finTsBalances
+        onBalancesRetrieved: {
             accountsListView.model = accountBalances;
             bankNameText.text = finTsDialog.getBankName();
             balancesRetrieved = true;

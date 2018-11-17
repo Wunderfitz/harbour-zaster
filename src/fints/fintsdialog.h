@@ -66,6 +66,8 @@ public:
     Q_INVOKABLE void storeParameterData();
     Q_INVOKABLE bool isPinSet();
     Q_INVOKABLE bool isInitialized();
+    Q_INVOKABLE bool canRetrieveTransactions(const QString &accountId);
+    Q_INVOKABLE bool canRetrievePortfolioInfo(const QString &accountId);
 
 signals:
     void dialogInitializationCompleted();
@@ -80,7 +82,7 @@ signals:
     void accountTransactionsFailed();
     void institutesSearchCompleted(const QVariantList &resultList);
     void errorOccurred();
-    void portfolioInfoCompleted(const QVariantMap &portfolioInfo);
+    void portfolioInfoCompleted(const QVariantList &portfolioItems);
     void portfolioInfoFailed();
 
 public slots:
@@ -114,7 +116,7 @@ private:
     Message *createMessageAccountTransactions(const QString &accountId);
     QVariantList parseReplyAccountTransactions(Message *replyMessage);
     Message *createMessagePortfolioInfo(const QString &portfolioId);
-    QVariantMap parseReplyPortfolioInfo(Message *replyMessage);
+    QVariantList parseReplyPortfolioInfo(Message *replyMessage);
 
     Segment *createSegmentMessageHeader(Message *parentMessage);
     Segment *createSegmentIdentification(Message *parentMessage);
@@ -141,6 +143,7 @@ private:
     void parseSegmentAccountInformation(Segment *segmentAccountInformation);
     QVariantList parseSegmentAccountTransactions(Segment *segmentAccountTransactions);
     QVariantMap parseSegmentAccountBalance(Segment *segmentAccountBalance);
+    QVariantList parseSegmentPortfolioInfo(Segment *segmentPortfolioInfo);
     Message *parseSegmentEncryptedMessage(Segment *segmentEncryptedMessage);
 
     DataElementGroup *createDegSegmentHeader(FinTsElement *parentElement, const QString &segmentId, const QString &segmentNumber, const QString &segmentVersion);

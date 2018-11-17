@@ -282,6 +282,8 @@ Page {
                     contentHeight: resultItem.height + Theme.paddingMedium
                     contentWidth: parent.width
 
+                    enabled: finTsDialog.canRetrieveTransactions(modelData.accountId) || finTsDialog.canRetrievePortfolioInfo(modelData.accountId)
+
                     onClicked: {
                         console.log("Selected: " + modelData.accountId);
                         pageStack.push(Qt.resolvedUrl("AccountTransactionsPage.qml"), {"accountId": modelData.accountId})
