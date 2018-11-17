@@ -25,6 +25,7 @@ Page {
     allowedOrientations: Orientation.All
 
     property variant singleTransaction;
+    property bool isPortfolio;
 
     SilicaFlickable {
 
@@ -39,7 +40,7 @@ Page {
 
             PageHeader {
                 id: singleTransactionHeader
-                title: qsTr("Transaction")
+                title: transactionPage.isPortfolio ? qsTr("Portfolio Item") : qsTr("Transaction")
             }
             Column {
                 id: transactionColumn
@@ -51,7 +52,8 @@ Page {
                     width: parent.width
                     font.pixelSize: Theme.fontSizeTiny
                     color: Theme.secondaryColor
-                    text: singleTransaction.volume.date.toLocaleDateString(Locale.ShortFormat)
+                    visible: !transactionPage.isPortfolio
+                    text: transactionPage.isPortfolio ? "" : singleTransaction.volume.date.toLocaleDateString(Locale.ShortFormat)
                 }
                 Text {
                     id: otherPartyNameText
@@ -63,23 +65,26 @@ Page {
                     maximumLineCount: 2
                     wrapMode: Text.Wrap
                     visible: text ? true : false
-                    text: singleTransaction.details.otherPartyName
+                    text: transactionPage.isPortfolio ? singleTransaction.itemId : singleTransaction.details.otherPartyName
+                    textFormat: Text.StyledText
                 }
                 Text {
                     id: transactionTextText
                     width: parent.width
                     font.pixelSize: Theme.fontSizeTiny
                     color: Theme.secondaryHighlightColor
-                    text: singleTransaction.details.transactionText
+                    text: transactionPage.isPortfolio ? "" : singleTransaction.details.transactionText
                     elide: Text.ElideRight
                     maximumLineCount: 1
+                    visible: !transactionPage.isPortfolio
                 }
                 Text {
                     id: transactionPurposeText
                     width: parent.width
                     font.pixelSize: Theme.fontSizeExtraSmall
                     color: Theme.primaryColor
-                    text: singleTransaction.details.transactionPurpose
+                    text: transactionPage.isPortfolio ? ( qsTr("<b>Amount: </b> %1").arg((singleTransaction.amountNegative ? "-" : "") + Number(singleTransaction.amount).toLocaleString(Qt.locale(), "f", 2)) + "<br>" + qsTr("<b>Price: </b> %1 %2").arg(Number(singleTransaction.price).toLocaleString(Qt.locale(), "f", 2)).arg(singleTransaction.priceCurrency) ) : singleTransaction.details.transactionPurpose
+                    textFormat: Text.StyledText
                     wrapMode: Text.Wrap
                     elide: Text.ElideRight
                 }
@@ -89,7 +94,7 @@ Page {
                     horizontalAlignment: Text.AlignRight
                     font.pixelSize: Theme.fontSizeLarge
                     color: Theme.highlightColor
-                    text: (singleTransaction.volume.creditDebit === "D" ? "- " : "") + Number(singleTransaction.volume.value).toLocaleString(Qt.locale(), "f", 2)
+                    text: transactionPage.isPortfolio ? ((singleTransaction.valueNegative ? "-" : "") +  Number(singleTransaction.value).toLocaleString(Qt.locale(), "f", 2) + " " + singleTransaction.valueCurrency ) : (singleTransaction.volume.creditDebit === "D" ? "- " : "") + Number(singleTransaction.volume.value).toLocaleString(Qt.locale(), "f", 2)
                 }
             }
 

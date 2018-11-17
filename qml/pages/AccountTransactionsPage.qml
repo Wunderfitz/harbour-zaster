@@ -204,7 +204,7 @@ Page {
                     contentWidth: parent.width
 
                     onClicked: {
-                        pageStack.push(Qt.resolvedUrl("SingleTransactionPage.qml"), {"singleTransaction": modelData })
+                        pageStack.push(Qt.resolvedUrl("SingleTransactionPage.qml"), {"singleTransaction": modelData, "isPortfolio": transactionsPage.isPortfolio})
                     }
 
                     Item {
@@ -248,7 +248,6 @@ Page {
                                     font.pixelSize: Theme.fontSizeTiny
                                     color: Theme.secondaryHighlightColor
                                     text: transactionsPage.isPortfolio ? "" : modelData.details.transactionText
-                                    textFormat: Text.StyledText
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
                                     visible: !transactionsPage.isPortfolio
@@ -259,6 +258,7 @@ Page {
                                     font.pixelSize: Theme.fontSizeExtraSmall
                                     color: Theme.primaryColor
                                     text: transactionsPage.isPortfolio ? ( qsTr("<b>Amount: </b> %1").arg((modelData.amountNegative ? "-" : "") + Number(modelData.amount).toLocaleString(Qt.locale(), "f", 2)) + "<br>" + qsTr("<b>Price: </b> %1 %2").arg(Number(modelData.price).toLocaleString(Qt.locale(), "f", 2)).arg(modelData.priceCurrency) ) : modelData.details.transactionPurpose
+                                    textFormat: Text.StyledText
                                     wrapMode: Text.Wrap
                                     elide: Text.ElideRight
                                     maximumLineCount: 4

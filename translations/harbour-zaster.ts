@@ -166,5 +166,17 @@
         <source>Transaction</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Portfolio Item</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Amount: &lt;/b&gt; %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Price: &lt;/b&gt; %1 %2</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 </TS>
