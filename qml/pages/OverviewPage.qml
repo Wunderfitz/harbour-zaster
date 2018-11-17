@@ -26,10 +26,11 @@ Page {
 
     allowedOrientations: Orientation.All
     property bool inErrorStatus: false
-    property bool balanceRetrieved: false
+    property bool initializationCompleted: false
 
     Component.onCompleted: {
         if (finTsDialog.isPinSet()) {
+            // Initial retrieval of account information
             finTsDialog.synchronization();
             loadingColumn.visible = true;
         } else {
@@ -40,33 +41,31 @@ Page {
 
     function enterPin() {
         finTsDialog.setPin(enterPinField.text);
-        finTsDialog.dialogInitialization();
+        overviewPage.initializationCompleted = true;
+        finTsBalances.retrieveBalances();
         enterPinColumn.visible = false;
         loadingColumn.visible = true;
     }
 
     Connections {
-        target: finTsDialog
-        onDialogInitializationCompleted: {
+        target: finTsBalances
+        onBalancesRetrieved: {
             bankNameText.text = finTsDialog.getBankName();
             bankCodeText.text = qsTr("Bank ID: %1").arg(finTsDialog.getBankId());
-            if (!overviewPage.inErrorStatus && !overviewPage.balanceRetrieved) {
-                finTsDialog.storeParameterData();
-                finTsDialog.accountBalance();
-            }
-        }
-        onDialogEndCompleted: {
-            if (!overviewPage.balanceRetrieved) {
-                finTsDialog.dialogInitialization();
-            }
-        }
-        onAccountBalanceCompleted: {
             console.log("Retrieved account balances: " + accountBalances.length);
             accountsListView.model = accountBalances;
-            finTsDialog.closeDialog();
             loadingColumn.visible = false;
             overviewFlickable.visible = true;
-            overviewPage.balanceRetrieved = true;
+        }
+    }
+
+    Connections {
+        target: finTsDialog
+        onDialogEndCompleted: {
+            if (!overviewPage.initializationCompleted) {
+                overviewPage.initializationCompleted = true;
+                finTsBalances.retrieveBalances();
+            }
         }
         onErrorOccurred: {
             overviewPage.inErrorStatus = true;

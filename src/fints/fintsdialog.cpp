@@ -98,10 +98,10 @@ void FinTsDialog::closeDialog()
 
 }
 
-void FinTsDialog::accountBalance()
+void FinTsDialog::accountBalance(const QString &accountId)
 {
-    qDebug() << "FinTsDialog::accountBalance";
-    Message *accountBalanceMessage = this->createMessageAccountBalance();
+    qDebug() << "FinTsDialog::accountBalance" << accountId;
+    Message *accountBalanceMessage = this->createMessageAccountBalance(accountId);
     QByteArray serializedAccountBalanceMessage = serializer.serializeAndEncode(accountBalanceMessage);
 
     QNetworkReply *reply = sendMessage(serializedAccountBalanceMessage);
@@ -144,6 +144,11 @@ QString FinTsDialog::getBankId()
 QString FinTsDialog::getBankName()
 {
     return this->bankParameterData.value(BPD_KEY_BANK_NAME).toString();
+}
+
+QVariantMap FinTsDialog::getUserParameterData()
+{
+    return this->userParameterData;
 }
 
 void FinTsDialog::setBankData(const QString &bankId, const QString &bankName, const QString &url)
@@ -213,6 +218,7 @@ void FinTsDialog::handleDialogInitializationFinished()
     parseReplyDialogInitialization(replyMessage);
     if (this->initialized) {
         qDebug() << "Dialog initialization completed";
+        storeParameterData();
         emit dialogInitializationCompleted();
     } else {
         qDebug() << "Dialog initialization failed";
@@ -426,14 +432,14 @@ void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
     this->myMessageNumber = 0;
 }
 
-Message *FinTsDialog::createMessageAccountBalance()
+Message *FinTsDialog::createMessageAccountBalance(const QString &accountId)
 {
-    qDebug() << "FinTsDialog::createMessageAccountBalance";
+    qDebug() << "FinTsDialog::createMessageAccountBalance" << accountId;
     Message *accountBalanceMessage = new Message();
     this->myMessageNumber++;
     accountBalanceMessage->addSegment(createSegmentMessageHeader(accountBalanceMessage));
     accountBalanceMessage->addSegment(createSegmentSignatureHeader(accountBalanceMessage));
-    accountBalanceMessage->addSegment(createSegmentAccountBalance(accountBalanceMessage));
+    accountBalanceMessage->addSegment(createSegmentAccountBalance(accountBalanceMessage, accountId));
     accountBalanceMessage->addSegment(createSegmentSignatureFooter(accountBalanceMessage));
     accountBalanceMessage->addSegment(createSegmentMessageTermination(accountBalanceMessage));
     return packageMessage(accountBalanceMessage);
@@ -923,13 +929,18 @@ Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, co
     return encryptionDataSegment;
 }
 
-Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage)
+Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const QString &accountId)
 {
     Segment *accountBalanceSegment = new Segment(parentMessage);
     accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_ACCOUNT_BALANCE_VERSION));
-    QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
-    accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), firstAccount.value(UPD_KEY_ACCOUNT_ID).toString()));
-    accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "J"));
+    if (accountId.isEmpty()) {
+        QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
+        accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), firstAccount.value(UPD_KEY_ACCOUNT_ID).toString()));
+        accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "J"));
+    } else {
+        accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), accountId));
+        accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "N"));
+    }
     return accountBalanceSegment;
 }
 

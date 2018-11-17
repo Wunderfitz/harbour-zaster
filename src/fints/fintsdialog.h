@@ -52,12 +52,13 @@ public:
     Q_INVOKABLE void dialogInitialization();
     Q_INVOKABLE void synchronization();
     Q_INVOKABLE void closeDialog();
-    Q_INVOKABLE void accountBalance();
+    Q_INVOKABLE void accountBalance(const QString &accountId = "");
     Q_INVOKABLE void accountTransactions(const QString &accountId);
     Q_INVOKABLE void portfolioInfo(const QString &portfolioId);
     Q_INVOKABLE bool supportsPinTan();
     Q_INVOKABLE QString getBankId();
     Q_INVOKABLE QString getBankName();
+    Q_INVOKABLE QVariantMap getUserParameterData();
     Q_INVOKABLE void setBankData(const QString &bankId, const QString &bankName, const QString &url);
     Q_INVOKABLE void setUserData(const QString &userId, const QString &pin);
     Q_INVOKABLE void setPin(const QString &pin);
@@ -108,7 +109,7 @@ private:
     void parseReplyDialogInitialization(Message *replyMessage);
     Message *createMessageCloseDialog();
     void parseReplyCloseDialog(Message *replyMessage);
-    Message *createMessageAccountBalance();
+    Message *createMessageAccountBalance(const QString &accountId);
     QVariantList parseReplyAccountBalance(Message *replyMessage);
     Message *createMessageAccountTransactions(const QString &accountId);
     QVariantList parseReplyAccountTransactions(Message *replyMessage);
@@ -125,7 +126,7 @@ private:
     Segment *createSegmentSignatureFooter(Message *parentMessage);
     Segment *createSegmentEncryptionHeader(FinTsElement *parentElement);
     Segment *createSegmentEncryptedData(FinTsElement *parentElement, const QString &encryptedData);
-    Segment *createSegmentAccountBalance(Message *parentMessage);
+    Segment *createSegmentAccountBalance(Message *parentMessage, const QString &accountId);
     Segment *createSegmentAccountTransactions(Message *parentMessage, const QString &accountId);
     Segment *createSegmentPortfolioInfo(Message *parentMessage, const QString &portfolioId);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);

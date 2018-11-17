@@ -31,6 +31,7 @@
 #include "wagnis/wagnis.h"
 #include "zaster.h"
 #include "fints/fintsdialog.h"
+#include "fints/fintsbalances.h"
 
 int main(int argc, char *argv[])
 {
@@ -44,6 +45,8 @@ int main(int argc, char *argv[])
     context->setContextProperty("wagnis", wagnis);
     FinTsDialog *finTsDialog = zaster.getFinTsDialog();
     context->setContextProperty("finTsDialog", finTsDialog);
+    FinTsBalances *finTsBalances = zaster.getFinTsBalances();
+    context->setContextProperty("finTsBalances", finTsBalances);
 
     view->setSource(SailfishApp::pathTo("qml/harbour-zaster.qml"));
     view->show();
