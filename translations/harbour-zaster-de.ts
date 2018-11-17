@@ -56,19 +56,19 @@
     </message>
     <message>
         <source>Portfolio</source>
-        <translation type="unfinished"></translation>
+        <translation>Depot</translation>
     </message>
     <message>
         <source>Retrieving information...</source>
-        <translation type="unfinished">Informationen abrufen...</translation>
+        <translation>Informationen abrufen...</translation>
     </message>
     <message>
         <source>&lt;b&gt;Amount: &lt;/b&gt; %1</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Anzahl: &lt;/b&gt; %1</translation>
     </message>
     <message>
         <source>&lt;b&gt;Price: &lt;/b&gt; %1 %2</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Preis: &lt;/b&gt; %1 %2</translation>
     </message>
 </context>
 <context>
@@ -168,15 +168,15 @@
     </message>
     <message>
         <source>Portfolio Item</source>
-        <translation type="unfinished"></translation>
+        <translation>Depotposition</translation>
     </message>
     <message>
         <source>&lt;b&gt;Amount: &lt;/b&gt; %1</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Anzahl: &lt;/b&gt; %1</translation>
     </message>
     <message>
         <source>&lt;b&gt;Price: &lt;/b&gt; %1 %2</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;b&gt;Preis: &lt;/b&gt; %1 %2</translation>
     </message>
 </context>
 </TS>

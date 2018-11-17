@@ -26,11 +26,13 @@ private slots:
     void handleAccountBalanceFailed();
     void handleDialogEndCompleted();
     void handleDialogEndFailed();
+    void handleErrorOccurred();
 
 private:
     FinTsDialog *finTsDialog;
     bool workInProgress;
     bool shallHandleDialogEnd;
+    bool inError;
     QVariantList myAccounts;
     QVariantList retrievedAccounts;
     QVariantList retrievedBalances;

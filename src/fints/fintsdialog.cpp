@@ -423,6 +423,9 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_USER_PARAMETER_DATA_ID) { parseSegmentUserParameterData(currentSegment); }
         if (segmentIdentifier == SEGMENT_SYNCHRONIZATION_RESPONSE_ID) { parseSegmentSynchronizationResponse(currentSegment); }
         if (segmentIdentifier == SEGMENT_ACCOUNT_INFORMATION_ID) { parseSegmentAccountInformation(currentSegment); }
+        if (segmentIdentifier == SEGMENT_ACCOUNT_BALANCE_PARAMETERS_ID) { parseSegmentAccountBalanceParameters(currentSegment); }
+        if (segmentIdentifier == SEGMENT_TRANSACTIONS_PARAMETERS_ID) { parseSegmentTransactionsParameters(currentSegment); }
+        if (segmentIdentifier == SEGMENT_PORTFOLIO_INFO_PARAMETERS_ID) { parseSegmentPortfolioInfoParameters(currentSegment); }
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
     // TODO: React on error messages here... We need an error handler!
@@ -801,6 +804,30 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
     this->userParameterData.insert(UPD_KEY_ACCOUNTS, accounts);
 }
 
+void FinTsDialog::parseSegmentAccountBalanceParameters(Segment *segmentAccountBalanceParameters)
+{
+    DataElementGroup *segmentHeader = segmentAccountBalanceParameters->getHeader();
+    int accountBalanceVersion = segmentHeader->getDataElements().at(2)->getValue().toInt();
+    qDebug() << "[FinTsDialog] Account Balance Message Version: " << accountBalanceVersion;
+    this->bankParameterData.insert(BPD_KEY_ACCOUNT_BALANCE_VERSION, accountBalanceVersion);
+}
+
+void FinTsDialog::parseSegmentTransactionsParameters(Segment *segmentTransactionsParameters)
+{
+    DataElementGroup *segmentHeader = segmentTransactionsParameters->getHeader();
+    int transactionsVersion = segmentHeader->getDataElements().at(2)->getValue().toInt();
+    qDebug() << "[FinTsDialog] Transactions Message Version: " << transactionsVersion;
+    this->bankParameterData.insert(BPD_KEY_TRANSACTIONS_VERSION, transactionsVersion);
+}
+
+void FinTsDialog::parseSegmentPortfolioInfoParameters(Segment *segmentPortfolioInfoParameters)
+{
+    DataElementGroup *segmentHeader = segmentPortfolioInfoParameters->getHeader();
+    int portfolioInfoVersion = segmentHeader->getDataElements().at(2)->getValue().toInt();
+    qDebug() << "[FinTsDialog] Portfolio Info Message Version: " << portfolioInfoVersion;
+    this->bankParameterData.insert(BPD_KEY_PORTFOLIO_INFO_VERSION, portfolioInfoVersion);
+}
+
 QVariantList FinTsDialog::parseSegmentAccountTransactions(Segment *segmentAccountTransactions)
 {
     QString rawTransactions = segmentAccountTransactions->getDataElements().at(0)->getValue();
@@ -980,23 +1007,40 @@ Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, co
 Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const QString &accountId)
 {
     Segment *accountBalanceSegment = new Segment(parentMessage);
-    accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_ACCOUNT_BALANCE_VERSION));
+    int accountBalanceVersion = this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, SEGMENT_ACCOUNT_BALANCE_VERSION).toInt();
+    accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(accountBalanceVersion)));
+    QString usedAccountId = accountId;
+    QString getAllAccounts = "N";
     if (accountId.isEmpty()) {
         QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
-        accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), firstAccount.value(UPD_KEY_ACCOUNT_ID).toString()));
-        accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "J"));
-    } else {
-        accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), accountId));
-        accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, "N"));
+        usedAccountId = firstAccount.value(UPD_KEY_ACCOUNT_ID).toString();
+        getAllAccounts = "J";
     }
+    qDebug() << "[FinTsDialog] Account Balance Message Version: " << accountBalanceVersion;
+    if (accountBalanceVersion > 6) {
+        qDebug() << "[FinTsDialog] Using international account ID version";
+        accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId));
+    } else {
+        qDebug() << "[FinTsDialog] Using national account ID version";
+        accountBalanceSegment->addDataElement(createDegAccountId(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId));
+    }
+    accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, getAllAccounts));
     return accountBalanceSegment;
 }
 
 Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, const QString &accountId)
 {
     Segment *accountTransactionsSegment = new Segment(parentMessage);
-    accountTransactionsSegment->setHeader(createDegSegmentHeader(accountTransactionsSegment, SEGMENT_TRANSACTIONS_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_TRANSACTIONS_REQUEST_VERSION));
-    accountTransactionsSegment->addDataElement(createDegAccountIdInternational(accountTransactionsSegment, this->getBankId(), accountId));
+    int transactionsVersion = this->bankParameterData.value(BPD_KEY_TRANSACTIONS_VERSION, SEGMENT_TRANSACTIONS_REQUEST_VERSION).toInt();
+    accountTransactionsSegment->setHeader(createDegSegmentHeader(accountTransactionsSegment, SEGMENT_TRANSACTIONS_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(transactionsVersion)));
+    qDebug() << "[FinTsDialog] Transactions Message Version: " << transactionsVersion;
+    if (transactionsVersion > 6) {
+        qDebug() << "[FinTsDialog] Using international account ID version";
+        accountTransactionsSegment->addDataElement(createDegAccountIdInternational(accountTransactionsSegment, this->getBankId(), accountId));
+    } else {
+        qDebug() << "[FinTsDialog] Using national account ID version";
+        accountTransactionsSegment->addDataElement(createDegAccountId(accountTransactionsSegment, this->getBankId(), accountId));
+    }
     accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
     return accountTransactionsSegment;
 }
@@ -1004,7 +1048,9 @@ Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, c
 Segment *FinTsDialog::createSegmentPortfolioInfo(Message *parentMessage, const QString &portfolioId)
 {
     Segment *portfolioInfoSegment = new Segment(parentMessage);
-    portfolioInfoSegment->setHeader(createDegSegmentHeader(portfolioInfoSegment, SEGMENT_PORTFOLIO_INFO_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_PORTFOLIO_INFO_REQUEST_VERSION));
+    int portfolioInfoVersion = this->bankParameterData.value(BPD_KEY_PORTFOLIO_INFO_VERSION, SEGMENT_PORTFOLIO_INFO_REQUEST_VERSION).toInt();
+    portfolioInfoSegment->setHeader(createDegSegmentHeader(portfolioInfoSegment, SEGMENT_PORTFOLIO_INFO_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(portfolioInfoVersion)));
+    qDebug() << "[FinTsDialog] Portfolio Info Version: " << portfolioInfoVersion;
     portfolioInfoSegment->addDataElement(createDegAccountId(portfolioInfoSegment, this->getBankId(), portfolioId));
     return portfolioInfoSegment;
 }

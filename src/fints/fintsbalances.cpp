@@ -12,6 +12,7 @@ FinTsBalances::FinTsBalances(QObject *parent, FinTsDialog *finTsDialog) : QObjec
     connect(this->finTsDialog, SIGNAL(accountBalanceFailed()), this, SLOT(handleAccountBalanceFailed()));
     connect(this->finTsDialog, SIGNAL(dialogEndFailed()), this, SLOT(handleDialogEndFailed()));
     connect(this->finTsDialog, SIGNAL(dialogEndCompleted()), this, SLOT(handleDialogEndCompleted()));
+    connect(this->finTsDialog, SIGNAL(errorOccurred()), this, SLOT(handleErrorOccurred()));
 }
 
 void FinTsBalances::retrieveBalances()
@@ -39,6 +40,11 @@ void FinTsBalances::handleDialogInitializationFailed()
 void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBalances)
 {
     if (this->workInProgress) {
+        if (inError) {
+            this->shallHandleDialogEnd = true;
+            this->finTsDialog->closeDialog();
+            return;
+        }
         // Did we receive all account balances or do we have others to go...
         QListIterator<QVariant> accountBalancesIterator(accountBalances);
         while (accountBalancesIterator.hasNext()) {
@@ -75,6 +81,7 @@ void FinTsBalances::handleDialogEndCompleted()
     if (this->shallHandleDialogEnd) {
         setWorkInProgress(false);
         this->shallHandleDialogEnd = false;
+        this->inError = false;
     }
 }
 
@@ -82,6 +89,11 @@ void FinTsBalances::handleDialogEndFailed()
 {
     setWorkInProgress(false);
     emit errorRetrievingBalances("Error closing dialog with your bank during balance retrieval!");
+}
+
+void FinTsBalances::handleErrorOccurred()
+{
+    this->inError = true;
 }
 
 void FinTsBalances::setWorkInProgress(const bool &inProgress)

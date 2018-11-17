@@ -14,7 +14,7 @@ Name:       harbour-zaster
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    Zaster
 Version:    0.1
-Release:    15
+Release:    16
 Group:      Qt/Qt
 License:    LICENSE
 URL:        http://example.org/

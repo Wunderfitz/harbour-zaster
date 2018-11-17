@@ -141,6 +141,9 @@ private:
     void parseSegmentUserParameterData(Segment *segmentUserParameterData);
     void parseSegmentSynchronizationResponse(Segment *segmentSynchronizationResponse);
     void parseSegmentAccountInformation(Segment *segmentAccountInformation);
+    void parseSegmentAccountBalanceParameters(Segment *segmentAccountBalanceParameters);
+    void parseSegmentTransactionsParameters(Segment *segmentTransactionsParameters);
+    void parseSegmentPortfolioInfoParameters(Segment *segmentPortfolioInfoParameters);
     QVariantList parseSegmentAccountTransactions(Segment *segmentAccountTransactions);
     QVariantMap parseSegmentAccountBalance(Segment *segmentAccountBalance);
     QVariantList parseSegmentPortfolioInfo(Segment *segmentPortfolioInfo);

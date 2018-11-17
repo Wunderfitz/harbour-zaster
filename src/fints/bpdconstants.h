@@ -31,5 +31,8 @@ const char BPD_KEY_SUPPORTED_HBCI_VERSION[] = "suportedHBCIVersion";
 const char BPD_KEY_PIN_TAN_SUPPORTED[] = "pinTanSupported";
 const char BPD_KEY_ONE_STEP_ALLOWED[] = "oneStepAllowed";
 const char BPD_KEY_PIN_TAN_METHOD[] = "pinTanMethod";
+const char BPD_KEY_ACCOUNT_BALANCE_VERSION[] = "accountBalanceVersion";
+const char BPD_KEY_TRANSACTIONS_VERSION[] = "transactionsVersion";
+const char BPD_KEY_PORTFOLIO_INFO_VERSION[] = "portfolioInfoVersion";
 
 #endif // BPDCONSTANTS_H
