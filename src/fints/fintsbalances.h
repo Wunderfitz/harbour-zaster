@@ -33,6 +33,7 @@ private:
     bool workInProgress;
     bool shallHandleDialogEnd;
     bool inError;
+    QString accountInProgress;
     QVariantList myAccounts;
     QVariantList retrievedAccounts;
     QVariantList retrievedBalances;

@@ -6,6 +6,7 @@ FinTsBalances::FinTsBalances(QObject *parent, FinTsDialog *finTsDialog) : QObjec
     this->finTsDialog = finTsDialog;
     this->workInProgress = false;
     this->shallHandleDialogEnd = false;
+    this->inError = false;
     connect(this->finTsDialog, SIGNAL(dialogInitializationFailed()), this, SLOT(handleDialogInitializationFailed()));
     connect(this->finTsDialog, SIGNAL(dialogInitializationCompleted()), this, SLOT(handleDialogInitializationCompleted()));
     connect(this->finTsDialog, SIGNAL(accountBalanceCompleted(QVariantList)), this, SLOT(handleAccountBalanceCompleted(QVariantList)));
@@ -21,7 +22,6 @@ void FinTsBalances::retrieveBalances()
     setWorkInProgress(true);
     this->myAccounts = finTsDialog->getUserParameterData().value(UPD_KEY_ACCOUNTS).toList();
     finTsDialog->dialogInitialization();
-
 }
 
 void FinTsBalances::handleDialogInitializationCompleted()
@@ -41,6 +41,7 @@ void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBal
 {
     if (this->workInProgress) {
         if (inError) {
+            qDebug() << "[FinTsBalances] Error status detected. Closing dialog with bank.";
             this->shallHandleDialogEnd = true;
             this->finTsDialog->closeDialog();
             return;
@@ -56,10 +57,16 @@ void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBal
         QListIterator<QVariant> accountsIterator(this->myAccounts);
         while (accountsIterator.hasNext()) {
             QString myAccount = accountsIterator.next().toMap().value(UPD_KEY_ACCOUNT_ID).toString();
-            qDebug() << "Checking account " << myAccount;
+            qDebug() << "[FinTsBalances] Checking account " << myAccount;
+            if (myAccount == this->accountInProgress) {
+                // DRY! Most certainly an error/unsuppoerted format
+                qDebug() << "[FinTsBalances] Previous balance retrieval not successful. Aborting...";
+                break;
+            }
             if (!this->retrievedAccounts.contains(myAccount)) {
                 qDebug() << "[FinTsBalances] There is an account missing: " << myAccount;
                 qDebug() << "[FinTsBalances] Retrieving balance for this account!";
+                this->accountInProgress = myAccount;
                 finTsDialog->accountBalance(myAccount);
                 return;
             }
@@ -82,6 +89,7 @@ void FinTsBalances::handleDialogEndCompleted()
         setWorkInProgress(false);
         this->shallHandleDialogEnd = false;
         this->inError = false;
+        this->accountInProgress = "";
     }
 }
 

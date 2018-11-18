@@ -158,7 +158,7 @@ private:
     DataElementGroup *createDegSignatureAlgorithm(FinTsElement *parentElement);
     DataElementGroup *createDegKeyName(FinTsElement *parentElement, const QString &keyType);
     DataElementGroup *createDegEncryptionAlgorithm(FinTsElement *parentElement);
-    DataElementGroup *createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
+    DataElementGroup *createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber, const int &messageVersion = SEGMENT_ACCOUNT_BALANCE_VERSION);
     DataElementGroup *createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
 
     void insertMessageLength(Message *message);

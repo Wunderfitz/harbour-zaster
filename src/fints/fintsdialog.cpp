@@ -840,11 +840,19 @@ QVariantMap FinTsDialog::parseSegmentAccountBalance(Segment *segmentAccountBalan
 {
     QVariantMap accountBalance;
     QList<DataElement *> accountBalanceElements = segmentAccountBalance->getDataElements();
+    // We need to support multiple version as some banks still use a 20 year-old format... *grrr*
+    int accountBalanceVersion = segmentAccountBalance->getHeader()->getDataElements().at(2)->getValue().toInt();
     if (accountBalanceElements.size() >= 4) {
         qDebug() << "[FinTsDialog] === New Account Balance! ===";
-        QList<DataElement *> ktiElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(0))->getDataElements();
-        accountBalance.insert(TRANSACTION_KEY_ACCOUNT_ID, ktiElements.at(2)->getValue());
-        qDebug() << "[FinTsDialog] Account ID: " << ktiElements.at(2)->getValue();
+        QList<DataElement *> accountInformationElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(0))->getDataElements();
+        QString accountId;
+        if (accountBalanceVersion >= 7) {
+            accountId = accountInformationElements.at(2)->getValue();
+        } else {
+            accountId = accountInformationElements.at(0)->getValue();
+        }
+        accountBalance.insert(TRANSACTION_KEY_ACCOUNT_ID, accountId);
+        qDebug() << "[FinTsDialog] Account ID: " << accountId;
         accountBalance.insert(TRANSACTION_KEY_ACCOUNT_DESCRIPTION, accountBalanceElements.at(1)->getValue());
         qDebug() << "[FinTsDialog] Account Description: " << accountBalanceElements.at(1)->getValue();
         QList<DataElement *> valueElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(3))->getDataElements();
@@ -1017,12 +1025,10 @@ Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const 
         getAllAccounts = "J";
     }
     qDebug() << "[FinTsDialog] Account Balance Message Version: " << accountBalanceVersion;
-    if (accountBalanceVersion > 6) {
-        qDebug() << "[FinTsDialog] Using international account ID version";
+    if (accountBalanceVersion >= 7) {
         accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId));
     } else {
-        qDebug() << "[FinTsDialog] Using national account ID version";
-        accountBalanceSegment->addDataElement(createDegAccountId(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId));
+        accountBalanceSegment->addDataElement(createDegAccountId(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId, accountBalanceVersion));
     }
     accountBalanceSegment->addDataElement(new DataElement(accountBalanceSegment, getAllAccounts));
     return accountBalanceSegment;
@@ -1034,14 +1040,14 @@ Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, c
     int transactionsVersion = this->bankParameterData.value(BPD_KEY_TRANSACTIONS_VERSION, SEGMENT_TRANSACTIONS_REQUEST_VERSION).toInt();
     accountTransactionsSegment->setHeader(createDegSegmentHeader(accountTransactionsSegment, SEGMENT_TRANSACTIONS_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(transactionsVersion)));
     qDebug() << "[FinTsDialog] Transactions Message Version: " << transactionsVersion;
-    if (transactionsVersion > 6) {
-        qDebug() << "[FinTsDialog] Using international account ID version";
+    if (transactionsVersion >= 7) {
         accountTransactionsSegment->addDataElement(createDegAccountIdInternational(accountTransactionsSegment, this->getBankId(), accountId));
     } else {
-        qDebug() << "[FinTsDialog] Using national account ID version";
-        accountTransactionsSegment->addDataElement(createDegAccountId(accountTransactionsSegment, this->getBankId(), accountId));
+        accountTransactionsSegment->addDataElement(createDegAccountId(accountTransactionsSegment, this->getBankId(), accountId, transactionsVersion));
     }
-    accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
+    if (transactionsVersion >= 5) {
+        accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
+    }
     return accountTransactionsSegment;
 }
 
@@ -1160,11 +1166,13 @@ DataElementGroup *FinTsDialog::createDegEncryptionAlgorithm(FinTsElement *parent
     return encryptionAlgorithm;
 }
 
-DataElementGroup *FinTsDialog::createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber)
+DataElementGroup *FinTsDialog::createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber, const int &messageVersion)
 {
     DataElementGroup *accountId = new DataElementGroup(parentElement);
     accountId->addDataElement(new DataElement(accountId, accountNumber));
-    accountId->addDataElement(new DataElement(accountId, ""));
+    if (messageVersion > 4) {
+        accountId->addDataElement(new DataElement(accountId, ""));
+    }
     accountId->addDataElement(createDegBankId(accountId, blz));
     return accountId;
 }
