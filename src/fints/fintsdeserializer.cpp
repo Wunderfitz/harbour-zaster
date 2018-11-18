@@ -140,6 +140,11 @@ QVariantList FinTsDeserializer::deserializeSwiftTransactions(const QString &rawS
 {
     QVariantList messageComponentList;
     QStringList swiftComponents = rawSwiftMessage.split(QRegExp("\r\n"));
+    if (swiftComponents.length() <= 1) {
+        swiftComponents.clear();
+        // Not in the standard, but received that. STRANGE!
+        swiftComponents = rawSwiftMessage.split(QRegExp("\\@\\@"));
+    }
     QListIterator<QString> swiftComponentIterator(swiftComponents);
     QRegExp swiftIdentifierRegEx("\\:([a-zA-Z0-9]+)\\:");
     bool inMultiFunction = false;
@@ -209,6 +214,11 @@ QVariantList FinTsDeserializer::deserializeSwiftPortfolioInfo(const QString &raw
 {
     QVariantList portfolioItems;
     QStringList swiftComponents = rawSwiftMessage.split(QRegExp("\r\n"));
+    if (swiftComponents.length() <= 1) {
+        swiftComponents.clear();
+        // Not in the standard, but received that. STRANGE!
+        swiftComponents = rawSwiftMessage.split(QRegExp("\\@\\@"));
+    }
     QListIterator<QString> swiftComponentIterator(swiftComponents);
     QRegExp swiftIdentifierRegEx("\\:([a-zA-Z0-9]+)\\:");
     QVariantMap currentPortfolioItem;

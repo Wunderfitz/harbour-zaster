@@ -207,9 +207,25 @@ Page {
                 width: 1/2 * parent.width
             }
 
-            InfoLabel {
-                id: pinInfoLabel
+            Text {
+                id: bankInfoLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - ( 2 * Theme.horizontalPageMargin )
                 font.pixelSize: Theme.fontSizeLarge
+                horizontalAlignment: Text.AlignHCenter
+                color: Theme.primaryColor
+                wrapMode: Text.Wrap
+                text: finTsDialog.getBankName()
+            }
+
+            Text {
+                id: pinInfoLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width - ( 2 * Theme.horizontalPageMargin )
+                font.pixelSize: Theme.fontSizeMedium
+                horizontalAlignment: Text.AlignHCenter
+                color: Theme.secondaryColor
+                wrapMode: Text.Wrap
                 text: qsTr("Authentication required")
             }
 
@@ -281,6 +297,17 @@ Page {
                 title: qsTr("Account Balance")
             }
 
+            Image {
+                id: overviewImage
+                source: "../../images/zaster.png"
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+
+                fillMode: Image.PreserveAspectFit
+                width: 1/2 * parent.width
+            }
+
             Text {
                 id: bankNameText
                 horizontalAlignment: Text.AlignHCenter
@@ -305,7 +332,7 @@ Page {
 
                 id: accountsListView
 
-                height: overviewPage.height - accountsHeader.height - bankNameText.height - bankCodeText.height - ( 3 * Theme.paddingMedium )
+                height: overviewPage.height - accountsHeader.height - bankNameText.height - bankCodeText.height - overviewImage.height - ( 4 * Theme.paddingMedium )
                 width: parent.width
                 anchors.left: parent.left
                 anchors.right: parent.right
