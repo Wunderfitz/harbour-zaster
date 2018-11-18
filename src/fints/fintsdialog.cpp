@@ -918,11 +918,7 @@ Segment *FinTsDialog::createSegmentIdentification(Message *parentMessage)
     messageIdentificationSegment->addDataElement(createDegBankId(messageIdentificationSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_ID).toString()));
-    if (this->initialized) {
-        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "0");
-    } else {
-        this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "1");
-    }
+    this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "1");
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_STATUS).toString()));
     return messageIdentificationSegment;
 }

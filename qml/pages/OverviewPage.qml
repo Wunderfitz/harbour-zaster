@@ -303,6 +303,7 @@ Page {
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                 }
+                visible: overviewPage.isPortrait
 
                 fillMode: Image.PreserveAspectFit
                 width: 1/2 * parent.width
@@ -332,7 +333,7 @@ Page {
 
                 id: accountsListView
 
-                height: overviewPage.height - accountsHeader.height - bankNameText.height - bankCodeText.height - overviewImage.height - ( 4 * Theme.paddingMedium )
+                height: overviewPage.height - accountsHeader.height - bankNameText.height - bankCodeText.height - ( 3 * Theme.paddingMedium ) - ( overviewPage.isPortrait ? overviewImage.height + Theme.paddingMedium : 0 )
                 width: parent.width
                 anchors.left: parent.left
                 anchors.right: parent.right
