@@ -27,6 +27,10 @@ void FinTsBalances::retrieveBalances()
 void FinTsBalances::handleDialogInitializationCompleted()
 {
     if (this->workInProgress) {
+        if (inError) {
+            this->handleErrorStatus();
+            return;
+        }
         this->finTsDialog->accountBalance();
     }
 }
@@ -41,9 +45,7 @@ void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBal
 {
     if (this->workInProgress) {
         if (inError) {
-            qDebug() << "[FinTsBalances] Error status detected. Closing dialog with bank.";
-            this->shallHandleDialogEnd = true;
-            this->finTsDialog->closeDialog();
+            this->handleErrorStatus();
             return;
         }
         // Did we receive all account balances or do we have others to go...
@@ -108,4 +110,11 @@ void FinTsBalances::setWorkInProgress(const bool &inProgress)
 {
     qDebug() << "FinTsBalances::setWorkInProgress" << inProgress;
     this->workInProgress = inProgress;
+}
+
+void FinTsBalances::handleErrorStatus()
+{
+    qDebug() << "[FinTsBalances] Error status detected. Closing dialog with bank.";
+    this->shallHandleDialogEnd = true;
+    this->finTsDialog->closeDialog();
 }

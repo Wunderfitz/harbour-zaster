@@ -25,7 +25,6 @@ Page {
     id: overviewPage
 
     allowedOrientations: Orientation.All
-    property bool inErrorStatus: false
     property bool initializationCompleted: false
 
     Component.onCompleted: {
@@ -35,7 +34,7 @@ Page {
             loadingColumn.visible = true;
         } else {
             overviewFlickable.visible = false;
-            enterPinColumn.visible = true;
+            enterPinFlickable.visible = true;
         }
     }
 
@@ -43,7 +42,7 @@ Page {
         finTsDialog.setPin(enterPinField.text);
         overviewPage.initializationCompleted = true;
         finTsBalances.retrieveBalances();
-        enterPinColumn.visible = false;
+        enterPinFlickable.visible = false;
         loadingColumn.visible = true;
     }
 
@@ -68,11 +67,15 @@ Page {
             }
         }
         onErrorOccurred: {
-            overviewPage.inErrorStatus = true;
-            errorColumn.visible = true;
-            enterPinColumn.visible = false;
-            overviewFlickable.visible = false;
-            loadingColumn.visible = false;
+            if (pageStack.currentPage === overviewPage) {
+                errorMessageRepeater.model = finTsDialog.getErrorMessages();
+                errorFlickable.visible = true;
+                enterPinFlickable.visible = false;
+                overviewFlickable.visible = false;
+                loadingColumn.visible = false;
+            } else {
+                console.log("[OverviewPage] Not handling error as not current page...")
+            }
         }
         onSynchronizationCompleted: {
             finTsDialog.closeDialog();
@@ -113,112 +116,143 @@ Page {
         }
     }
 
-    Column {
-
-        id: errorColumn
-        width: parent.width
-        spacing: Theme.paddingMedium
-        anchors.verticalCenter: parent.verticalCenter
+    SilicaFlickable {
+        id: errorFlickable
+        anchors.fill: parent
+        topMargin: Theme.horizontalPageMargin
+        contentHeight: errorColumn.height
 
         Behavior on opacity { NumberAnimation {} }
         opacity: visible ? 1 : 0
         visible: false
 
-        Image {
-            id: zasterErrorImage
-            source: "../../images/zaster.png"
-            anchors {
-                horizontalCenter: parent.horizontalCenter
+        Column {
+            id: errorColumn
+            width: parent.width - ( 2 * Theme.horizontalPageMargin )
+            spacing: Theme.paddingMedium
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+
+            Image {
+                id: zasterErrorImage
+                source: "../../images/zaster.png"
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+
+                fillMode: Image.PreserveAspectFit
+                width: 1/2 * parent.width
             }
 
-            fillMode: Image.PreserveAspectFit
-            width: 1/2 * parent.width
+            InfoLabel {
+                id: errorInfoLabel
+                font.pixelSize: Theme.fontSizeLarge
+                text: qsTr("Unable to retrieve account information. Please check the following error messages.")
+            }
+
+            Repeater {
+                id: errorMessageRepeater
+                width: parent.width
+                delegate: Text {
+                    id: errorMessageText
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    color: Theme.primaryColor
+                    wrapMode: Text.Wrap
+                    text: qsTr("%1 (Error Code: %2)").arg(modelData.text).arg(modelData.code)
+                }
+            }
+
+            Button {
+                id: errorOkButton
+                text: qsTr("OK")
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                onClicked: {
+                    errorFlickable.visible = false;
+                    enterPinFlickable.visible = true;
+                }
+            }
         }
 
-        InfoLabel {
-            id: errorInfoLabel
-            font.pixelSize: Theme.fontSizeLarge
-            text: qsTr("Unable to retrieve account information. Please ensure that you entered proper credentials and try again.")
-        }
-
-        Button {
-            id: errorOkButton
-            text: qsTr("OK")
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-            }
-            onClicked: {
-                overviewPage.inErrorStatus = false;
-                errorColumn.visible = false;
-                enterPinColumn.visible = true;
-            }
-        }
     }
 
-    Column {
-
-        id: enterPinColumn
-
-        width: parent.width
-        spacing: Theme.paddingMedium
-        anchors.verticalCenter: parent.verticalCenter
+    SilicaFlickable {
+        id: enterPinFlickable
+        anchors.fill: parent
+        topMargin: Theme.horizontalPageMargin
+        contentHeight: enterPinColumn.height
 
         Behavior on opacity { NumberAnimation {} }
         opacity: visible ? 1 : 0
         visible: false
 
-        Image {
-            id: zasterImage
-            source: "../../images/zaster.png"
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-            }
+        Column {
+            id: enterPinColumn
 
-            fillMode: Image.PreserveAspectFit
-            width: 1/2 * parent.width
-        }
-
-        InfoLabel {
-            id: pinInfoLabel
-            font.pixelSize: Theme.fontSizeLarge
-            text: qsTr("Authentication required")
-        }
-
-        PasswordField {
-            id: enterPinField
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-            }
-            font.pixelSize: Theme.fontSizeLarge
             width: parent.width
-            horizontalAlignment: TextInput.AlignHCenter
-            labelVisible: false
-            placeholderText: qsTr("Your PIN or Password")
-            focus: enterPinColumn.visible
-            Keys.onEnterPressed: {
-                if (pinOkButton.enabled) {
-                    enterPin();
+            spacing: Theme.paddingMedium
+            anchors.verticalCenter: parent.verticalCenter
+
+            Image {
+                id: zasterImage
+                source: "../../images/zaster.png"
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+
+                fillMode: Image.PreserveAspectFit
+                width: 1/2 * parent.width
+            }
+
+            InfoLabel {
+                id: pinInfoLabel
+                font.pixelSize: Theme.fontSizeLarge
+                text: qsTr("Authentication required")
+            }
+
+            PasswordField {
+                id: enterPinField
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                font.pixelSize: Theme.fontSizeLarge
+                width: parent.width
+                horizontalAlignment: TextInput.AlignHCenter
+                labelVisible: false
+                placeholderText: qsTr("Your PIN or Password")
+                focus: enterPinFlickable.visible
+                Keys.onEnterPressed: {
+                    if (pinOkButton.enabled) {
+                        enterPin();
+                    }
+                }
+                Keys.onReturnPressed: {
+                    if (pinOkButton.enabled) {
+                        enterPin();
+                    }
                 }
             }
-            Keys.onReturnPressed: {
-                if (pinOkButton.enabled) {
+
+            Button {
+                id: pinOkButton
+                text: qsTr("OK")
+                enabled: enterPinField.text !== ""
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                onClicked: {
                     enterPin();
                 }
             }
         }
 
-        Button {
-            id: pinOkButton
-            text: qsTr("OK")
-            enabled: enterPinField.text !== ""
-            anchors {
-                horizontalCenter: parent.horizontalCenter
-            }
-            onClicked: {
-                enterPin();
-            }
-        }
+        VerticalScrollDecorator {}
     }
+
+
 
 
     SilicaFlickable {

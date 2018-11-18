@@ -39,6 +39,7 @@ private:
     QVariantList retrievedBalances;
 
     void setWorkInProgress(const bool &inProgress);
+    void handleErrorStatus();
 };
 
 #endif // FINTSBALANCES_H

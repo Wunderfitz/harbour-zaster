@@ -70,6 +70,14 @@
         <source>&lt;b&gt;Price: &lt;/b&gt; %1 %2</source>
         <translation>&lt;b&gt;Preis: &lt;/b&gt; %1 %2</translation>
     </message>
+    <message>
+        <source>Unable to retrieve account information. Please check the following error messages.</source>
+        <translation type="unfinished">Abfrage der Konteninformationen nicht möglich. Bitte prüfen Sie die folgenden Fehlermeldungen.</translation>
+    </message>
+    <message>
+        <source>%1 (Error Code: %2)</source>
+        <translation type="unfinished">%1 (Fehlernummer: %2)</translation>
+    </message>
 </context>
 <context>
     <name>CredentialsPage</name>
@@ -144,10 +152,6 @@
         <translation>OK</translation>
     </message>
     <message>
-        <source>Unable to retrieve account information. Please ensure that you entered proper credentials and try again.</source>
-        <translation>Abruf der Kontoinformationen nicht möglich. Bitte stellen Sie sicher, dass Sie korrekte Anmeldedaten eingegeben haben und versuchen Sie es nochmal.</translation>
-    </message>
-    <message>
         <source>Retrieving information...</source>
         <translation>Informationen abrufen...</translation>
     </message>
@@ -158,6 +162,14 @@
     <message>
         <source>Your PIN or Password</source>
         <translation>PIN oder Passwort</translation>
+    </message>
+    <message>
+        <source>%1 (Error Code: %2)</source>
+        <translation>%1 (Fehlernummer: %2)</translation>
+    </message>
+    <message>
+        <source>Unable to retrieve account information. Please check the following error messages.</source>
+        <translation>Abfrage der Konteninformationen nicht möglich. Bitte prüfen Sie die folgenden Fehlermeldungen.</translation>
     </message>
 </context>
 <context>

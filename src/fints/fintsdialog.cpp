@@ -63,6 +63,7 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
 void FinTsDialog::dialogInitialization()
 {
     qDebug() << "FinTsDialog::dialogInitialization";
+    this->errorMessages.clear();
     Message *dialogInitializationMessage = this->createMessageDialogInitialization();
     QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
 
@@ -76,6 +77,7 @@ void FinTsDialog::dialogInitialization()
 void FinTsDialog::synchronization()
 {
     qDebug() << "FinTsDialog::synchronization";
+    this->errorMessages.clear();
     Message *synchronizationMessage = this->createMessageSynchronization();
     QByteArray serializedSynchronizationMessage = serializer.serializeAndEncode(synchronizationMessage);
 
@@ -222,6 +224,11 @@ bool FinTsDialog::canRetrievePortfolioInfo(const QString &accountId)
     return false;
 }
 
+QVariantList FinTsDialog::getErrorMessages()
+{
+    return this->errorMessages;
+}
+
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)
 {
     QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
@@ -241,7 +248,10 @@ void FinTsDialog::handleDialogInitializationFinished()
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyDialogInitialization(replyMessage);
     if (this->initialized) {
-        qDebug() << "Dialog initialization completed";
+        qDebug() << "[FinTsDialog] Using account balance message version " << this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, SEGMENT_ACCOUNT_BALANCE_VERSION).toInt();
+        qDebug() << "[FinTsDialog] Using transactions message version " << this->bankParameterData.value(BPD_KEY_TRANSACTIONS_VERSION, SEGMENT_TRANSACTIONS_REQUEST_VERSION).toInt();
+        qDebug() << "[FinTsDialog] Using portfolio info message version " << this->bankParameterData.value(BPD_KEY_PORTFOLIO_INFO_VERSION, SEGMENT_PORTFOLIO_INFO_REQUEST_VERSION).toInt();
+        qDebug() << "[FinTsDialog] Dialog initialization completed";
         storeParameterData();
         emit dialogInitializationCompleted();
     } else {
@@ -428,7 +438,6 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_PORTFOLIO_INFO_PARAMETERS_ID) { parseSegmentPortfolioInfoParameters(currentSegment); }
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
-    // TODO: React on error messages here... We need an error handler!
     this->initialized = true;
 }
 
@@ -582,8 +591,10 @@ void FinTsDialog::parseSegmentMessageFeedback(Segment *segmentMessageFeedback)
             QList<DataElement *> feedbackElements = feedbackGroup->getDataElements();
             if (feedbackElements.size() >= 3) {
                 QString messageFeedbackCode = feedbackElements.at(0)->getValue();
-                qDebug() << "[FinTsDialog] Feedback for message: " << messageFeedbackCode << feedbackElements.at(2)->getValue();
+                QString messageText = feedbackElements.at(2)->getValue();
+                qDebug() << "[FinTsDialog] Feedback for message: " << messageFeedbackCode << messageText;
                 if (messageFeedbackCode.startsWith("9")) {
+                    this->appendErrorMessage(messageFeedbackCode, messageText);
                     emit errorOccurred();
                 }
             }
@@ -605,12 +616,18 @@ void FinTsDialog::parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback)
         if (feedbackElement->getType() == FinTsElement::DEG) {
             DataElementGroup *feedbackGroup = qobject_cast<DataElementGroup *>(feedbackElement);
             QList<DataElement *> feedbackElements = feedbackGroup->getDataElements();
+            QString segmentFeedbackCode = feedbackElements.at(0)->getValue();
+            QString segmentMessageText = feedbackElements.at(2)->getValue();
             if (feedbackElements.size() >= 3) {
-                qDebug() << "[FinTsDialog] Feedback for segment " << referenceSegmentNumber << ":" << feedbackElements.at(0)->getValue() << feedbackElements.at(2)->getValue();
+                qDebug() << "[FinTsDialog] Feedback for segment " << referenceSegmentNumber << ":" << segmentFeedbackCode << segmentMessageText;
             }
-            if (feedbackElements.at(0)->getValue() == "3920" && feedbackElements.size() >= 4) {
+            if (segmentFeedbackCode == "3920" && feedbackElements.size() >= 4) {
                 this->bankParameterData.insert(BPD_KEY_PIN_TAN_METHOD, feedbackElements.at(3)->getValue());
                 qDebug() << "[FinTsDialog] Bank told us to use PIN/TAN method: " << feedbackElements.at(3)->getValue();
+            }
+            if (segmentFeedbackCode.startsWith("9")) {
+                this->appendErrorMessage(segmentFeedbackCode, segmentMessageText);
+                emit errorOccurred();
             }
         }
     }
@@ -808,24 +825,30 @@ void FinTsDialog::parseSegmentAccountBalanceParameters(Segment *segmentAccountBa
 {
     DataElementGroup *segmentHeader = segmentAccountBalanceParameters->getHeader();
     int accountBalanceVersion = segmentHeader->getDataElements().at(2)->getValue().toInt();
-    qDebug() << "[FinTsDialog] Account Balance Message Version: " << accountBalanceVersion;
-    this->bankParameterData.insert(BPD_KEY_ACCOUNT_BALANCE_VERSION, accountBalanceVersion);
+    qDebug() << "[FinTsDialog] Bank supports account balance message version: " << accountBalanceVersion;
+    if (this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, accountBalanceVersion - 1).toInt() < accountBalanceVersion) {
+        this->bankParameterData.insert(BPD_KEY_ACCOUNT_BALANCE_VERSION, accountBalanceVersion);
+    }
 }
 
 void FinTsDialog::parseSegmentTransactionsParameters(Segment *segmentTransactionsParameters)
 {
     DataElementGroup *segmentHeader = segmentTransactionsParameters->getHeader();
     int transactionsVersion = segmentHeader->getDataElements().at(2)->getValue().toInt();
-    qDebug() << "[FinTsDialog] Transactions Message Version: " << transactionsVersion;
-    this->bankParameterData.insert(BPD_KEY_TRANSACTIONS_VERSION, transactionsVersion);
+    qDebug() << "[FinTsDialog] Bank supports transactions message version: " << transactionsVersion;
+    if (this->bankParameterData.value(BPD_KEY_TRANSACTIONS_VERSION, transactionsVersion - 1).toInt() < transactionsVersion) {
+        this->bankParameterData.insert(BPD_KEY_TRANSACTIONS_VERSION, transactionsVersion);
+    }
 }
 
 void FinTsDialog::parseSegmentPortfolioInfoParameters(Segment *segmentPortfolioInfoParameters)
 {
     DataElementGroup *segmentHeader = segmentPortfolioInfoParameters->getHeader();
     int portfolioInfoVersion = segmentHeader->getDataElements().at(2)->getValue().toInt();
-    qDebug() << "[FinTsDialog] Portfolio Info Message Version: " << portfolioInfoVersion;
-    this->bankParameterData.insert(BPD_KEY_PORTFOLIO_INFO_VERSION, portfolioInfoVersion);
+    qDebug() << "[FinTsDialog] Bank supports portfolio info message version: " << portfolioInfoVersion;
+    if (this->bankParameterData.value(BPD_KEY_PORTFOLIO_INFO_VERSION, portfolioInfoVersion - 1).toInt() < portfolioInfoVersion) {
+        this->bankParameterData.insert(BPD_KEY_PORTFOLIO_INFO_VERSION, portfolioInfoVersion);
+    }
 }
 
 QVariantList FinTsDialog::parseSegmentAccountTransactions(Segment *segmentAccountTransactions)
@@ -1057,7 +1080,8 @@ Segment *FinTsDialog::createSegmentPortfolioInfo(Message *parentMessage, const Q
     int portfolioInfoVersion = this->bankParameterData.value(BPD_KEY_PORTFOLIO_INFO_VERSION, SEGMENT_PORTFOLIO_INFO_REQUEST_VERSION).toInt();
     portfolioInfoSegment->setHeader(createDegSegmentHeader(portfolioInfoSegment, SEGMENT_PORTFOLIO_INFO_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(portfolioInfoVersion)));
     qDebug() << "[FinTsDialog] Portfolio Info Version: " << portfolioInfoVersion;
-    portfolioInfoSegment->addDataElement(createDegAccountId(portfolioInfoSegment, this->getBankId(), portfolioId));
+    // Portfolio message versions are by 1 smaller than the normal account message versions. For correct message versions, we increase it here for the reuse method
+    portfolioInfoSegment->addDataElement(createDegAccountId(portfolioInfoSegment, this->getBankId(), portfolioId, portfolioInfoVersion + 1));
     return portfolioInfoSegment;
 }
 
@@ -1222,6 +1246,14 @@ Message *FinTsDialog::packageMessage(Message *originalMessage)
     originalMessage->deleteLater();
     insertMessageLength(packagedMessage);
     return packagedMessage;
+}
+
+void FinTsDialog::appendErrorMessage(const QString &errorCode, const QString &errorText)
+{
+    QVariantMap errorMessage;
+    errorMessage.insert("code", errorCode);
+    errorMessage.insert("text", errorText);
+    this->errorMessages.append(errorMessage);
 }
 
 void FinTsDialog::initializeParameters()

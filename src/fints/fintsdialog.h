@@ -68,6 +68,7 @@ public:
     Q_INVOKABLE bool isInitialized();
     Q_INVOKABLE bool canRetrieveTransactions(const QString &accountId);
     Q_INVOKABLE bool canRetrievePortfolioInfo(const QString &accountId);
+    Q_INVOKABLE QVariantList getErrorMessages();
 
 signals:
     void dialogInitializationCompleted();
@@ -165,6 +166,8 @@ private:
     QString convertToBinaryFormat(const QString &originalString);
     Message *packageMessage(Message *originalMessage);
 
+    void appendErrorMessage(const QString &errorCode, const QString &errorText);
+
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;
     FinTsDeserializer deserializer;
@@ -176,6 +179,7 @@ private:
     QVariantMap userParameterData;
     QSqlDatabase database;
     InstitutesSearchWorker institutesSearchWorker;
+    QVariantList errorMessages;
 };
 
 #endif // FINTSDIALOG_H

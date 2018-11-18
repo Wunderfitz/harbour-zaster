@@ -70,6 +70,14 @@
         <source>&lt;b&gt;Price: &lt;/b&gt; %1 %2</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Unable to retrieve account information. Please check the following error messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (Error Code: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>CredentialsPage</name>
@@ -144,10 +152,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unable to retrieve account information. Please ensure that you entered proper credentials and try again.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Retrieving information...</source>
         <translation type="unfinished"></translation>
     </message>
@@ -157,6 +161,14 @@
     </message>
     <message>
         <source>Your PIN or Password</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (Error Code: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unable to retrieve account information. Please check the following error messages.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

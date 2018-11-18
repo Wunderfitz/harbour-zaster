@@ -26,6 +26,7 @@ Page {
 
     property string accountId;
     property bool isPortfolio: false
+    property bool inError: false
 
     Component.onCompleted: {
         finTsDialog.dialogInitialization();
@@ -46,30 +47,40 @@ Page {
         }
         onDialogInitializationFailed: {
             loadingColumn.visible = false;
+            transactionsColumn.visible = false;
+            errorMessageRepeater.model = finTsDialog.getErrorMessages();
             errorColumn.retryPossible = true;
             errorColumn.visible = true;
             errorInfoLabel.text = qsTr("Unable to connect to your bank. Please ensure that your internet connection works properly and try again.");
         }
         onAccountTransactionsCompleted: {
             finTsDialog.closeDialog();
-            loadingColumn.visible = false;
-            transactionsColumn.visible = true;
-            transactionsListView.model = accountTransactions;
+            if (!inError) {
+                loadingColumn.visible = false;
+                transactionsColumn.visible = true;
+                transactionsListView.model = accountTransactions;
+            }
         }
         onAccountTransactionsFailed: {
             loadingColumn.visible = false;
+            transactionsColumn.visible = false;
+            errorMessageRepeater.model = finTsDialog.getErrorMessages();
             errorColumn.retryPossible = true;
             errorColumn.visible = true;
             errorInfoLabel.text = qsTr("Unable to connect to your bank. Please ensure that your internet connection works properly and try again.");
         }
         onPortfolioInfoCompleted: {
             finTsDialog.closeDialog();
-            loadingColumn.visible = false;
-            transactionsColumn.visible = true;
-            transactionsListView.model = portfolioItems;
+            if (!inError) {
+                loadingColumn.visible = false;
+                transactionsColumn.visible = true;
+                transactionsListView.model = portfolioItems;
+            }
         }
         onPortfolioInfoFailed: {
             loadingColumn.visible = false;
+            transactionsColumn.visible = false;
+            errorMessageRepeater.model = finTsDialog.getErrorMessages();
             errorColumn.retryPossible = true;
             errorColumn.visible = true;
             errorInfoLabel.text = qsTr("Unable to connect to your bank. Please ensure that your internet connection works properly and try again.");
@@ -80,13 +91,27 @@ Page {
         onDialogEndFailed: {
             console.log("Error terminating dialog.");
         }
+        onErrorOccurred: {
+            if (pageStack.currentPage === transactionsPage) {
+                inError = true;
+                loadingColumn.visible = false;
+                transactionsColumn.visible = false;
+                errorMessageRepeater.model = finTsDialog.getErrorMessages();
+                errorColumn.retryPossible = false;
+                errorColumn.visible = true;
+                errorInfoLabel.text = qsTr("Unable to retrieve account information. Please check the following error messages.");
+            } else {
+                console.log("[AccountTransactionPage] Not handling error as not current page...")
+            }
+        }
     }
 
     SilicaFlickable {
 
         anchors.fill: parent
+        topMargin: errorColumn.visible ? Theme.horizontalPageMargin : 0
         contentWidth: parent.width
-        contentHeight: transactionsColumn.visible ? transactionsColumn.height : parent.height
+        contentHeight: transactionsColumn.visible ? transactionsColumn.height : ( errorColumn.visible ? errorColumn.height : parent.height )
 
         Column {
             id: loadingColumn
@@ -128,7 +153,6 @@ Page {
             property bool retryPossible: false
 
             id: errorColumn
-            height: errorInfoLabel.height + zasterErrorImage.height + errorOkButton.height + ( 3 * Theme.paddingMedium )
             width: parent.width
             spacing: Theme.paddingMedium
             anchors.verticalCenter: parent.verticalCenter
@@ -154,6 +178,20 @@ Page {
                 text: ""
             }
 
+            Repeater {
+                id: errorMessageRepeater
+                width: parent.width
+                delegate: Text {
+                    id: errorMessageText
+                    width: parent.width
+                    horizontalAlignment: Text.AlignHCenter
+                    font.pixelSize: Theme.fontSizeExtraSmall
+                    color: Theme.primaryColor
+                    wrapMode: Text.Wrap
+                    text: qsTr("%1 (Error Code: %2)").arg(modelData.text).arg(modelData.code)
+                }
+            }
+
             Button {
                 id: errorOkButton
                 text: qsTr("OK")
@@ -161,7 +199,7 @@ Page {
                     horizontalCenter: parent.horizontalCenter
                 }
                 onClicked: {
-
+                    inError = false;
                     if (errorColumn.retryPossible) {
                         errorColumn.visible = false;
                         finTsDialog.dialogInitialization();
@@ -296,6 +334,7 @@ Page {
 
         }
 
+        VerticalScrollDecorator {}
     }
 
 }
