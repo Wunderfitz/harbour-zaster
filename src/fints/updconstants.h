@@ -21,6 +21,7 @@
 #define UPDCONSTANTS_H
 
 const char UPD_KEY_VERSION[] = "version";
+const char UPD_KEY_LOGIN_ID[] = "loginId";
 const char UPD_KEY_USER_ID[] = "userId";
 const char UPD_KEY_CUSTOMER_SYSTEM_ID[] = "customerSystemId";
 const char UPD_KEY_CUSTOMER_SYSTEM_STATUS[] = "customerSystemStatus";

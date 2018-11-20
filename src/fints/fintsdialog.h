@@ -60,7 +60,7 @@ public:
     Q_INVOKABLE QString getBankName();
     Q_INVOKABLE QVariantMap getUserParameterData();
     Q_INVOKABLE void setBankData(const QString &bankId, const QString &bankName, const QString &url);
-    Q_INVOKABLE void setUserData(const QString &userId, const QString &pin);
+    Q_INVOKABLE void setUserData(const QString &loginId, const QString &pin);
     Q_INVOKABLE void setPin(const QString &pin);
     Q_INVOKABLE void searchInstitute(const QString &queryString);
     Q_INVOKABLE void storeParameterData();

@@ -160,9 +160,9 @@ void FinTsDialog::setBankData(const QString &bankId, const QString &bankName, co
     this->bankParameterData.insert(BPD_KEY_FINTS_URL, url);
 }
 
-void FinTsDialog::setUserData(const QString &userId, const QString &pin)
+void FinTsDialog::setUserData(const QString &loginId, const QString &pin)
 {
-    this->userParameterData.insert(UPD_KEY_USER_ID, userId);
+    this->userParameterData.insert(UPD_KEY_LOGIN_ID, loginId);
     this->myPin = pin;
 }
 
@@ -916,7 +916,7 @@ Segment *FinTsDialog::createSegmentIdentification(Message *parentMessage)
     messageIdentificationSegment->setHeader(createDegSegmentHeader(messageIdentificationSegment, SEGMENT_IDENTIFICATION_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_IDENTIFICATION_VERSION));
     // Usually it's the German "Bankleitzahl" or BLZ, see Geschäftsvorfälle page 608
     messageIdentificationSegment->addDataElement(createDegBankId(messageIdentificationSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
-    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
+    messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_LOGIN_ID).toString()));
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_ID).toString()));
     this->userParameterData.insert(UPD_KEY_CUSTOMER_SYSTEM_STATUS, "1");
     messageIdentificationSegment->addDataElement(new DataElement(messageIdentificationSegment, this->userParameterData.value(UPD_KEY_CUSTOMER_SYSTEM_STATUS).toString()));
@@ -1164,7 +1164,7 @@ DataElementGroup *FinTsDialog::createDegKeyName(FinTsElement *parentElement, con
 {
     DataElementGroup *keyName = new DataElementGroup(parentElement);
     keyName->addDataElement(createDegBankId(keyName, this->bankParameterData.value(BPD_KEY_BANK_ID).toString()));
-    keyName->addDataElement(new DataElement(keyName, this->userParameterData.value(UPD_KEY_USER_ID).toString()));
+    keyName->addDataElement(new DataElement(keyName, this->userParameterData.value(UPD_KEY_LOGIN_ID).toString()));
     keyName->addDataElement(new DataElement(keyName, keyType));
     keyName->addDataElement(new DataElement(keyName, "0"));
     keyName->addDataElement(new DataElement(keyName, "0"));

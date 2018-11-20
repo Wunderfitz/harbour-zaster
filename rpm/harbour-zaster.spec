@@ -14,10 +14,10 @@ Name:       harbour-zaster
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    Zaster
 Version:    0.1
-Release:    18
+Release:    19
 Group:      Qt/Qt
 License:    LICENSE
-URL:        http://example.org/
+URL:        http:/werkwolf.eu/
 Source0:    %{name}-%{version}.tar.bz2
 Source100:  harbour-zaster.yaml
 Requires:   sailfishsilica-qt5 >= 0.10.9
@@ -28,7 +28,7 @@ BuildRequires:  pkgconfig(Qt5Quick)
 BuildRequires:  desktop-file-utils
 
 %description
-Short description of my Sailfish OS Application
+A banking client for Sailfish OS
 
 
 %prep
