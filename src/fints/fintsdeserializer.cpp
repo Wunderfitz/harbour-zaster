@@ -36,7 +36,7 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray &encodedMessag
 Message *FinTsDeserializer::deserialize(const QByteArray &decodedMessage)
 {
     Message *newMessage = new Message();
-    qDebug() << "[FinTsDeserializer] Raw Message: " << QString::fromLatin1(decodedMessage);
+    // qDebug() << "[FinTsDeserializer] Raw Message: " << QString::fromLatin1(decodedMessage);
     bool inEscape = false;
     bool inGroup = false;
     bool inBinaryLength = false;

@@ -854,7 +854,7 @@ void FinTsDialog::parseSegmentPortfolioInfoParameters(Segment *segmentPortfolioI
 QVariantList FinTsDialog::parseSegmentAccountTransactions(Segment *segmentAccountTransactions)
 {
     QString rawTransactions = segmentAccountTransactions->getDataElements().at(0)->getValue();
-    qDebug() << "[FinTsDialog] Raw Transactions: " << rawTransactions;
+    // qDebug() << "[FinTsDialog] Raw Transactions: " << rawTransactions;
     return deserializer.deserializeSwiftTransactions(rawTransactions);
 }
 
@@ -894,7 +894,7 @@ QVariantMap FinTsDialog::parseSegmentAccountBalance(Segment *segmentAccountBalan
 QVariantList FinTsDialog::parseSegmentPortfolioInfo(Segment *segmentPortfolioInfo)
 {
     QString rawPortfolioInfo = segmentPortfolioInfo->getDataElements().at(0)->getValue();
-    qDebug() << "[FinTsDialog] Raw Portfolio Info: " << rawPortfolioInfo;
+    // qDebug() << "[FinTsDialog] Raw Portfolio Info: " << rawPortfolioInfo;
     return deserializer.deserializeSwiftPortfolioInfo(rawPortfolioInfo);
 }
 
@@ -1067,6 +1067,13 @@ Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, c
     if (transactionsVersion >= 5) {
         accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
     }
+    QDateTime toDateTime = QDateTime::currentDateTime();
+    QDateTime fromDateTime = toDateTime.addMonths(-3);
+    QTimeZone timezone("Europe/Berlin");
+    fromDateTime.setTimeZone(timezone);
+    toDateTime.setTimeZone(timezone);
+    accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, fromDateTime.toString("yyyyMMdd")));
+    accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, toDateTime.toString("yyyyMMdd")));
     return accountTransactionsSegment;
 }
 
