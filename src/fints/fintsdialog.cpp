@@ -654,7 +654,15 @@ void FinTsDialog::parseSegmentBankParameter(Segment *segmentBankParameter)
         QString maxTransactions = bankParameterElements.at(3)->getValue();
         this->bankParameterData.insert(BPD_KEY_MAX_TRANSACTIONS, maxTransactions);
         qDebug() << "[FinTsDialog] Maximum transactions per message: " << maxTransactions;
-        QString supportedLanguage = bankParameterElements.at(4)->getValue();
+        DataElement *languagesInfo = bankParameterElements.at(4);
+        QString supportedLanguage;
+        if (languagesInfo->getType() == FinTsElement::DEG) {
+            DataElementGroup *languagesInfoGroup = qobject_cast<DataElementGroup *>(languagesInfo);
+            QList<DataElement *> languagesInfoElements = languagesInfoGroup->getDataElements();
+            supportedLanguage = languagesInfoElements.at(0)->getValue();
+        } else {
+            supportedLanguage = languagesInfo->getValue();
+        }
         this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, supportedLanguage);
         qDebug() << "[FinTsDialog] Supported Language (0: Default, 1: German, 2: English, 3: French): " << supportedLanguage;
         QString supportedHBCIVersion = bankParameterElements.at(5)->getValue();
@@ -1226,11 +1234,10 @@ void FinTsDialog::insertMessageLength(Message *message)
 
 QString FinTsDialog::convertToBinaryFormat(const QString &originalString)
 {
-    QByteArray binaryString = originalString.toLatin1();
     QString formattedBinaryString = "@";
-    formattedBinaryString.append(QString::number(binaryString.length()));
+    formattedBinaryString.append(QString::number(originalString.length()));
     formattedBinaryString.append("@");
-    formattedBinaryString.append(binaryString);
+    formattedBinaryString.append(originalString);
     return formattedBinaryString;
 }
 
