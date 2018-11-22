@@ -32,9 +32,10 @@ static quint64 getSimpleCryptKey(const QString &encryptionKey) {
     return QCryptographicHash::hash(encryptionKey.toLatin1(), QCryptographicHash::Sha1).toULongLong();
 }
 
-FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
+FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
 {
     this->networkAccessManager = networkAccessManager;
+    this->wagnis = wagnis;
 
     this->initializeParameters();
 
@@ -77,6 +78,13 @@ void FinTsDialog::dialogInitialization()
 {
     qDebug() << "FinTsDialog::dialogInitialization";
     this->errorMessages.clear();
+
+    if (!wagnis->hasFeature("contribution") && wagnis->getRemainingTime() == 0) {
+        this->appendErrorMessage("666", "You haven't completed the registration process!");
+        emit errorOccurred();
+        return;
+    }
+
     Message *dialogInitializationMessage = this->createMessageDialogInitialization();
     QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
 

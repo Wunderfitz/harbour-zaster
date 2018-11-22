@@ -40,11 +40,16 @@ ApplicationWindow
     }
 
     Component {
+        id: registrationPage
+        RegistrationPage { }
+    }
+
+    Component {
         id: institutesSearchPage
         InstitutesSearchPage { }
     }
 
-    initialPage: finTsDialog.isInitialized() ? overviewPage : institutesSearchPage
+    initialPage: ( wagnis.isRegistered() && wagnis.hasFeature("contribution") ) ? ( finTsDialog.isInitialized() ? overviewPage : institutesSearchPage ) : registrationPage
     cover: Qt.resolvedUrl("cover/CoverPage.qml")
     allowedOrientations: defaultAllowedOrientations
 }
