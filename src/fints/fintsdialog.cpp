@@ -26,6 +26,7 @@
 #include <QSettings>
 #include <QLocale>
 #include <QCryptographicHash>
+#include <QJsonDocument>
 
 static quint64 getSimpleCryptKey(const QString &encryptionKey) {
     return QCryptographicHash::hash(encryptionKey.toLatin1(), QCryptographicHash::Sha1).toULongLong();
@@ -53,14 +54,14 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
 
     int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
     if (settingsVersion >= SETTINGS_VERSION) {
-        QVariant storedBankParameterData = finTsSettings.value("bankParameterData");
-        if (storedBankParameterData.isValid()) {
-            this->bankParameterData = storedBankParameterData.toMap();
+        QJsonDocument bankParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("bankParameterData").toString()));
+        if (!bankParameterJson.isEmpty()) {
+            this->bankParameterData = bankParameterJson.toVariant().toMap();
         }
 
-        QVariant storedUserParameterData = finTsSettings.value("userParameterData");
-        if (storedUserParameterData.isValid()) {
-            this->userParameterData = storedUserParameterData.toMap();
+        QJsonDocument userParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("userParameterData").toString()));
+        if (!userParameterJson.isEmpty()) {
+            this->userParameterData = userParameterJson.toVariant().toMap();
             this->initialized = true;
         }
     }
@@ -192,8 +193,10 @@ void FinTsDialog::storeParameterData()
 {
     qDebug() << "FinTsDialog::storeParameterData";
     QSettings finTsSettings("harbour-zaster", "finTsSettings");
-    finTsSettings.setValue("bankParameterData", this->bankParameterData);
-    finTsSettings.setValue("userParameterData", this->userParameterData);
+    QJsonDocument bankParameterJson = QJsonDocument::fromVariant(this->bankParameterData);
+    QJsonDocument userParameterJson = QJsonDocument::fromVariant(this->userParameterData);
+    finTsSettings.setValue("bankParameterData", simpleCrypt->encryptToString(bankParameterJson.toJson()));
+    finTsSettings.setValue("userParameterData", simpleCrypt->encryptToString(userParameterJson.toJson()));
     finTsSettings.setValue("settingsVersion", SETTINGS_VERSION);
 }
 

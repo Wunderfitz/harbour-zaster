@@ -183,7 +183,6 @@ private:
     QSqlDatabase database;
     InstitutesSearchWorker institutesSearchWorker;
     QVariantList errorMessages;
-
 };
 
 #endif // FINTSDIALOG_H

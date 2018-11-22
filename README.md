@@ -15,7 +15,7 @@ Simply clone this repository and use the project file `harbour-zaster.pro` to im
 const char FINTS_PRODUCT_ID[] = "1234567890ABCDEF";
 const char FINTS_PRODUCT_VERSION[] = "23";
 const char FINTS_DUMMY_USER_ID[] = "123456789";
-const int SETTINGS_DEFAULT_ENCRYPTION_KEY = 123456789;
+const char SETTINGS_DEFAULT_ENCRYPTION_KEY[] = "123456789";
 #endif // FINTSGLOBALS_H
 ```
 
