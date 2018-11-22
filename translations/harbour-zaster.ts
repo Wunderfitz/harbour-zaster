@@ -4,7 +4,7 @@
 <context>
     <name>AboutPage</name>
     <message>
-        <source>About Zaster</source>
+        <source>About ZasterBanker</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -37,6 +37,18 @@
     </message>
     <message>
         <source>Show Wagnis ID</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Credits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses SimpleCrypt by Andre Somers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Qt Wiki page on SimpleCrypt</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -125,7 +137,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Welcome to Zaster</source>
+        <source>Welcome to ZasterBanker</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -136,7 +148,7 @@
 <context>
     <name>OverviewPage</name>
     <message>
-        <source>About Zaster</source>
+        <source>About ZasterBanker</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

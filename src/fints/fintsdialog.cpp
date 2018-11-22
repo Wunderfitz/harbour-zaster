@@ -1,20 +1,20 @@
 /*
     Copyright (C) 2018 Sebastian J. Wolf
 
-    This file is part of Zaster.
+    This file is part of ZasterBanker.
 
-    Zaster is free software: you can redistribute it and/or modify
+    ZasterBanker is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Zaster is distributed in the hope that it will be useful,
+    ZasterBanker is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Zaster. If not, see <http://www.gnu.org/licenses/>.
+    along with ZasterBanker. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "fintsdialog.h"
@@ -25,6 +25,11 @@
 #include <QJsonObject>
 #include <QSettings>
 #include <QLocale>
+#include <QCryptographicHash>
+
+static quint64 getSimpleCryptKey(const QString &encryptionKey) {
+    return QCryptographicHash::hash(encryptionKey.toLatin1(), QCryptographicHash::Sha1).toULongLong();
+}
 
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
@@ -42,6 +47,8 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
        qDebug() << "Institutes database: Connection OK";
     }
 
+    simpleCrypt = new SimpleCrypt(getSimpleCryptKey(SETTINGS_DEFAULT_ENCRYPTION_KEY));
+
     QSettings finTsSettings("harbour-zaster", "finTsSettings");
 
     int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
@@ -58,6 +65,11 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
         }
     }
 
+}
+
+FinTsDialog::~FinTsDialog()
+{
+    delete simpleCrypt;
 }
 
 void FinTsDialog::dialogInitialization()
@@ -131,11 +143,6 @@ void FinTsDialog::portfolioInfo(const QString &portfolioId)
     QNetworkReply *reply = sendMessage(serializedPortfolioInfoMessage);
     connect(reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(handlePortfolioInfoError(QNetworkReply::NetworkError)));
     connect(reply, SIGNAL(finished()), this, SLOT(handlePortfolioInfoFinished()));
-}
-
-bool FinTsDialog::supportsPinTan()
-{
-    return this->bankParameterData.value(BPD_KEY_PIN_TAN_SUPPORTED, false).toBool();
 }
 
 QString FinTsDialog::getBankId()
@@ -227,6 +234,11 @@ bool FinTsDialog::canRetrievePortfolioInfo(const QString &accountId)
 QVariantList FinTsDialog::getErrorMessages()
 {
     return this->errorMessages;
+}
+
+SimpleCrypt *FinTsDialog::getSimpleCrypt()
+{
+    return this->simpleCrypt;
 }
 
 void FinTsDialog::handleDialogInitializationError(QNetworkReply::NetworkError error)

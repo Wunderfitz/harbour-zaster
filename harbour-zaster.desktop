@@ -3,4 +3,4 @@ Type=Application
 X-Nemo-Application-Type=silica-qt5
 Icon=harbour-zaster
 Exec=harbour-zaster
-Name=Zaster
+Name=ZasterBanker

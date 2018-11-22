@@ -12,9 +12,9 @@ Name:       harbour-zaster
 %{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
-Summary:    Zaster
+Summary:    ZasterBanker
 Version:    0.1
-Release:    22
+Release:    23
 Group:      Qt/Qt
 License:    LICENSE
 URL:        http:/werkwolf.eu/

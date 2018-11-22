@@ -4,8 +4,8 @@
 <context>
     <name>AboutPage</name>
     <message>
-        <source>About Zaster</source>
-        <translation>Über Zaster</translation>
+        <source>About ZasterBanker</source>
+        <translation>Über ZasterBanker</translation>
     </message>
     <message>
         <source>A banking client for Sailfish OS</source>
@@ -38,6 +38,18 @@
     <message>
         <source>Show Wagnis ID</source>
         <translation>Wagnis-ID anzeigen</translation>
+    </message>
+    <message>
+        <source>Credits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This project uses SimpleCrypt by Andre Somers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open Qt Wiki page on SimpleCrypt</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -125,8 +137,8 @@
         <translation>Keine Ergebnisse gefunden</translation>
     </message>
     <message>
-        <source>Welcome to Zaster</source>
-        <translation>Willkommen bei Zaster</translation>
+        <source>Welcome to ZasterBanker</source>
+        <translation>Willkommen bei ZasterBanker</translation>
     </message>
     <message>
         <source>Find your bank...</source>
@@ -136,8 +148,8 @@
 <context>
     <name>OverviewPage</name>
     <message>
-        <source>About Zaster</source>
-        <translation>Über Zaster</translation>
+        <source>About ZasterBanker</source>
+        <translation>Über ZasterBanker</translation>
     </message>
     <message>
         <source>Account Balance</source>

@@ -1,20 +1,20 @@
 /*
     Copyright (C) 2018 Sebastian J. Wolf
 
-    This file is part of Zaster.
+    This file is part of ZasterBanker.
 
-    Zaster is free software: you can redistribute it and/or modify
+    ZasterBanker is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Zaster is distributed in the hope that it will be useful,
+    ZasterBanker is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Zaster. If not, see <http://www.gnu.org/licenses/>.
+    along with ZasterBanker. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #ifndef FINTSDIALOG_H
@@ -38,15 +38,17 @@
 #include "updconstants.h"
 #include "transactionconstants.h"
 #include "institutessearchworker.h"
+#include "../simplecrypt.h"
 
 // Settings version (to check compatibility)
-const int SETTINGS_VERSION = 1;
+const int SETTINGS_VERSION = 2;
 
 class FinTsDialog : public QObject
 {
     Q_OBJECT
 public:
     explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0);
+    ~FinTsDialog();
 
     Q_INVOKABLE void initializeParameters();
     Q_INVOKABLE void dialogInitialization();
@@ -55,7 +57,6 @@ public:
     Q_INVOKABLE void accountBalance(const QString &accountId = "");
     Q_INVOKABLE void accountTransactions(const QString &accountId);
     Q_INVOKABLE void portfolioInfo(const QString &portfolioId);
-    Q_INVOKABLE bool supportsPinTan();
     Q_INVOKABLE QString getBankId();
     Q_INVOKABLE QString getBankName();
     Q_INVOKABLE QVariantMap getUserParameterData();
@@ -69,6 +70,7 @@ public:
     Q_INVOKABLE bool canRetrieveTransactions(const QString &accountId);
     Q_INVOKABLE bool canRetrievePortfolioInfo(const QString &accountId);
     Q_INVOKABLE QVariantList getErrorMessages();
+    SimpleCrypt *getSimpleCrypt();
 
 signals:
     void dialogInitializationCompleted();
@@ -168,6 +170,7 @@ private:
 
     void appendErrorMessage(const QString &errorCode, const QString &errorText);
 
+    SimpleCrypt *simpleCrypt;
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;
     FinTsDeserializer deserializer;
@@ -180,6 +183,7 @@ private:
     QSqlDatabase database;
     InstitutesSearchWorker institutesSearchWorker;
     QVariantList errorMessages;
+
 };
 
 #endif // FINTSDIALOG_H

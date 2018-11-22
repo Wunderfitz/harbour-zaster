@@ -1,20 +1,20 @@
 /*
     Copyright (C) 2018 Sebastian J. Wolf
 
-    This file is part of Zaster.
+    This file is part of ZasterBanker.
 
-    Zaster is free software: you can redistribute it and/or modify
+    ZasterBanker is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    Zaster is distributed in the hope that it will be useful,
+    ZasterBanker is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with Zaster. If not, see <http://www.gnu.org/licenses/>.
+    along with ZasterBanker. If not, see <http://www.gnu.org/licenses/>.
 */
 
 import QtQuick 2.0
@@ -36,7 +36,7 @@ Page {
             spacing: Theme.paddingLarge
 
             PageHeader {
-                title: qsTr("About Zaster")
+                title: qsTr("About ZasterBanker")
             }
 
             Image {
@@ -52,7 +52,7 @@ Page {
             }
 
             Label {
-                text: "Zaster 0.1"
+                text: "ZasterBanker 0.1"
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Theme.fontSizeExtraLarge
                 anchors {
@@ -160,6 +160,32 @@ Page {
                     showWagnisIdButton.visible = false;
                     wagnisIdLabel.visible = true;
                 }
+            }
+
+            SectionHeader {
+                text: qsTr("Credits")
+            }
+
+            Label {
+                x: Theme.horizontalPageMargin
+                width: parent.width  - ( 2 * Theme.horizontalPageMargin )
+                text: qsTr("This project uses SimpleCrypt by Andre Somers.")
+                font.pixelSize: Theme.fontSizeExtraSmall
+                wrapMode: Text.Wrap
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Text {
+                text: "<a href=\"https://wiki.qt.io/Simple_encryption_with_SimpleCrypt\">" + qsTr("Open Qt Wiki page on SimpleCrypt") + "</a>"
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                font.pixelSize: Theme.fontSizeSmall
+                linkColor: Theme.highlightColor
+
+                onLinkActivated: Qt.openUrlExternally("https://wiki.qt.io/Simple_encryption_with_SimpleCrypt")
             }
 
             Label {
