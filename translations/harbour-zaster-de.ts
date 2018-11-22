@@ -88,7 +88,7 @@
     </message>
     <message>
         <source>%1 (Error Code: %2)</source>
-        <translation >%1 (Fehlernummer: %2)</translation>
+        <translation>%1 (Fehlernummer: %2)</translation>
     </message>
 </context>
 <context>
@@ -355,7 +355,7 @@
     </message>
     <message>
         <source>%1 XL - 9,99 €</source>
-        <translation>%1 XL - 9,99 €/translation>
+        <translation>%1 XL - 9,99 €</translation>
     </message>
     <message>
         <source>After you have received your key by purchasing it or for another contribution, please validate your key here to run %1.</source>
