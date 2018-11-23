@@ -165,10 +165,10 @@ private:
     DataElementGroup *createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber, const int &messageVersion = SEGMENT_ACCOUNT_BALANCE_VERSION);
     DataElementGroup *createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
 
+    QString obtainEncryptionKey();
     void insertMessageLength(Message *message);
     QString convertToBinaryFormat(const QString &originalString);
     Message *packageMessage(Message *originalMessage);
-
     void appendErrorMessage(const QString &errorCode, const QString &errorText);
 
     SimpleCrypt *simpleCrypt;

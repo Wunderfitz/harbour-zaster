@@ -30,12 +30,58 @@
 #include <QFile>
 #include <QIODevice>
 
-static quint64 getSimpleCryptKey(const QString &encryptionKey)
+FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
 {
-    return QCryptographicHash::hash(encryptionKey.toLatin1(), QCryptographicHash::Sha1).toULongLong();
+    this->networkAccessManager = networkAccessManager;
+    this->wagnis = wagnis;
+
+    this->initializeParameters();
+
+    connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString, QVariantList)), this, SLOT(handleInstitutesSearchCompleted(QString, QVariantList)));
+    database = QSqlDatabase::addDatabase("QSQLITE");
+    database.setDatabaseName("/usr/share/harbour-zaster/db/fints_institutes.db");
+
+    if (!database.open()) {
+       qDebug() << "Error: connection with institutes database failed";
+    } else {
+       qDebug() << "Institutes database: Connection OK";
+    }
+
+    simpleCrypt = new SimpleCrypt();
+    QString encryptionKey = obtainEncryptionKey().replace("-", "");
+    QByteArray keyHash = encryptionKey.toLatin1().left(12);
+    bool conversionOk = false;
+    quint64 simpleCryptKey = keyHash.toLongLong(&conversionOk, 16);
+    if (simpleCryptKey == 0) {
+        qDebug() << "Using fallback SimpleCrypt Key";
+        simpleCryptKey = Q_UINT64_C(0x0c2ad4a4acb9f023);
+    }
+    simpleCrypt->setKey(simpleCryptKey);
+
+    QSettings finTsSettings("harbour-zaster", "finTsSettings");
+
+    int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
+    if (settingsVersion >= SETTINGS_VERSION) {
+        QJsonDocument bankParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("bankParameterData").toString()));
+        if (!bankParameterJson.isEmpty()) {
+            this->bankParameterData = bankParameterJson.toVariant().toMap();
+        }
+
+        QJsonDocument userParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("userParameterData").toString()));
+        if (!userParameterJson.isEmpty()) {
+            this->userParameterData = userParameterJson.toVariant().toMap();
+            this->initialized = true;
+        }
+    }
+
 }
 
-static QString obtainEncryptionKey()
+FinTsDialog::~FinTsDialog()
+{
+    delete simpleCrypt;
+}
+
+QString FinTsDialog::obtainEncryptionKey()
 {
     QString encryptionKey;
 
@@ -87,48 +133,6 @@ static QString obtainEncryptionKey()
     }
     qDebug() << "Using encryption key: " + encryptionKey;
     return encryptionKey;
-}
-
-FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
-{
-    this->networkAccessManager = networkAccessManager;
-    this->wagnis = wagnis;
-
-    this->initializeParameters();
-
-    connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString, QVariantList)), this, SLOT(handleInstitutesSearchCompleted(QString, QVariantList)));
-    database = QSqlDatabase::addDatabase("QSQLITE");
-    database.setDatabaseName("/usr/share/harbour-zaster/db/fints_institutes.db");
-
-    if (!database.open()) {
-       qDebug() << "Error: connection with institutes database failed";
-    } else {
-       qDebug() << "Institutes database: Connection OK";
-    }
-
-    simpleCrypt = new SimpleCrypt(getSimpleCryptKey(obtainEncryptionKey()));
-
-    QSettings finTsSettings("harbour-zaster", "finTsSettings");
-
-    int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
-    if (settingsVersion >= SETTINGS_VERSION) {
-        QJsonDocument bankParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("bankParameterData").toString()));
-        if (!bankParameterJson.isEmpty()) {
-            this->bankParameterData = bankParameterJson.toVariant().toMap();
-        }
-
-        QJsonDocument userParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("userParameterData").toString()));
-        if (!userParameterJson.isEmpty()) {
-            this->userParameterData = userParameterJson.toVariant().toMap();
-            this->initialized = true;
-        }
-    }
-
-}
-
-FinTsDialog::~FinTsDialog()
-{
-    delete simpleCrypt;
 }
 
 void FinTsDialog::dialogInitialization()

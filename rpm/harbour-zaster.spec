@@ -14,7 +14,7 @@ Name:       harbour-zaster
 %{?qtc_builddir:%define _builddir %qtc_builddir}
 Summary:    Zaster Banker
 Version:    0.1
-Release:    23
+Release:    24
 Group:      Qt/Qt
 License:    LICENSE
 URL:        http:/werkwolf.eu/
