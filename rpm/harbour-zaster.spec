@@ -12,7 +12,7 @@ Name:       harbour-zaster
 %{!?qtc_qmake5:%define qtc_qmake5 %qmake5}
 %{!?qtc_make:%define qtc_make make}
 %{?qtc_builddir:%define _builddir %qtc_builddir}
-Summary:    ZasterBanker
+Summary:    Zaster Banker
 Version:    0.1
 Release:    23
 Group:      Qt/Qt

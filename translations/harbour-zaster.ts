@@ -4,7 +4,7 @@
 <context>
     <name>AboutPage</name>
     <message>
-        <source>About ZasterBanker</source>
+        <source>About Zaster Banker</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -137,7 +137,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Welcome to ZasterBanker</source>
+        <source>Welcome to Zaster Banker</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -155,7 +155,7 @@
 <context>
     <name>OverviewPage</name>
     <message>
-        <source>About ZasterBanker</source>
+        <source>About Zaster Banker</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

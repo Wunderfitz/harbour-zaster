@@ -4,8 +4,8 @@
 <context>
     <name>AboutPage</name>
     <message>
-        <source>About ZasterBanker</source>
-        <translation>Über ZasterBanker</translation>
+        <source>About Zaster Banker</source>
+        <translation>Über Zaster Banker</translation>
     </message>
     <message>
         <source>A banking client for Sailfish OS</source>
@@ -137,8 +137,8 @@
         <translation>Keine Ergebnisse gefunden</translation>
     </message>
     <message>
-        <source>Welcome to ZasterBanker</source>
-        <translation>Willkommen bei ZasterBanker</translation>
+        <source>Welcome to Zaster Banker</source>
+        <translation>Willkommen bei Zaster Banker</translation>
     </message>
     <message>
         <source>Find your bank...</source>
@@ -155,8 +155,8 @@
 <context>
     <name>OverviewPage</name>
     <message>
-        <source>About ZasterBanker</source>
-        <translation>Über ZasterBanker</translation>
+        <source>About Zaster Banker</source>
+        <translation>Über Zaster Banker</translation>
     </message>
     <message>
         <source>Account Balance</source>
@@ -335,7 +335,7 @@
     </message>
     <message>
         <source>%1 is and will remain Open Source Software. However, in order to support the development of %1, we&apos;d like to ask you for a contribution before you can run it. Such a contribution can be made by translating %1 to another language, help developing it or simply by purchasing a key.</source>
-        <translation>ZasterBanker ist und wird Open Source-Software bleiben. Allerdings bitte ich Sie um einen Beitrag für die Unterstützung der Entwicklung von ZasterBanker, bevor sie die Anwendung ausführen können. Solch ein Beitrag kann geleistet werden, indem Sie ZasterBanker in eine andere Sprache übersetzen, bei der Entwicklung mithelfen, oder indem Sie einen Schlüssel erwerben.</translation>
+        <translation>Zaster Banker ist und wird Open Source-Software bleiben. Allerdings bitte ich Sie um einen Beitrag für die Unterstützung der Entwicklung von Zaster Banker, bevor sie die Anwendung ausführen können. Solch ein Beitrag kann geleistet werden, indem Sie Zaster Banker in eine andere Sprache übersetzen, bei der Entwicklung mithelfen, oder indem Sie einen Schlüssel erwerben.</translation>
     </message>
     <message>
         <source>If you&apos;ve already contributed to %1, please &lt;a href=&quot;mailto:contact@werkwolf.eu&quot;&gt;contact me&lt;/a&gt; directly.</source>

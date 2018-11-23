@@ -1,20 +1,20 @@
 /*
     Copyright (C) 2018 Sebastian J. Wolf
 
-    This file is part of ZasterBanker.
+    This file is part of Zaster Banker.
 
-    ZasterBanker is free software: you can redistribute it and/or modify
+    Zaster Banker is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation, either version 3 of the License, or
     (at your option) any later version.
 
-    ZasterBanker is distributed in the hope that it will be useful,
+    Zaster Banker is distributed in the hope that it will be useful,
     but WITHOUT ANY WARRANTY; without even the implied warranty of
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
     GNU General Public License for more details.
 
     You should have received a copy of the GNU General Public License
-    along with ZasterBanker. If not, see <http://www.gnu.org/licenses/>.
+    along with Zaster Banker. If not, see <http://www.gnu.org/licenses/>.
 */
 
 #include "fintsdialog.h"
@@ -27,9 +27,66 @@
 #include <QLocale>
 #include <QCryptographicHash>
 #include <QJsonDocument>
+#include <QFile>
+#include <QIODevice>
 
-static quint64 getSimpleCryptKey(const QString &encryptionKey) {
+static quint64 getSimpleCryptKey(const QString &encryptionKey)
+{
     return QCryptographicHash::hash(encryptionKey.toLatin1(), QCryptographicHash::Sha1).toULongLong();
+}
+
+static QString obtainEncryptionKey()
+{
+    QString encryptionKey;
+
+    // We try to use the unique device ID as encryption key. If we can't determine this ID, a default key is used...
+    // Unique device ID determination copied from the QtSystems module of the Qt Toolkit
+    if (encryptionKey.isEmpty()) {
+        QFile file(QStringLiteral("/sys/devices/virtual/dmi/id/product_uuid"));
+        if (file.open(QIODevice::ReadOnly)) {
+            QString id = QString::fromLocal8Bit(file.readAll().simplified().data());
+            if (id.length() == 36) {
+                encryptionKey = id;
+            }
+            file.close();
+        }
+    }
+    if (encryptionKey.isEmpty()) {
+        QFile file(QStringLiteral("/etc/machine-id"));
+        if (file.open(QIODevice::ReadOnly)) {
+            QString id = QString::fromLocal8Bit(file.readAll().simplified().data());
+            if (id.length() == 32) {
+                encryptionKey = id.insert(8,'-').insert(13,'-').insert(18,'-').insert(23,'-');
+            }
+            file.close();
+        }
+    }
+    if (encryptionKey.isEmpty()) {
+        QFile file(QStringLiteral("/etc/unique-id"));
+        if (file.open(QIODevice::ReadOnly)) {
+            QString id = QString::fromLocal8Bit(file.readAll().simplified().data());
+            if (id.length() == 32) {
+                encryptionKey = id.insert(8,'-').insert(13,'-').insert(18,'-').insert(23,'-');
+            }
+            file.close();
+        }
+    }
+    if (encryptionKey.isEmpty()) {
+        QFile file(QStringLiteral("/var/lib/dbus/machine-id"));
+        if (file.open(QIODevice::ReadOnly)) {
+            QString id = QString::fromLocal8Bit(file.readAll().simplified().data());
+            if (id.length() == 32) {
+                encryptionKey = id.insert(8,'-').insert(13,'-').insert(18,'-').insert(23,'-');
+            }
+            file.close();
+        }
+    }
+
+    if (encryptionKey.isEmpty()) {
+         encryptionKey = QString(SETTINGS_DEFAULT_ENCRYPTION_KEY);
+    }
+    qDebug() << "Using encryption key: " + encryptionKey;
+    return encryptionKey;
 }
 
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
@@ -49,7 +106,7 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
        qDebug() << "Institutes database: Connection OK";
     }
 
-    simpleCrypt = new SimpleCrypt(getSimpleCryptKey(SETTINGS_DEFAULT_ENCRYPTION_KEY));
+    simpleCrypt = new SimpleCrypt(getSimpleCryptKey(obtainEncryptionKey()));
 
     QSettings finTsSettings("harbour-zaster", "finTsSettings");
 
