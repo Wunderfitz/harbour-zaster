@@ -73,7 +73,7 @@ Page {
             registrationPage.registrationLoading = false;
             if (wagnis.hasFeature("contribution")) {
                 pageStack.clear();
-                pageStack.push(titlePage);
+                pageStack.push(overviewPage);
             } else {
                 contributionFlickable.visible = true;
                 contributionFlickable.opacity = 1;
@@ -520,23 +520,23 @@ Page {
                     switch (contributionComboBox.currentIndex) {
                         case 0:
                             payment = "3,33 €";
-                            purchaseLink = "https://www.digistore24.com/product/xyz";
+                            purchaseLink = "https://www.digistore24.com/product/249730";
                             break;
                         case 1:
                             payment = "5,55 €";
-                            purchaseLink = "https://www.digistore24.com/product/xyz";
+                            purchaseLink = "https://www.digistore24.com/product/249734";
                             break;
                         case 2:
                             payment = "7,77 €";
-                            purchaseLink = "https://www.digistore24.com/product/xyz";
+                            purchaseLink = "https://www.digistore24.com/product/249736";
                             break;
                         case 3:
                             payment = "9,99 €";
-                            purchaseLink = "https://www.digistore24.com/product/xyz";
+                            purchaseLink = "https://www.digistore24.com/product/249737";
                             break;
                     }
                     console.log("Payment selected: " + payment);
-                    //Qt.openUrlExternally(purchaseLink);
+                    Qt.openUrlExternally(purchaseLink);
                 }
             }
 
