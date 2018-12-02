@@ -26,6 +26,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QUrl>
+#include "fintsaccounts.h"
 #include "fintsserializer.h"
 #include "fintsdeserializer.h"
 #include "dataelementgroup.h"
@@ -48,7 +49,7 @@ class FinTsDialog : public QObject
 {
     Q_OBJECT
 public:
-    explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0, Wagnis *wagnis = 0);
+    explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0, Wagnis *wagnis = 0, FinTsAccounts *finTsAccounts = 0);
     ~FinTsDialog();
 
     Q_INVOKABLE void initializeParameters();
@@ -166,6 +167,7 @@ private:
     DataElementGroup *createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
 
     QString obtainEncryptionKey();
+    void storeAccountDescriptor();
     void insertMessageLength(Message *message);
     QString convertToBinaryFormat(const QString &originalString);
     Message *packageMessage(Message *originalMessage);
@@ -173,6 +175,7 @@ private:
 
     SimpleCrypt *simpleCrypt;
     Wagnis *wagnis;
+    FinTsAccounts *finTsAccounts;
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;
     FinTsDeserializer deserializer;

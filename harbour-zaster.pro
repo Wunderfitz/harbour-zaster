@@ -30,7 +30,8 @@ SOURCES += src/harbour-zaster.cpp \
     src/fints/fintsdialog.cpp \
     src/fints/institutessearchworker.cpp \
     src/fints/fintsbalances.cpp \
-    src/simplecrypt.cpp
+    src/simplecrypt.cpp \
+    src/fints/fintsaccounts.cpp
 
 DISTFILES += qml/*.qml \
     rpm/harbour-zaster.changes.in \
@@ -70,7 +71,8 @@ HEADERS += \
     src/fints/transactionconstants.h \
     src/fints/institutessearchworker.h \
     src/fints/fintsbalances.h \
-    src/simplecrypt.h
+    src/simplecrypt.h \
+    src/fints/fintsaccounts.h
 
 database.files = db
 database.path = /usr/share/$${TARGET}

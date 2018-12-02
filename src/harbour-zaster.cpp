@@ -32,6 +32,7 @@
 #include "zaster.h"
 #include "fints/fintsdialog.h"
 #include "fints/fintsbalances.h"
+#include "fints/fintsaccounts.h"
 
 int main(int argc, char *argv[])
 {
@@ -47,6 +48,8 @@ int main(int argc, char *argv[])
     context->setContextProperty("finTsDialog", finTsDialog);
     FinTsBalances *finTsBalances = zaster.getFinTsBalances();
     context->setContextProperty("finTsBalances", finTsBalances);
+    FinTsAccounts *finTsAccounts = zaster.getFinTsAccounts();
+    context->setContextProperty("finTsAccounts", finTsAccounts);
 
     view->setSource(SailfishApp::pathTo("qml/harbour-zaster.qml"));
     view->show();

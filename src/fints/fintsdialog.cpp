@@ -29,11 +29,13 @@
 #include <QJsonDocument>
 #include <QFile>
 #include <QIODevice>
+#include <QUuid>
 
-FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
+FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis, FinTsAccounts *finTsAccounts) : QObject(parent)
 {
     this->networkAccessManager = networkAccessManager;
     this->wagnis = wagnis;
+    this->finTsAccounts = finTsAccounts;
 
     this->initializeParameters();
 
@@ -70,10 +72,15 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
         QJsonDocument userParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("userParameterData").toString()));
         if (!userParameterJson.isEmpty()) {
             this->userParameterData = userParameterJson.toVariant().toMap();
+            this->storeAccountDescriptor();
             this->initialized = true;
         }
     }
-
+    QString accountUUIDString = finTsSettings.value("accountUUID").toString();
+    if (accountUUIDString.isEmpty()) {
+        QUuid accountUUID = QUuid::createUuid();
+        finTsSettings.setValue("accountUUID", accountUUID.toString().remove("{").remove("}"));
+    }
 }
 
 FinTsDialog::~FinTsDialog()
@@ -133,6 +140,20 @@ QString FinTsDialog::obtainEncryptionKey()
     }
     qDebug() << "Using encryption key: " + encryptionKey;
     return encryptionKey;
+}
+
+void FinTsDialog::storeAccountDescriptor()
+{
+    QSettings finTsSettings("harbour-zaster", "finTsSettings");
+    QString accountDescriptorId = this->userParameterData.value(UPD_KEY_LOGIN_ID).toString();
+    if (accountDescriptorId.size() < 4) {
+        accountDescriptorId = "42***42";
+    } else {
+        accountDescriptorId = accountDescriptorId.left(2) + "***" + accountDescriptorId.right(2);
+    }
+    finTsSettings.setValue("accountDescriptorID", accountDescriptorId);
+    finTsSettings.setValue("accountDescriptorText", this->bankParameterData.value(BPD_KEY_BANK_NAME).toString());
+    finTsAccounts->initializeAccounts();
 }
 
 void FinTsDialog::dialogInitialization()
@@ -523,6 +544,7 @@ void FinTsDialog::parseReplyDialogInitialization(Message *replyMessage)
         if (segmentIdentifier == SEGMENT_ENCRYPTED_DATA_ID) { parseReplyDialogInitialization(parseSegmentEncryptedMessage(currentSegment)); }
     }
     this->initialized = true;
+    this->storeAccountDescriptor();
 }
 
 Message *FinTsDialog::createMessageCloseDialog()

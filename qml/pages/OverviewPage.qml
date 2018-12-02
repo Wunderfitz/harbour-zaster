@@ -296,6 +296,10 @@ Page {
                 text: qsTr("About Zaster Banker")
                 onClicked: pageStack.push(Qt.resolvedUrl("AboutPage.qml"))
             }
+            MenuItem {
+                text: qsTr("Settings")
+                onClicked: pageStack.push(Qt.resolvedUrl("SettingsPage.qml"))
+            }
         }
 
         Column {
