@@ -187,7 +187,7 @@ QVariantList FinTsDeserializer::deserializeSwiftTransactions(const QString &rawS
                 if (!nextSwiftComponent.at(offset).isDigit()) {
                     offset++;
                 }
-                QRegExp actualVolume("(\\d+,\\d+)");
+                QRegExp actualVolume("(\\d+,\\d*)");
                 if (nextSwiftComponent.indexOf(actualVolume, offset) != -1) {
                     QLocale germanLocale("de");
                     float floatValue = germanLocale.toFloat(actualVolume.cap(1));
