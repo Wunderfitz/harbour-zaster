@@ -40,6 +40,8 @@ void FinTsBalances::retrieveBalances()
     qDebug() << "FinTsBalances::retrieveBalances";
     setWorkInProgress(true);
     this->myAccounts = finTsDialog->getUserParameterData().value(UPD_KEY_ACCOUNTS).toList();
+    this->retrievedAccounts.clear();
+    this->retrievedBalances.clear();
     finTsDialog->dialogInitialization();
 }
 
@@ -79,12 +81,12 @@ void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBal
         while (accountsIterator.hasNext()) {
             QString myAccount = accountsIterator.next().toMap().value(UPD_KEY_ACCOUNT_ID).toString();
             qDebug() << "[FinTsBalances] Checking account " << myAccount;
-            if (myAccount == this->accountInProgress) {
-                // DRY! Most certainly an error/unsuppoerted format
-                qDebug() << "[FinTsBalances] Previous balance retrieval not successful. Aborting...";
-                break;
-            }
             if (!this->retrievedAccounts.contains(myAccount)) {
+                if (myAccount == this->accountInProgress) {
+                    // DRY! Most certainly an error/unsuppoerted format
+                    qDebug() << "[FinTsBalances] Previous balance retrieval not successful. Aborting...";
+                    break;
+                }
                 qDebug() << "[FinTsBalances] There is an account missing: " << myAccount;
                 qDebug() << "[FinTsBalances] Retrieving balance for this account!";
                 this->accountInProgress = myAccount;

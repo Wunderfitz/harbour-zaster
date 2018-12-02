@@ -1133,7 +1133,6 @@ Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const 
     if (accountId.isEmpty()) {
         QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
         usedAccountId = firstAccount.value(UPD_KEY_ACCOUNT_ID).toString();
-        getAllAccounts = "J";
     }
     qDebug() << "[FinTsDialog] Account Balance Message Version: " << accountBalanceVersion;
     if (accountBalanceVersion >= 7) {
