@@ -311,9 +311,12 @@ Page {
 
             Text {
                 id: bankNameText
+                x: Theme.horizontalPageMargin
+                width: parent.width - ( 2 * Theme.horizontalPageMargin )
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Theme.fontSizeLarge
                 color: Theme.primaryColor
+                wrapMode: Text.Wrap
                 anchors {
                     horizontalCenter: parent.horizontalCenter
                 }
