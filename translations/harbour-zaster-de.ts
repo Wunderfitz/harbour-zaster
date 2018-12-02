@@ -335,7 +335,7 @@
     </message>
     <message>
         <source>%1 is and will remain Open Source Software. However, in order to support the development of %1, we&apos;d like to ask you for a contribution before you can run it. Such a contribution can be made by translating %1 to another language, help developing it or simply by purchasing a key.</source>
-        <translation>Zaster Banker ist und wird Open Source-Software bleiben. Allerdings bitte ich Sie um einen Beitrag für die Unterstützung der Entwicklung von Zaster Banker, bevor sie die Anwendung ausführen können. Solch ein Beitrag kann geleistet werden, indem Sie Zaster Banker in eine andere Sprache übersetzen, bei der Entwicklung mithelfen, oder indem Sie einen Schlüssel erwerben.</translation>
+        <translation>%1 ist und wird Open Source-Software bleiben. Allerdings bitte ich Sie um einen Beitrag für die Unterstützung der Entwicklung von %1, bevor sie die Anwendung ausführen können. Solch ein Beitrag kann geleistet werden, indem Sie %1 in eine andere Sprache übersetzen, bei der Entwicklung mithelfen, oder indem Sie einen Schlüssel erwerben.</translation>
     </message>
     <message>
         <source>If you&apos;ve already contributed to %1, please &lt;a href=&quot;mailto:contact@werkwolf.eu&quot;&gt;contact me&lt;/a&gt; directly.</source>
