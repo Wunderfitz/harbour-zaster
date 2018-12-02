@@ -41,9 +41,9 @@ Page {
     function enterPin() {
         finTsDialog.setPin(enterPinField.text);
         overviewPage.initializationCompleted = true;
-        finTsBalances.retrieveBalances();
         enterPinFlickable.visible = false;
         loadingColumn.visible = true;
+        finTsBalances.retrieveBalances();        
     }
 
     Connections {
@@ -55,6 +55,17 @@ Page {
             accountsListView.model = accountBalances;
             loadingColumn.visible = false;
             overviewFlickable.visible = true;
+        }
+        onErrorRetrievingBalances: {
+            if (pageStack.currentPage === overviewPage) {
+                errorMessageRepeater.model = [{ code: "Internal", text: errorMessage }] ;
+                errorFlickable.visible = true;
+                enterPinFlickable.visible = false;
+                overviewFlickable.visible = false;
+                loadingColumn.visible = false;
+            } else {
+                console.log("[OverviewPage] Not handling error as not current page...")
+            }
         }
     }
 

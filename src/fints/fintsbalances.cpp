@@ -38,8 +38,13 @@ FinTsBalances::FinTsBalances(QObject *parent, FinTsDialog *finTsDialog) : QObjec
 void FinTsBalances::retrieveBalances()
 {
     qDebug() << "FinTsBalances::retrieveBalances";
-    setWorkInProgress(true);
     this->myAccounts = finTsDialog->getUserParameterData().value(UPD_KEY_ACCOUNTS).toList();
+    if (this->myAccounts.isEmpty()) {
+        qDebug() << "[FinTsBalances] No accounts found, no balances will be retrieved!";
+        emit errorRetrievingBalances("No accounts found! Please check your credentials and if they are not locked.");
+        return;
+    }
+    setWorkInProgress(true);
     this->retrievedAccounts.clear();
     this->retrievedBalances.clear();
     finTsDialog->dialogInitialization();
