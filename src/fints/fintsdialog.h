@@ -42,7 +42,7 @@
 #include "../wagnis/wagnis.h"
 
 // Settings version (to check compatibility)
-const int SETTINGS_VERSION = 2;
+const int SETTINGS_VERSION = 3;
 
 class FinTsDialog : public QObject
 {

@@ -36,6 +36,15 @@ CoverBackground {
         }
     }
 
+    Connections {
+        target: finTsAccounts
+        onAccountSwitched: {
+            balancesRetrieved = false;
+            bankNameText.text = "";
+            accountsListView.model = null;
+        }
+    }
+
     Image {
         source: "../../images/background.png"
         anchors {

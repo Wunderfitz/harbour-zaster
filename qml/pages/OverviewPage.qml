@@ -200,6 +200,10 @@ Page {
         opacity: visible ? 1 : 0
         visible: false
 
+        RemorsePopup {
+            id: removeAccountRemorsePopup
+        }
+
         Column {
             id: enterPinColumn
 
@@ -272,6 +276,32 @@ Page {
                 }
                 onClicked: {
                     enterPin();
+                }
+            }
+
+            Label {
+                id: separatorLabel
+                x: Theme.horizontalPageMargin
+                width: parent.width  - ( 2 * Theme.horizontalPageMargin )
+                font.pixelSize: Theme.fontSizeExtraSmall
+                wrapMode: Text.Wrap
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Button {
+                id: removeAccountButton
+                text: qsTr("Remove this Account")
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                onClicked: {
+                    removeAccountRemorsePopup.execute(qsTr("Removing account"), function() {
+                        finTsAccounts.removeCurrentAccount();
+                        pageStack.clear();
+                        pageStack.push(( wagnis.isRegistered() && wagnis.hasFeature("contribution") ) ?  ( finTsDialog.isInitialized() ? overviewPage : institutesSearchPage ) : registrationPage);
+                    } );
                 }
             }
         }

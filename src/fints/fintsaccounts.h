@@ -36,8 +36,12 @@ public:
     Q_INVOKABLE void switchAccount(const QString &newAccountUUID);
 
 signals:
+    void accountSwitched();
 
 public slots:
+
+private slots:
+    void handleDialogInitializationCompleted();
 
 private:
     QVariantList myAccounts;

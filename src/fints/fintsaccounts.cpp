@@ -27,6 +27,7 @@
 FinTsAccounts::FinTsAccounts(QObject *parent, FinTsDialog *finTsDialog) : QObject(parent)
 {
     this->finTsDialog = finTsDialog;
+    connect(this->finTsDialog, SIGNAL(dialogInitializationCompleted()), this, SLOT(handleDialogInitializationCompleted()));
     initializeAccounts();
 }
 
@@ -41,6 +42,7 @@ void FinTsAccounts::registerNewAccount()
     QSettings settings("harbour-zaster", "finTsSettings");
     QString currentAccountUUID = settings.value("accountUUID").toString();
     QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + currentAccountUUID + ".conf");
+    emit accountSwitched();
     this->finTsDialog->initializeParameters();
 }
 
@@ -60,6 +62,7 @@ void FinTsAccounts::removeCurrentAccount()
             }
         }
     }
+    emit accountSwitched();
     this->finTsDialog->initializeParameters();
 }
 
@@ -70,7 +73,13 @@ void FinTsAccounts::switchAccount(const QString &newAccountUUID)
     QString currentAccountUUID = settings.value("accountUUID").toString();
     QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + currentAccountUUID + ".conf");
     QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + newAccountUUID + ".conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf");
+    emit accountSwitched();
     this->finTsDialog->initializeParameters();
+}
+
+void FinTsAccounts::handleDialogInitializationCompleted()
+{
+    initializeAccounts();
 }
 
 void FinTsAccounts::initializeAccounts()

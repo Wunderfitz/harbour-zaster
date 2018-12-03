@@ -918,7 +918,9 @@ void FinTsDialog::parseSegmentAccountBalanceParameters(Segment *segmentAccountBa
     DataElementGroup *segmentHeader = segmentAccountBalanceParameters->getHeader();
     int accountBalanceVersion = segmentHeader->getDataElements().at(2)->getValue().toInt();
     qDebug() << "[FinTsDialog] Bank supports account balance message version: " << accountBalanceVersion;
-    if (this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, accountBalanceVersion - 1).toInt() < accountBalanceVersion) {
+    // Don't support version 7 as we don't get BIC and without it, it won't work everywhere...
+    if (this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, accountBalanceVersion - 1).toInt() < accountBalanceVersion &&
+            accountBalanceVersion < 7) {
         this->bankParameterData.insert(BPD_KEY_ACCOUNT_BALANCE_VERSION, accountBalanceVersion);
     }
 }
@@ -1130,7 +1132,6 @@ Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const 
 {
     Segment *accountBalanceSegment = new Segment(parentMessage);
     int accountBalanceVersion = this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, SEGMENT_ACCOUNT_BALANCE_VERSION).toInt();
-    accountBalanceVersion = 4;
     accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(accountBalanceVersion)));
     QString usedAccountId = accountId;
     QString usedIban = iban;
@@ -1165,7 +1166,7 @@ Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, c
         accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
     }
     QDateTime toDateTime = QDateTime::currentDateTime();
-    QDateTime fromDateTime = toDateTime.addMonths(-3);
+    QDateTime fromDateTime = toDateTime.addMonths(-1);
     QTimeZone timezone("Europe/Berlin");
     fromDateTime.setTimeZone(timezone);
     toDateTime.setTimeZone(timezone);
