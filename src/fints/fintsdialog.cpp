@@ -361,6 +361,7 @@ void FinTsDialog::handleSynchronizationFinished()
 
     Message *replyMessage = deserializer.decodeAndDeserialize(reply->readAll());
     parseReplyDialogInitialization(replyMessage);
+    this->storeAccountDescriptor();
     emit synchronizationCompleted();
     replyMessage->deleteLater();
 }
@@ -1129,6 +1130,7 @@ Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const 
 {
     Segment *accountBalanceSegment = new Segment(parentMessage);
     int accountBalanceVersion = this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, SEGMENT_ACCOUNT_BALANCE_VERSION).toInt();
+    accountBalanceVersion = 4;
     accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(accountBalanceVersion)));
     QString usedAccountId = accountId;
     QString usedIban = iban;
@@ -1364,6 +1366,10 @@ void FinTsDialog::initializeParameters()
     // Message number - first message is always "1", but is increased at message creation, see Formals, page 120
     this->myMessageNumber = 0;
 
+    this->bankParameterData.clear();
+    this->userParameterData.clear();
+    this->myPin.clear();
+
     // Dialog language, needs to be "0" for Standard, see Formals page 109
     this->bankParameterData.insert(BPD_KEY_SUPPORTED_LANGUAGE, "0");
     // Bank Parameter Data (BPD) version, needs to be "0" for the initial call, see Formals page 45
@@ -1386,6 +1392,7 @@ void FinTsDialog::initializeParameters()
 
     int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
     if (settingsVersion >= SETTINGS_VERSION) {
+        qDebug() << "[FinTsDialog] Using Bank Parameter Data from file";
         QJsonDocument bankParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("bankParameterData").toString()));
         if (!bankParameterJson.isEmpty()) {
             this->bankParameterData = bankParameterJson.toVariant().toMap();
@@ -1393,6 +1400,7 @@ void FinTsDialog::initializeParameters()
 
         QJsonDocument userParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("userParameterData").toString()));
         if (!userParameterJson.isEmpty()) {
+            qDebug() << "[FinTsDialog] Using User Parameter Data from file";
             this->userParameterData = userParameterJson.toVariant().toMap();
             this->storeAccountDescriptor();
             this->initialized = true;

@@ -79,20 +79,27 @@ void FinTsAccounts::initializeAccounts()
     this->myAccounts.clear();
     QString configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster";
     QDir configDirectory(configPath);
-    QStringList nameFilter("finTsSettings*.conf");
+    QVariantMap currentAccount;
+    QSettings currentSettings("harbour-zaster", "finTsSettings");
+    currentAccount.insert("uuid", currentSettings.value("accountUUID").toString());
+    currentAccount.insert("descriptorId", currentSettings.value("accountDescriptorID").toString());
+    currentAccount.insert("descriptorText", currentSettings.value("accountDescriptorText").toString());
+    this->myAccounts.append(currentAccount);
+
+    QStringList nameFilter("finTsSettings-*.conf");
     QStringList accountFiles = configDirectory.entryList(nameFilter);
     QStringListIterator accountFilesIterator(accountFiles);
     while (accountFilesIterator.hasNext()) {
-        QVariantMap singleAccount;
+        QVariantMap otherAccount;
         QString accountFileName = accountFilesIterator.next();
-        QRegExp accountFileMatcher("(finTsSettings\\-?[\\w]*)\\.conf");
+        QRegExp accountFileMatcher("(finTsSettings\\-[0-9a-f\\-]*)\\.conf");
         if (accountFileMatcher.indexIn(accountFileName) != -1) {
-            QSettings currentSettings("harbour-zaster", accountFileMatcher.cap(1));
-            qDebug() << "Found account: " << currentSettings.value("accountUUID").toString() << currentSettings.value("accountDescriptorID").toString() << currentSettings.value("accountDescriptorText").toString();
-            singleAccount.insert("uuid", currentSettings.value("accountUUID").toString());
-            singleAccount.insert("descriptorId", currentSettings.value("accountDescriptorID").toString());
-            singleAccount.insert("descriptorText", currentSettings.value("accountDescriptorText").toString());
-            this->myAccounts.append(singleAccount);
+            QSettings otherSettings("harbour-zaster", accountFileMatcher.cap(1));
+            qDebug() << "Found account: " << otherSettings.value("accountUUID").toString() << otherSettings.value("accountDescriptorID").toString() << otherSettings.value("accountDescriptorText").toString();
+            otherAccount.insert("uuid", otherSettings.value("accountUUID").toString());
+            otherAccount.insert("descriptorId", otherSettings.value("accountDescriptorID").toString());
+            otherAccount.insert("descriptorText", otherSettings.value("accountDescriptorText").toString());
+            this->myAccounts.append(otherAccount);
         }
     }
 }
