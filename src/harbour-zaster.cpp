@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
     FinTsAccounts *finTsAccounts = zaster.getFinTsAccounts();
     context->setContextProperty("finTsAccounts", finTsAccounts);
 
+
     view->setSource(SailfishApp::pathTo("qml/harbour-zaster.qml"));
     view->show();
     return app->exec();

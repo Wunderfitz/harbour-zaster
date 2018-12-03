@@ -84,7 +84,9 @@ void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBal
         qDebug() << "[FinTsBalances] Number of accounts: " << QString::number(this->myAccounts.size());
         QListIterator<QVariant> accountsIterator(this->myAccounts);
         while (accountsIterator.hasNext()) {
-            QString myAccount = accountsIterator.next().toMap().value(UPD_KEY_ACCOUNT_ID).toString();
+            QVariantMap nextAccount = accountsIterator.next().toMap();
+            QString myAccount = nextAccount.value(UPD_KEY_ACCOUNT_ID).toString();
+            QString myIban = nextAccount.value(UPD_KEY_IBAN).toString();
             qDebug() << "[FinTsBalances] Checking account " << myAccount;
             if (!this->retrievedAccounts.contains(myAccount)) {
                 if (myAccount == this->accountInProgress) {
@@ -95,7 +97,7 @@ void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBal
                 qDebug() << "[FinTsBalances] There is an account missing: " << myAccount;
                 qDebug() << "[FinTsBalances] Retrieving balance for this account!";
                 this->accountInProgress = myAccount;
-                finTsDialog->accountBalance(myAccount);
+                finTsDialog->accountBalance(myAccount, myIban);
                 return;
             }
         }

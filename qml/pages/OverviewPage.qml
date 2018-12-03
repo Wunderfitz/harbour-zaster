@@ -366,7 +366,7 @@ Page {
 
                     onClicked: {
                         console.log("Selected: " + modelData.accountId);
-                        pageStack.push(Qt.resolvedUrl("AccountTransactionsPage.qml"), {"accountId": modelData.accountId})
+                        pageStack.push(Qt.resolvedUrl("AccountTransactionsPage.qml"), {"accountId": modelData.accountId, "iban": modelData.iban})
                     }
 
                     Item {

@@ -25,6 +25,7 @@ Page {
     allowedOrientations: Orientation.All
 
     property string accountId;
+    property string iban;
     property bool isPortfolio: false
     property bool inError: false
 
@@ -38,7 +39,7 @@ Page {
         onDialogInitializationCompleted: {
             if (finTsDialog.canRetrieveTransactions(transactionsPage.accountId)) {
                 transactionsHeader.title = qsTr("Transactions");
-                finTsDialog.accountTransactions(transactionsPage.accountId);
+                finTsDialog.accountTransactions(transactionsPage.accountId, transactionsPage.iban);
             } else if (finTsDialog.canRetrievePortfolioInfo(transactionsPage.accountId)) {
                 transactionsHeader.title = qsTr("Portfolio");
                 transactionsPage.isPortfolio = true;

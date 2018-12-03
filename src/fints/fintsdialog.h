@@ -26,7 +26,6 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QUrl>
-#include "fintsaccounts.h"
 #include "fintsserializer.h"
 #include "fintsdeserializer.h"
 #include "dataelementgroup.h"
@@ -49,15 +48,15 @@ class FinTsDialog : public QObject
 {
     Q_OBJECT
 public:
-    explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0, Wagnis *wagnis = 0, FinTsAccounts *finTsAccounts = 0);
+    explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0, Wagnis *wagnis = 0);
     ~FinTsDialog();
 
     Q_INVOKABLE void initializeParameters();
     Q_INVOKABLE void dialogInitialization();
     Q_INVOKABLE void synchronization();
     Q_INVOKABLE void closeDialog();
-    Q_INVOKABLE void accountBalance(const QString &accountId = "");
-    Q_INVOKABLE void accountTransactions(const QString &accountId);
+    Q_INVOKABLE void accountBalance(const QString &accountId = "", const QString &iban = "");
+    Q_INVOKABLE void accountTransactions(const QString &accountId, const QString &iban = "");
     Q_INVOKABLE void portfolioInfo(const QString &portfolioId);
     Q_INVOKABLE QString getBankId();
     Q_INVOKABLE QString getBankName();
@@ -116,9 +115,9 @@ private:
     void parseReplyDialogInitialization(Message *replyMessage);
     Message *createMessageCloseDialog();
     void parseReplyCloseDialog(Message *replyMessage);
-    Message *createMessageAccountBalance(const QString &accountId);
+    Message *createMessageAccountBalance(const QString &accountId, const QString &iban);
     QVariantList parseReplyAccountBalance(Message *replyMessage);
-    Message *createMessageAccountTransactions(const QString &accountId);
+    Message *createMessageAccountTransactions(const QString &accountId, const QString &iban);
     QVariantList parseReplyAccountTransactions(Message *replyMessage);
     Message *createMessagePortfolioInfo(const QString &portfolioId);
     QVariantList parseReplyPortfolioInfo(Message *replyMessage);
@@ -133,8 +132,8 @@ private:
     Segment *createSegmentSignatureFooter(Message *parentMessage);
     Segment *createSegmentEncryptionHeader(FinTsElement *parentElement);
     Segment *createSegmentEncryptedData(FinTsElement *parentElement, const QString &encryptedData);
-    Segment *createSegmentAccountBalance(Message *parentMessage, const QString &accountId);
-    Segment *createSegmentAccountTransactions(Message *parentMessage, const QString &accountId);
+    Segment *createSegmentAccountBalance(Message *parentMessage, const QString &accountId, const QString &iban);
+    Segment *createSegmentAccountTransactions(Message *parentMessage, const QString &accountId, const QString &iban);
     Segment *createSegmentPortfolioInfo(Message *parentMessage, const QString &portfolioId);
     void parseSegmentMessageHeader(Segment *segmentMessageHeader);
     void parseSegmentMessageFeedback(Segment *segmentMessageFeedback);
@@ -164,7 +163,7 @@ private:
     DataElementGroup *createDegKeyName(FinTsElement *parentElement, const QString &keyType);
     DataElementGroup *createDegEncryptionAlgorithm(FinTsElement *parentElement);
     DataElementGroup *createDegAccountId(FinTsElement *parentElement, const QString &blz, const QString &accountNumber, const int &messageVersion = SEGMENT_ACCOUNT_BALANCE_VERSION);
-    DataElementGroup *createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber);
+    DataElementGroup *createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber, const QString &iban);
 
     QString obtainEncryptionKey();
     void storeAccountDescriptor();
@@ -175,7 +174,6 @@ private:
 
     SimpleCrypt *simpleCrypt;
     Wagnis *wagnis;
-    FinTsAccounts *finTsAccounts;
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;
     FinTsDeserializer deserializer;

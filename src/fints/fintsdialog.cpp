@@ -31,13 +31,10 @@
 #include <QIODevice>
 #include <QUuid>
 
-FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis, FinTsAccounts *finTsAccounts) : QObject(parent)
+FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
 {
     this->networkAccessManager = networkAccessManager;
     this->wagnis = wagnis;
-    this->finTsAccounts = finTsAccounts;
-
-    this->initializeParameters();
 
     connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString, QVariantList)), this, SLOT(handleInstitutesSearchCompleted(QString, QVariantList)));
     database = QSqlDatabase::addDatabase("QSQLITE");
@@ -60,27 +57,8 @@ FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessMa
     }
     simpleCrypt->setKey(simpleCryptKey);
 
-    QSettings finTsSettings("harbour-zaster", "finTsSettings");
+    this->initializeParameters();
 
-    int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
-    if (settingsVersion >= SETTINGS_VERSION) {
-        QJsonDocument bankParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("bankParameterData").toString()));
-        if (!bankParameterJson.isEmpty()) {
-            this->bankParameterData = bankParameterJson.toVariant().toMap();
-        }
-
-        QJsonDocument userParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("userParameterData").toString()));
-        if (!userParameterJson.isEmpty()) {
-            this->userParameterData = userParameterJson.toVariant().toMap();
-            this->storeAccountDescriptor();
-            this->initialized = true;
-        }
-    }
-    QString accountUUIDString = finTsSettings.value("accountUUID").toString();
-    if (accountUUIDString.isEmpty()) {
-        QUuid accountUUID = QUuid::createUuid();
-        finTsSettings.setValue("accountUUID", accountUUID.toString().remove("{").remove("}"));
-    }
 }
 
 FinTsDialog::~FinTsDialog()
@@ -153,7 +131,6 @@ void FinTsDialog::storeAccountDescriptor()
     }
     finTsSettings.setValue("accountDescriptorID", accountDescriptorId);
     finTsSettings.setValue("accountDescriptorText", this->bankParameterData.value(BPD_KEY_BANK_NAME).toString());
-    finTsAccounts->initializeAccounts();
 }
 
 void FinTsDialog::dialogInitialization()
@@ -203,10 +180,10 @@ void FinTsDialog::closeDialog()
 
 }
 
-void FinTsDialog::accountBalance(const QString &accountId)
+void FinTsDialog::accountBalance(const QString &accountId, const QString &iban)
 {
-    qDebug() << "FinTsDialog::accountBalance" << accountId;
-    Message *accountBalanceMessage = this->createMessageAccountBalance(accountId);
+    qDebug() << "FinTsDialog::accountBalance" << accountId << iban;
+    Message *accountBalanceMessage = this->createMessageAccountBalance(accountId, iban);
     QByteArray serializedAccountBalanceMessage = serializer.serializeAndEncode(accountBalanceMessage);
 
     QNetworkReply *reply = sendMessage(serializedAccountBalanceMessage);
@@ -214,10 +191,10 @@ void FinTsDialog::accountBalance(const QString &accountId)
     connect(reply, SIGNAL(finished()), this, SLOT(handleAccountBalanceFinished()));
 }
 
-void FinTsDialog::accountTransactions(const QString &accountId)
+void FinTsDialog::accountTransactions(const QString &accountId, const QString &iban)
 {
-    qDebug() << "FinTsDialog::accountTransactions" << accountId;
-    Message *accountTransactionsMessage = this->createMessageAccountTransactions(accountId);
+    qDebug() << "FinTsDialog::accountTransactions" << accountId << iban;
+    Message *accountTransactionsMessage = this->createMessageAccountTransactions(accountId, iban);
     QByteArray serializedAccountTransactionsMessage = serializer.serializeAndEncode(accountTransactionsMessage);
 
     QNetworkReply *reply = sendMessage(serializedAccountTransactionsMessage);
@@ -574,14 +551,14 @@ void FinTsDialog::parseReplyCloseDialog(Message *replyMessage)
     this->myMessageNumber = 0;
 }
 
-Message *FinTsDialog::createMessageAccountBalance(const QString &accountId)
+Message *FinTsDialog::createMessageAccountBalance(const QString &accountId, const QString &iban)
 {
-    qDebug() << "FinTsDialog::createMessageAccountBalance" << accountId;
+    qDebug() << "FinTsDialog::createMessageAccountBalance" << accountId << iban;
     Message *accountBalanceMessage = new Message();
     this->myMessageNumber++;
     accountBalanceMessage->addSegment(createSegmentMessageHeader(accountBalanceMessage));
     accountBalanceMessage->addSegment(createSegmentSignatureHeader(accountBalanceMessage));
-    accountBalanceMessage->addSegment(createSegmentAccountBalance(accountBalanceMessage, accountId));
+    accountBalanceMessage->addSegment(createSegmentAccountBalance(accountBalanceMessage, accountId, iban));
     accountBalanceMessage->addSegment(createSegmentSignatureFooter(accountBalanceMessage));
     accountBalanceMessage->addSegment(createSegmentMessageTermination(accountBalanceMessage));
     return packageMessage(accountBalanceMessage);
@@ -604,14 +581,14 @@ QVariantList FinTsDialog::parseReplyAccountBalance(Message *replyMessage)
     return accountBalances;
 }
 
-Message *FinTsDialog::createMessageAccountTransactions(const QString &accountId)
+Message *FinTsDialog::createMessageAccountTransactions(const QString &accountId, const QString &iban)
 {
-    qDebug() << "FinTsDialog::createMessageAccountTransactions" << accountId;
+    qDebug() << "FinTsDialog::createMessageAccountTransactions" << accountId << iban;
     Message *accountTransactionsMessage = new Message();
     this->myMessageNumber++;
     accountTransactionsMessage->addSegment(createSegmentMessageHeader(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentSignatureHeader(accountTransactionsMessage));
-    accountTransactionsMessage->addSegment(createSegmentAccountTransactions(accountTransactionsMessage, accountId));
+    accountTransactionsMessage->addSegment(createSegmentAccountTransactions(accountTransactionsMessage, accountId, iban));
     accountTransactionsMessage->addSegment(createSegmentSignatureFooter(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentMessageTermination(accountTransactionsMessage));
     return packageMessage(accountTransactionsMessage);
@@ -984,7 +961,10 @@ QVariantMap FinTsDialog::parseSegmentAccountBalance(Segment *segmentAccountBalan
         QList<DataElement *> accountInformationElements = qobject_cast<DataElementGroup *>(accountBalanceElements.at(0))->getDataElements();
         QString accountId;
         if (accountBalanceVersion >= 7) {
+            QString iban = accountInformationElements.at(0)->getValue();
+            qDebug() << "[FinTsDialog] IBAN: " << iban;
             accountId = accountInformationElements.at(2)->getValue();
+            accountBalance.insert(TRANSACTION_KEY_IBAN, iban);
         } else {
             accountId = accountInformationElements.at(0)->getValue();
         }
@@ -1145,20 +1125,22 @@ Segment *FinTsDialog::createSegmentEncryptedData(FinTsElement *parentElement, co
     return encryptionDataSegment;
 }
 
-Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const QString &accountId)
+Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const QString &accountId, const QString &iban)
 {
     Segment *accountBalanceSegment = new Segment(parentMessage);
     int accountBalanceVersion = this->bankParameterData.value(BPD_KEY_ACCOUNT_BALANCE_VERSION, SEGMENT_ACCOUNT_BALANCE_VERSION).toInt();
     accountBalanceSegment->setHeader(createDegSegmentHeader(accountBalanceSegment, SEGMENT_ACCOUNT_BALANCE_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(accountBalanceVersion)));
     QString usedAccountId = accountId;
+    QString usedIban = iban;
     QString getAllAccounts = "N";
     if (accountId.isEmpty()) {
         QVariantMap firstAccount = this->userParameterData.value(UPD_KEY_ACCOUNTS).toList().at(0).toMap();
         usedAccountId = firstAccount.value(UPD_KEY_ACCOUNT_ID).toString();
+        usedIban = firstAccount.value(UPD_KEY_IBAN).toString();
     }
     qDebug() << "[FinTsDialog] Account Balance Message Version: " << accountBalanceVersion;
     if (accountBalanceVersion >= 7) {
-        accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId));
+        accountBalanceSegment->addDataElement(createDegAccountIdInternational(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId, usedIban));
     } else {
         accountBalanceSegment->addDataElement(createDegAccountId(accountBalanceSegment, this->bankParameterData.value(BPD_KEY_BANK_ID).toString(), usedAccountId, accountBalanceVersion));
     }
@@ -1166,14 +1148,14 @@ Segment *FinTsDialog::createSegmentAccountBalance(Message *parentMessage, const 
     return accountBalanceSegment;
 }
 
-Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, const QString &accountId)
+Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, const QString &accountId, const QString &iban)
 {
     Segment *accountTransactionsSegment = new Segment(parentMessage);
     int transactionsVersion = this->bankParameterData.value(BPD_KEY_TRANSACTIONS_VERSION, SEGMENT_TRANSACTIONS_REQUEST_VERSION).toInt();
     accountTransactionsSegment->setHeader(createDegSegmentHeader(accountTransactionsSegment, SEGMENT_TRANSACTIONS_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), QString::number(transactionsVersion)));
     qDebug() << "[FinTsDialog] Transactions Message Version: " << transactionsVersion;
     if (transactionsVersion >= 7) {
-        accountTransactionsSegment->addDataElement(createDegAccountIdInternational(accountTransactionsSegment, this->getBankId(), accountId));
+        accountTransactionsSegment->addDataElement(createDegAccountIdInternational(accountTransactionsSegment, this->getBankId(), accountId, iban));
     } else {
         accountTransactionsSegment->addDataElement(createDegAccountId(accountTransactionsSegment, this->getBankId(), accountId, transactionsVersion));
     }
@@ -1318,11 +1300,11 @@ DataElementGroup *FinTsDialog::createDegAccountId(FinTsElement *parentElement, c
 }
 
 // See Geschäftsvorfälle, page 5
-DataElementGroup *FinTsDialog::createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber)
+DataElementGroup *FinTsDialog::createDegAccountIdInternational(FinTsElement *parentElement, const QString &blz, const QString &accountNumber, const QString &iban)
 {
     DataElementGroup *accountId = new DataElementGroup(parentElement);
     // IBAN (empty for national accounts)
-    accountId->addDataElement(new DataElement(accountId, ""));
+    accountId->addDataElement(new DataElement(accountId, iban));
     // BIC (empty for national accounts)
     accountId->addDataElement(new DataElement(accountId, ""));
     accountId->addDataElement(new DataElement(accountId, accountNumber));
@@ -1399,4 +1381,26 @@ void FinTsDialog::initializeParameters()
 
     // User Parameter Data (UPD) version
     this->userParameterData.insert(UPD_KEY_VERSION, "0");
+
+    QSettings finTsSettings("harbour-zaster", "finTsSettings");
+
+    int settingsVersion = finTsSettings.value("settingsVersion", 0).toInt();
+    if (settingsVersion >= SETTINGS_VERSION) {
+        QJsonDocument bankParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("bankParameterData").toString()));
+        if (!bankParameterJson.isEmpty()) {
+            this->bankParameterData = bankParameterJson.toVariant().toMap();
+        }
+
+        QJsonDocument userParameterJson = QJsonDocument::fromJson(simpleCrypt->decryptToByteArray(finTsSettings.value("userParameterData").toString()));
+        if (!userParameterJson.isEmpty()) {
+            this->userParameterData = userParameterJson.toVariant().toMap();
+            this->storeAccountDescriptor();
+            this->initialized = true;
+        }
+    }
+    QString accountUUIDString = finTsSettings.value("accountUUID").toString();
+    if (accountUUIDString.isEmpty()) {
+        QUuid accountUUID = QUuid::createUuid();
+        finTsSettings.setValue("accountUUID", accountUUID.toString().remove("{").remove("}"));
+    }
 }

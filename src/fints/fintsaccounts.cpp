@@ -1,3 +1,22 @@
+/*
+    Copyright (C) 2018 Sebastian J. Wolf
+
+    This file is part of Zaster Banker.
+
+    Zaster Banker is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Zaster Banker is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Zaster Banker. If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include "fintsaccounts.h"
 #include <QDir>
 #include <QRegExp>
@@ -5,8 +24,9 @@
 #include <QStandardPaths>
 #include <QSettings>
 
-FinTsAccounts::FinTsAccounts(QObject *parent) : QObject(parent)
+FinTsAccounts::FinTsAccounts(QObject *parent, FinTsDialog *finTsDialog) : QObject(parent)
 {
+    this->finTsDialog = finTsDialog;
     initializeAccounts();
 }
 
@@ -21,6 +41,7 @@ void FinTsAccounts::registerNewAccount()
     QSettings settings("harbour-zaster", "finTsSettings");
     QString currentAccountUUID = settings.value("accountUUID").toString();
     QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + currentAccountUUID + ".conf");
+    this->finTsDialog->initializeParameters();
 }
 
 void FinTsAccounts::removeCurrentAccount()
@@ -39,6 +60,7 @@ void FinTsAccounts::removeCurrentAccount()
             }
         }
     }
+    this->finTsDialog->initializeParameters();
 }
 
 void FinTsAccounts::switchAccount(const QString &newAccountUUID)
@@ -48,6 +70,7 @@ void FinTsAccounts::switchAccount(const QString &newAccountUUID)
     QString currentAccountUUID = settings.value("accountUUID").toString();
     QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + currentAccountUUID + ".conf");
     QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + newAccountUUID + ".conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf");
+    this->finTsDialog->initializeParameters();
 }
 
 void FinTsAccounts::initializeAccounts()
