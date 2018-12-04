@@ -1,3 +1,10 @@
 * Tue Nov 27 2018 Sebastian J. Wolf <sebastian@ygriega.de> 0.1
 - Initial Version
 
+* Tue Dec 04 2018 Sebastian J. Wolf <sebastian@ygriega.de> 0.2
+- Support for multiple accounts
+- Limit transactions to last month (should solve missing transactions in most cases)
+- Bugfix: Long bank name correctly wrapped
+- Bugfix: Crash in case of incorrect account credentials
+- Bugfix: Transactions without Cents for ING should no longer display NaN (untested)
+- Bugfix: UniCredit banks complain about unsupported "All Accounts" option (untested)
