@@ -56,7 +56,7 @@ void FinTsAccounts::removeCurrentAccount()
         QListIterator<QVariant> accountsIterator(this->myAccounts);
         while (accountsIterator.hasNext()) {
             QVariantMap currentAccount = accountsIterator.next().toMap();
-            QString otherAccountUUID = currentAccount.value("accountUUID").toString();
+            QString otherAccountUUID = currentAccount.value("uuid").toString();
             if (otherAccountUUID != currentAccountUUID) {
                 QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + otherAccountUUID + ".conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf");
             }
