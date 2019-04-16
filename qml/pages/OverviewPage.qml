@@ -26,8 +26,10 @@ Page {
 
     allowedOrientations: Orientation.All
     property bool initializationCompleted: false
+    property variant allAccounts;
 
     Component.onCompleted: {
+        allAccounts = finTsAccounts.getAllAccounts();
         if (finTsDialog.isPinSet()) {
             // Initial retrieval of account information
             finTsDialog.synchronization();
@@ -204,6 +206,12 @@ Page {
             id: removeAccountRemorsePopup
         }
 
+        onVisibleChanged: {
+            if (visible) {
+                allAccounts = finTsAccounts.getAllAccounts();
+            }
+        }
+
         Column {
             id: enterPinColumn
 
@@ -287,6 +295,38 @@ Page {
                 wrapMode: Text.Wrap
                 anchors {
                     horizontalCenter: parent.horizontalCenter
+                }
+            }
+
+            Separator {
+                id: accountsSeparator
+                visible: allAccounts.length > 1
+
+                width: parent.width
+                color: Theme.primaryColor
+                horizontalAlignment: Qt.AlignHCenter
+            }
+
+            ComboBox {
+                id: accountsComboBox
+                visible: allAccounts.length > 1
+                label: qsTr("Account")
+                currentIndex: 0
+                description: qsTr("Choose the active account here")
+                menu: ContextMenu {
+                    Repeater {
+                        model: allAccounts
+                        delegate: MenuItem {
+                            text: qsTr("%1 - %2").arg(modelData.descriptorText).arg(modelData.descriptorId)
+                        }
+                    }
+                    onActivated: {
+                        console.log("Account " + allAccounts[index].uuid + " was selected");
+                        enterPinFlickable.visible = false;
+                        finTsAccounts.switchAccount(allAccounts[index].uuid);
+                        bankInfoLabel.text = finTsDialog.getBankName();
+                        enterPinFlickable.visible = true;
+                    }
                 }
             }
 

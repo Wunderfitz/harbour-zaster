@@ -73,7 +73,7 @@ Page {
             registrationPage.registrationLoading = false;
             if (wagnis.hasFeature("contribution")) {
                 pageStack.clear();
-                pageStack.push(overviewPage);
+                finTsDialog.isInitialized() ? pageStack.push(overviewPage) : pageStack.push(institutesSearchPage);
             } else {
                 contributionFlickable.visible = true;
                 contributionFlickable.opacity = 1;

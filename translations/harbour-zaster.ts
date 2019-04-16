@@ -155,23 +155,23 @@
 <context>
     <name>OverviewPage</name>
     <message>
-        <source>About Zaster Banker</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Account Balance</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Bank ID: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>OK</source>
+        <source>Retrieving information...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Retrieving information...</source>
+        <source>Unable to retrieve account information. Please check the following error messages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (Error Code: %2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -183,15 +183,15 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 (Error Code: %2)</source>
+        <source>Account</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Unable to retrieve account information. Please check the following error messages.</source>
+        <source>Choose the active account here</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Settings</source>
+        <source>%1 - %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -200,6 +200,18 @@
     </message>
     <message>
         <source>Removing account</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>About Zaster Banker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Account Balance</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

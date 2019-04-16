@@ -155,24 +155,24 @@
 <context>
     <name>OverviewPage</name>
     <message>
-        <source>About Zaster Banker</source>
-        <translation>Über Zaster Banker</translation>
-    </message>
-    <message>
-        <source>Account Balance</source>
-        <translation>Kontostand</translation>
-    </message>
-    <message>
         <source>Bank ID: %1</source>
         <translation>BLZ: %1</translation>
     </message>
     <message>
-        <source>OK</source>
-        <translation>OK</translation>
-    </message>
-    <message>
         <source>Retrieving information...</source>
         <translation>Informationen abrufen...</translation>
+    </message>
+    <message>
+        <source>Unable to retrieve account information. Please check the following error messages.</source>
+        <translation>Abfrage der Konteninformationen nicht möglich. Bitte prüfen Sie die folgenden Fehlermeldungen.</translation>
+    </message>
+    <message>
+        <source>%1 (Error Code: %2)</source>
+        <translation>%1 (Fehlernummer: %2)</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation>OK</translation>
     </message>
     <message>
         <source>Authentication required</source>
@@ -183,16 +183,16 @@
         <translation>PIN oder Passwort</translation>
     </message>
     <message>
-        <source>%1 (Error Code: %2)</source>
-        <translation>%1 (Fehlernummer: %2)</translation>
+        <source>Account</source>
+        <translation>Zugang</translation>
     </message>
     <message>
-        <source>Unable to retrieve account information. Please check the following error messages.</source>
-        <translation>Abfrage der Konteninformationen nicht möglich. Bitte prüfen Sie die folgenden Fehlermeldungen.</translation>
+        <source>Choose the active account here</source>
+        <translation>Wählen Sie hier den aktiven Zugang aus</translation>
     </message>
     <message>
-        <source>Settings</source>
-        <translation>Einstellungen</translation>
+        <source>%1 - %2</source>
+        <translation>%1 - %2</translation>
     </message>
     <message>
         <source>Remove this Account</source>
@@ -201,6 +201,18 @@
     <message>
         <source>Removing account</source>
         <translation>Zugang löschen</translation>
+    </message>
+    <message>
+        <source>About Zaster Banker</source>
+        <translation>Über Zaster Banker</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation>Einstellungen</translation>
+    </message>
+    <message>
+        <source>Account Balance</source>
+        <translation>Kontostand</translation>
     </message>
 </context>
 <context>
