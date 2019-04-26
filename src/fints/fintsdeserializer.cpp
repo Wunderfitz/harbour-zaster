@@ -36,7 +36,7 @@ Message *FinTsDeserializer::decodeAndDeserialize(const QByteArray &encodedMessag
 Message *FinTsDeserializer::deserialize(const QByteArray &decodedMessage)
 {
     Message *newMessage = new Message();
-    //qDebug() << "[FinTsDeserializer] Raw Message: " << QString::fromLatin1(decodedMessage);
+    // qDebug() << "[FinTsDeserializer] Raw Message: " << QString::fromLatin1(decodedMessage);
     bool inEscape = false;
     bool inGroup = false;
     bool inBinaryLength = false;
@@ -152,6 +152,7 @@ QVariantList FinTsDeserializer::deserializeSwiftTransactions(const QString &rawS
     QVariantMap currentTransaction;
     while (swiftComponentIterator.hasNext()) {
         QString nextSwiftComponent = swiftComponentIterator.next();
+        // qDebug() << "[FinTsDeserializer] SWIFT: " << nextSwiftComponent;
         if (nextSwiftComponent.indexOf(swiftIdentifierRegEx) == 0) {
             // SWIFT Identifier
             inMultiFunction = false;
@@ -354,6 +355,8 @@ QVariantMap FinTsDeserializer::parseSwiftMultiFunctionField(const QString &multi
         QString otherPartyName;
         QListIterator<QString> multiFunctionComponentIterator(multiFunctionComponents);
         multiFunctionComponentIterator.next();
+        QString otherPartyNameCandidate;
+        bool otherPartyNameFound = false;
         // We start with the second element as the first one doesn't contain any valuable stuff
         while (multiFunctionComponentIterator.hasNext()) {
             QString multiFunctionElement = multiFunctionComponentIterator.next();
@@ -364,6 +367,9 @@ QVariantMap FinTsDeserializer::parseSwiftMultiFunctionField(const QString &multi
             if (elementIdentifier.at(0) == '2' || elementIdentifier.at(0) == '6') {
                 transactionPurpose.append(multiFunctionElement.mid(2));
             }
+            if (elementIdentifier == "29") {
+                otherPartyNameCandidate = multiFunctionElement.mid(2);
+            }
             if (elementIdentifier == "30") {
                 multiFunctionMap.insert("otherPartyBankId", multiFunctionElement.mid(2));
             }
@@ -372,7 +378,11 @@ QVariantMap FinTsDeserializer::parseSwiftMultiFunctionField(const QString &multi
             }
             if (elementIdentifier == "32" || elementIdentifier == "33") {
                 otherPartyName.append(multiFunctionElement.mid(2));
+                otherPartyNameFound = true;
             }
+        }
+        if (!otherPartyNameFound && !otherPartyNameCandidate.isEmpty()) {
+            otherPartyName = otherPartyNameCandidate;
         }
         multiFunctionMap.insert("transactionPurpose", transactionPurpose);
         multiFunctionMap.insert("otherPartyName", otherPartyName);
