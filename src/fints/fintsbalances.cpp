@@ -50,6 +50,16 @@ void FinTsBalances::retrieveBalances()
     finTsDialog->dialogInitialization();
 }
 
+void FinTsBalances::abort()
+{
+    qDebug() << "FinTsBalances::abort";
+    this->retrievedAccounts.clear();
+    this->retrievedBalances.clear();
+    this->shallHandleDialogEnd = true;
+    this->setWorkInProgress(false);
+    this->finTsDialog->closeDialog();
+}
+
 void FinTsBalances::handleDialogInitializationCompleted()
 {
     if (this->workInProgress) {
@@ -87,10 +97,10 @@ void FinTsBalances::handleAccountBalanceCompleted(const QVariantList &accountBal
             QVariantMap nextAccount = accountsIterator.next().toMap();
             QString myAccount = nextAccount.value(UPD_KEY_ACCOUNT_ID).toString();
             QString myIban = nextAccount.value(UPD_KEY_IBAN).toString();
-            qDebug() << "[FinTsBalances] Checking account " << myAccount;
+            qDebug() << "[FinTsBalances] Checking account " << myAccount << myIban;
             if (!this->retrievedAccounts.contains(myAccount)) {
                 if (myAccount == this->accountInProgress) {
-                    // DRY! Most certainly an error/unsuppoerted format
+                    // DRY! Most certainly an error/unsupported format
                     qDebug() << "[FinTsBalances] Previous balance retrieval not successful. Aborting...";
                     break;
                 }

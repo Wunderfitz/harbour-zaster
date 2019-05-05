@@ -31,6 +31,7 @@ class FinTsBalances : public QObject
 public:
     explicit FinTsBalances(QObject *parent = 0, FinTsDialog *finTsDialog = 0);
     Q_INVOKABLE void retrieveBalances();
+    Q_INVOKABLE void abort();
 
 signals:
     void balancesRetrieved(const QVariantList &accountBalances);

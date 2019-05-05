@@ -214,6 +214,10 @@
         <source>Account Balance</source>
         <translation>Kontostand</translation>
     </message>
+    <message>
+        <source>Abort</source>
+        <translation>Abbrechen</translation>
+    </message>
 </context>
 <context>
     <name>RegistrationPage</name>

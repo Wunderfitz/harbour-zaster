@@ -320,6 +320,7 @@ Page {
                             anchors.top : resultRow.bottom
                             anchors.topMargin: Theme.paddingMedium
 
+
                             width: parent.width
                             color: Theme.primaryColor
                             horizontalAlignment: Qt.AlignHCenter

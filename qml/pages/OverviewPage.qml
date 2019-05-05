@@ -35,6 +35,7 @@ Page {
             finTsDialog.synchronization();
             loadingColumn.visible = true;
         } else {
+            loadingColumn.canAbort = true;
             overviewFlickable.visible = false;
             enterPinFlickable.visible = true;
         }
@@ -46,6 +47,12 @@ Page {
         enterPinFlickable.visible = false;
         loadingColumn.visible = true;
         finTsBalances.retrieveBalances();        
+    }
+
+    function abortLoading() {
+        finTsBalances.abort();
+        loadingColumn.visible = false;
+        enterPinFlickable.visible = true;
     }
 
     Connections {
@@ -75,6 +82,7 @@ Page {
         target: finTsDialog
         onDialogEndCompleted: {
             if (!overviewPage.initializationCompleted) {
+                loadingColumn.canAbort = true;
                 overviewPage.initializationCompleted = true;
                 finTsBalances.retrieveBalances();
             }
@@ -101,12 +109,15 @@ Page {
         spacing: Theme.paddingMedium
         anchors.verticalCenter: parent.verticalCenter
 
+        property bool canAbort: false
+
         Behavior on opacity { NumberAnimation {} }
         opacity: visible ? 1 : 0
         visible: false
 
         Image {
-            id: zasterLoadingImage
+            id: zasterLoadingImage            
+            visible: overviewPage.isPortrait
             source: "../../images/zaster.png"
             anchors {
                 horizontalCenter: parent.horizontalCenter
@@ -126,6 +137,18 @@ Page {
             anchors.horizontalCenter: parent.horizontalCenter
             running: loadingColumn.visible
             size: BusyIndicatorSize.Large
+        }
+
+        Button {
+            id: loadingAbortButton
+            visible: loadingColumn.canAbort
+            text: qsTr("Abort")
+            anchors {
+                horizontalCenter: parent.horizontalCenter
+            }
+            onClicked: {
+                abortLoading();
+            }
         }
     }
 
@@ -262,7 +285,6 @@ Page {
                 horizontalAlignment: TextInput.AlignHCenter
                 labelVisible: false
                 placeholderText: qsTr("Your PIN or Password")
-                focus: enterPinFlickable.visible
                 Keys.onEnterPressed: {
                     if (pinOkButton.enabled) {
                         enterPin();
