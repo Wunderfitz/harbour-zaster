@@ -31,6 +31,8 @@
 #include <QIODevice>
 #include <QUuid>
 
+const char SETTINGS_TRANSACTIONS_SINCE[] = "settings/transactionsSince";
+
 FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
 {
     this->networkAccessManager = networkAccessManager;
@@ -304,6 +306,18 @@ bool FinTsDialog::canRetrievePortfolioInfo(const QString &accountId)
 QVariantList FinTsDialog::getErrorMessages()
 {
     return this->errorMessages;
+}
+
+int FinTsDialog::getTransactionsSince()
+{
+    qDebug() << "FinTsDialog::getTransactionsSince";
+    return settings.value(SETTINGS_TRANSACTIONS_SINCE, 30).toInt();
+}
+
+void FinTsDialog::setTransactionsSince(const int &transactionsSince)
+{
+    qDebug() << "FinTsDialog::setTransactionsSince" << transactionsSince;
+    settings.setValue(SETTINGS_TRANSACTIONS_SINCE, transactionsSince);
 }
 
 SimpleCrypt *FinTsDialog::getSimpleCrypt()
@@ -1166,7 +1180,7 @@ Segment *FinTsDialog::createSegmentAccountTransactions(Message *parentMessage, c
         accountTransactionsSegment->addDataElement(new DataElement(accountTransactionsSegment, "N"));
     }
     QDateTime toDateTime = QDateTime::currentDateTime();
-    QDateTime fromDateTime = toDateTime.addMonths(-1);
+    QDateTime fromDateTime = toDateTime.addDays( - getTransactionsSince());
     QTimeZone timezone("Europe/Berlin");
     fromDateTime.setTimeZone(timezone);
     toDateTime.setTimeZone(timezone);

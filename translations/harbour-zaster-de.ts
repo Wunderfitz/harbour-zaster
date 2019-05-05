@@ -436,6 +436,18 @@
         <source>%1 - %2</source>
         <translation>%1 - %2</translation>
     </message>
+    <message>
+        <source>Others</source>
+        <translation>Anderes</translation>
+    </message>
+    <message>
+        <source>Transactions: Retrieval Period</source>
+        <translation>Transaktionen: Abrufperiode</translation>
+    </message>
+    <message>
+        <source>%1 days</source>
+        <translation>%1 Tage</translation>
+    </message>
 </context>
 <context>
     <name>SingleTransactionPage</name>

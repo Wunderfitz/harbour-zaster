@@ -102,6 +102,22 @@ Page {
                 }
             }
 
+            SectionHeader {
+                text: qsTr("Others")
+            }
+
+            Slider {
+                id: daysToRetrieveLabel
+                label: qsTr("Transactions: Retrieval Period")
+                minimumValue: 5
+                maximumValue: 90
+                stepSize: 5
+                width: parent.width
+                value: finTsDialog.getTransactionsSince();
+                valueText: qsTr("%1 days").arg(value)
+                onValueChanged: finTsDialog.setTransactionsSince(value)
+            }
+
             Label {
                 id: separatorLabel
                 x: Theme.horizontalPageMargin

@@ -436,6 +436,18 @@
         <source>%1 - %2</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Others</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transactions: Retrieval Period</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 days</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SingleTransactionPage</name>

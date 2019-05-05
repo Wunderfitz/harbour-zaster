@@ -26,6 +26,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QUrl>
+#include <QSettings>
 #include "fintsserializer.h"
 #include "fintsdeserializer.h"
 #include "dataelementgroup.h"
@@ -71,6 +72,8 @@ public:
     Q_INVOKABLE bool canRetrieveTransactions(const QString &accountId);
     Q_INVOKABLE bool canRetrievePortfolioInfo(const QString &accountId);
     Q_INVOKABLE QVariantList getErrorMessages();
+    Q_INVOKABLE int getTransactionsSince();
+    Q_INVOKABLE void setTransactionsSince(const int &transactionsSince);
     SimpleCrypt *getSimpleCrypt();
 
 signals:
@@ -186,6 +189,7 @@ private:
     QSqlDatabase database;
     InstitutesSearchWorker institutesSearchWorker;
     QVariantList errorMessages;
+    QSettings settings;
 };
 
 #endif // FINTSDIALOG_H

@@ -284,6 +284,7 @@ Page {
                 width: parent.width
                 horizontalAlignment: TextInput.AlignHCenter
                 labelVisible: false
+                enabled: enterPinColumn.visible
                 placeholderText: qsTr("Your PIN or Password")
                 Keys.onEnterPressed: {
                     if (pinOkButton.enabled) {
