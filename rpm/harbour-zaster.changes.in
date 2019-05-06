@@ -8,3 +8,9 @@
 - Bugfix: Crash in case of incorrect account credentials
 - Bugfix: Transactions without Cents for ING should no longer display NaN (untested)
 - Bugfix: UniCredit banks complain about unsupported "All Accounts" option (untested)
+
+* Mon May 06 2019, Sebastian J. Wolf <sebastian@ygriega.de> 0.3
+- Choose current account from PIN/password screen
+- Add abort button for loading screen
+- Make transactions retrieval period configurable
+- Bugfix: Transaction headers missing for some banks (e.g. GLS)
