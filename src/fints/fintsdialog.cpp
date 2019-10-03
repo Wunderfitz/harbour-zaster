@@ -610,6 +610,7 @@ Message *FinTsDialog::createMessageAccountTransactions(const QString &accountId,
     accountTransactionsMessage->addSegment(createSegmentMessageHeader(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentSignatureHeader(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentAccountTransactions(accountTransactionsMessage, accountId, iban));
+    accountTransactionsMessage->addSegment(createSegmentTanTwoStepRequest(accountTransactionsMessage, SEGMENT_TRANSACTIONS_REQUEST_ID));
     accountTransactionsMessage->addSegment(createSegmentSignatureFooter(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentMessageTermination(accountTransactionsMessage));
     return packageMessage(accountTransactionsMessage);
