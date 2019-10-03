@@ -135,7 +135,7 @@ void FinTsDialog::storeAccountDescriptor()
     finTsSettings.setValue("accountDescriptorText", this->bankParameterData.value(BPD_KEY_BANK_NAME).toString());
 }
 
-void FinTsDialog::dialogInitialization()
+void FinTsDialog::dialogInitialization(const QString &referenceSegmentId)
 {
     qDebug() << "FinTsDialog::dialogInitialization";
     this->errorMessages.clear();
@@ -146,7 +146,7 @@ void FinTsDialog::dialogInitialization()
         return;
     }
 
-    Message *dialogInitializationMessage = this->createMessageDialogInitialization();
+    Message *dialogInitializationMessage = this->createMessageDialogInitialization(referenceSegmentId);
     QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);
 
     QNetworkReply *reply = sendMessage(serializedInitializationMessage);
@@ -320,6 +320,11 @@ void FinTsDialog::setTransactionsSince(const int &transactionsSince)
     settings.setValue(SETTINGS_TRANSACTIONS_SINCE, transactionsSince);
 }
 
+bool FinTsDialog::containsAccounts()
+{
+    return !this->getUserParameterData().value(UPD_KEY_ACCOUNTS).toList().isEmpty();
+}
+
 SimpleCrypt *FinTsDialog::getSimpleCrypt()
 {
     return this->simpleCrypt;
@@ -479,7 +484,7 @@ QNetworkReply *FinTsDialog::sendMessage(const QByteArray &serializedMessage)
     return networkAccessManager->post(request, serializedMessage);
 }
 
-Message *FinTsDialog::createMessageDialogInitialization()
+Message *FinTsDialog::createMessageDialogInitialization(const QString &referenceSegmentId)
 {
     qDebug() << "FinTsDialog::createMessageDialogInitialization";
     this->myMessageNumber++;
@@ -488,6 +493,7 @@ Message *FinTsDialog::createMessageDialogInitialization()
     dialogInitializationMessage->addSegment(createSegmentSignatureHeader(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage));
+    dialogInitializationMessage->addSegment(createSegmentTanTwoStepRequest(dialogInitializationMessage, referenceSegmentId));
     dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage));
     return packageMessage(dialogInitializationMessage);
@@ -889,11 +895,12 @@ void FinTsDialog::parseSegmentAccountInformation(Segment *segmentAccountInformat
                 QList<DataElement *> allowedTransactionElements = qobject_cast<DataElementGroup *>(rawTransactionElement)->getDataElements();
                 allowedTransactions.append(allowedTransactionElements.at(0)->getValue());
                 QString allowedTransactionId = allowedTransactionElements.at(0)->getValue();
+                QString neededSignatures = allowedTransactionElements.at(1)->getValue();
                 if (allowedTransactionId == SEGMENT_ACCOUNT_BALANCE_ID) {
                     qDebug() << "[FinTsDialog] This is a REAL account...";
                     realAccountFound = true;
                 }
-                qDebug() << "[FinTsDialog] Allowed Transaction: " << allowedTransactionId;
+                qDebug() << "[FinTsDialog] Allowed Transaction: " << allowedTransactionId << " - needed signatures: " << neededSignatures;
                 if (allowedTransactionId == SEGMENT_TRANSACTIONS_REQUEST_ID) {
                     currentAccount.insert(UPD_KEY_CAN_RETRIEVE_TRANSACTIONS, true);
                 }
@@ -1046,6 +1053,20 @@ Segment *FinTsDialog::createSegmentProcessPreparation(Message *parentMessage)
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_ID));
     processPreparationSegment->addDataElement(new DataElement(processPreparationSegment, FINTS_PRODUCT_VERSION));
     return processPreparationSegment;
+}
+
+Segment *FinTsDialog::createSegmentTanTwoStepRequest(Message *parentMessage, const QString &referenceSegmentId)
+{
+    Segment *tanTwoStepRequestSegment = new Segment(parentMessage);
+    tanTwoStepRequestSegment->setHeader(createDegSegmentHeader(tanTwoStepRequestSegment, SEGMENT_TAN_TWO_STEP_REQUEST_ID, QString::number(parentMessage->getNextSegmentNumber()), SEGMENT_TAN_TWO_STEP_REQUEST_VERSION));
+
+    // TAN Process 1 (see Sicherheitsverfahren PIN/TAN, page 39)
+    tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, "4"));
+    tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, referenceSegmentId));
+    tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, ""));
+    tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, ""));
+    tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, "WUGGAHUGGA"));
+    return tanTwoStepRequestSegment;
 }
 
 Segment *FinTsDialog::createSegmentSynchronization(Message *parentMessage)

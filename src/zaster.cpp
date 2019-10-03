@@ -22,7 +22,7 @@
 Zaster::Zaster(QObject *parent) : QObject(parent), settings("harbour-zaster", "settings")
 {
     this->networkAccessManager = new QNetworkAccessManager(this);
-    wagnis = new Wagnis(this->networkAccessManager, "harbour-zaster", "0.3", this);
+    wagnis = new Wagnis(this->networkAccessManager, "harbour-zaster", "0.4", this);
     finTsDialog = new FinTsDialog(this, this->networkAccessManager, this->wagnis);
     finTsBalances = new FinTsBalances(this, finTsDialog);
     finTsAccounts = new FinTsAccounts(this, finTsDialog);

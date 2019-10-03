@@ -52,7 +52,7 @@ Page {
             }
 
             Label {
-                text: "Zaster Banker 0.3"
+                text: "Zaster Banker 0.4"
                 horizontalAlignment: Text.AlignHCenter
                 font.pixelSize: Theme.fontSizeExtraLarge
                 anchors {

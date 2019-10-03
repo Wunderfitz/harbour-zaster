@@ -84,7 +84,7 @@ void FinTsAccounts::handleDialogInitializationCompleted()
 
 void FinTsAccounts::initializeAccounts()
 {
-    qDebug() << "FinTsAccounts::readAccounts";
+    qDebug() << "FinTsAccounts::initializeAccounts";
     this->myAccounts.clear();
     QString configPath = QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster";
     QDir configDirectory(configPath);

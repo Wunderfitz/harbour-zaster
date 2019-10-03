@@ -53,7 +53,7 @@ public:
     ~FinTsDialog();
 
     Q_INVOKABLE void initializeParameters();
-    Q_INVOKABLE void dialogInitialization();
+    Q_INVOKABLE void dialogInitialization(const QString &referenceSegmentId = SEGMENT_IDENTIFICATION_ID);
     Q_INVOKABLE void synchronization();
     Q_INVOKABLE void closeDialog();
     Q_INVOKABLE void accountBalance(const QString &accountId = "", const QString &iban = "");
@@ -74,6 +74,7 @@ public:
     Q_INVOKABLE QVariantList getErrorMessages();
     Q_INVOKABLE int getTransactionsSince();
     Q_INVOKABLE void setTransactionsSince(const int &transactionsSince);
+    Q_INVOKABLE bool containsAccounts();
     SimpleCrypt *getSimpleCrypt();
 
 signals:
@@ -113,7 +114,7 @@ private:
 
     QNetworkReply *sendMessage(const QByteArray &serializedMessage);
 
-    Message *createMessageDialogInitialization();
+    Message *createMessageDialogInitialization(const QString &referenceSegmentId);
     Message *createMessageSynchronization();
     void parseReplyDialogInitialization(Message *replyMessage);
     Message *createMessageCloseDialog();
@@ -128,6 +129,7 @@ private:
     Segment *createSegmentMessageHeader(Message *parentMessage);
     Segment *createSegmentIdentification(Message *parentMessage);
     Segment *createSegmentProcessPreparation(Message *parentMessage);
+    Segment *createSegmentTanTwoStepRequest(Message *parentMessage, const QString &referenceSegmentId);
     Segment *createSegmentSynchronization(Message *parentMessage);
     Segment *createSegmentMessageTermination(Message *parentMessage);
     Segment *createSegmentDialogEnd(Message *parentMessage);

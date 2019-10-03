@@ -26,6 +26,7 @@ Page {
 
     allowedOrientations: Orientation.All
     property bool initializationCompleted: false
+    property bool userParameterDataRequest: false
     property variant allAccounts;
 
     Component.onCompleted: {
@@ -83,8 +84,15 @@ Page {
         onDialogEndCompleted: {
             if (!overviewPage.initializationCompleted) {
                 loadingColumn.canAbort = true;
-                overviewPage.initializationCompleted = true;
-                finTsBalances.retrieveBalances();
+                if (finTsDialog.containsAccounts() || overviewPage.userParameterDataRequest) {
+                    overviewPage.userParameterDataRequest = false;
+                    overviewPage.initializationCompleted = true;
+                    finTsBalances.retrieveBalances();
+                } else {
+                    console.log("[OverviewPage] No accounts received, trying additional dialog initialization");
+                    overviewPage.userParameterDataRequest = true;
+                    finTsDialog.dialogInitialization();
+                }
             }
         }
         onErrorOccurred: {
@@ -100,6 +108,12 @@ Page {
         }
         onSynchronizationCompleted: {
             finTsDialog.closeDialog();
+        }
+
+        onDialogInitializationCompleted: {
+            if (overviewPage.userParameterDataRequest) {
+                finTsDialog.closeDialog();
+            }
         }
     }
 
