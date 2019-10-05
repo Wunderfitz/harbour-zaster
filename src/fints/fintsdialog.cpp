@@ -325,6 +325,16 @@ bool FinTsDialog::containsAccounts()
     return !this->getUserParameterData().value(UPD_KEY_ACCOUNTS).toList().isEmpty();
 }
 
+bool FinTsDialog::getTanRequirement(const QString &segmentId)
+{
+    QString tanRequirement = this->bankParameterData.value(QString(BPD_KEY_TAN_REQUIREMENT) + "-" + segmentId, "N").toString();
+    if (tanRequirement == "J") {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 SimpleCrypt *FinTsDialog::getSimpleCrypt()
 {
     return this->simpleCrypt;
@@ -803,6 +813,25 @@ void FinTsDialog::parseSegmentPinTanInformation(Segment *segmentPinTanInformatio
     if (segmentPinTanInformationElements.size() > 0) {
         this->bankParameterData.insert(BPD_KEY_PIN_TAN_SUPPORTED, true);
         qDebug() << "[FinTsDialog] PIN/TAN implicitly supported by PIN/TAN information segment";
+        if (segmentPinTanInformationElements.size() >= 4) {
+            DataElementGroup* pinTanSpecification = qobject_cast<DataElementGroup *>(segmentPinTanInformationElements.value(3));
+            QList<DataElement *> specificationElements = pinTanSpecification->getDataElements();
+            QListIterator<DataElement *> specificationElementIterator(specificationElements);
+            int specificationElementNumber = 0;
+            QString currentIdentifier;
+            while (specificationElementIterator.hasNext()) {
+                specificationElementNumber++;
+                DataElement *currentDataElement = specificationElementIterator.next();
+                if (specificationElementNumber >= 6) {
+                    if (specificationElementNumber % 2 == 0) {
+                        currentIdentifier = currentDataElement->getValue();
+                    } else {
+                        qDebug() << "[FinTsDialog] TAN requirement for " << currentIdentifier << " - " << currentDataElement->getValue();
+                        this->bankParameterData.insert(QString(BPD_KEY_TAN_REQUIREMENT) + "-" + currentIdentifier, currentDataElement->getValue());
+                    }
+                }
+            }
+        }
     }
 }
 

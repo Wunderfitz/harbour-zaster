@@ -75,6 +75,7 @@ public:
     Q_INVOKABLE int getTransactionsSince();
     Q_INVOKABLE void setTransactionsSince(const int &transactionsSince);
     Q_INVOKABLE bool containsAccounts();
+    Q_INVOKABLE bool getTanRequirement(const QString &segmentId);
     SimpleCrypt *getSimpleCrypt();
 
 signals:
