@@ -503,7 +503,7 @@ Message *FinTsDialog::createMessageDialogInitialization(const QString &reference
     dialogInitializationMessage->addSegment(createSegmentSignatureHeader(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentIdentification(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentProcessPreparation(dialogInitializationMessage));
-    dialogInitializationMessage->addSegment(createSegmentTanTwoStepRequest(dialogInitializationMessage, referenceSegmentId));
+    this->appendTanTwoStepRequest(dialogInitializationMessage, referenceSegmentId);
     dialogInitializationMessage->addSegment(createSegmentSignatureFooter(dialogInitializationMessage));
     dialogInitializationMessage->addSegment(createSegmentMessageTermination(dialogInitializationMessage));
     return packageMessage(dialogInitializationMessage);
@@ -590,6 +590,7 @@ Message *FinTsDialog::createMessageAccountBalance(const QString &accountId, cons
     accountBalanceMessage->addSegment(createSegmentMessageHeader(accountBalanceMessage));
     accountBalanceMessage->addSegment(createSegmentSignatureHeader(accountBalanceMessage));
     accountBalanceMessage->addSegment(createSegmentAccountBalance(accountBalanceMessage, accountId, iban));
+    this->appendTanTwoStepRequest(accountBalanceMessage, SEGMENT_ACCOUNT_BALANCE_ID);
     accountBalanceMessage->addSegment(createSegmentSignatureFooter(accountBalanceMessage));
     accountBalanceMessage->addSegment(createSegmentMessageTermination(accountBalanceMessage));
     return packageMessage(accountBalanceMessage);
@@ -620,7 +621,7 @@ Message *FinTsDialog::createMessageAccountTransactions(const QString &accountId,
     accountTransactionsMessage->addSegment(createSegmentMessageHeader(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentSignatureHeader(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentAccountTransactions(accountTransactionsMessage, accountId, iban));
-    accountTransactionsMessage->addSegment(createSegmentTanTwoStepRequest(accountTransactionsMessage, SEGMENT_TRANSACTIONS_REQUEST_ID));
+    this->appendTanTwoStepRequest(accountTransactionsMessage, SEGMENT_TRANSACTIONS_REQUEST_ID);
     accountTransactionsMessage->addSegment(createSegmentSignatureFooter(accountTransactionsMessage));
     accountTransactionsMessage->addSegment(createSegmentMessageTermination(accountTransactionsMessage));
     return packageMessage(accountTransactionsMessage);
@@ -651,6 +652,7 @@ Message *FinTsDialog::createMessagePortfolioInfo(const QString &portfolioId)
     portfolioInfoMessage->addSegment(createSegmentMessageHeader(portfolioInfoMessage));
     portfolioInfoMessage->addSegment(createSegmentSignatureHeader(portfolioInfoMessage));
     portfolioInfoMessage->addSegment(createSegmentPortfolioInfo(portfolioInfoMessage, portfolioId));
+    this->appendTanTwoStepRequest(portfolioInfoMessage, SEGMENT_PORTFOLIO_INFO_REQUEST_ID);
     portfolioInfoMessage->addSegment(createSegmentSignatureFooter(portfolioInfoMessage));
     portfolioInfoMessage->addSegment(createSegmentMessageTermination(portfolioInfoMessage));
     return packageMessage(portfolioInfoMessage);
@@ -739,6 +741,17 @@ void FinTsDialog::parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback)
             if (segmentFeedbackCode == "3920" && feedbackElements.size() >= 4) {
                 this->bankParameterData.insert(BPD_KEY_PIN_TAN_METHOD, feedbackElements.at(3)->getValue());
                 qDebug() << "[FinTsDialog] Bank told us to use PIN/TAN method: " << feedbackElements.at(3)->getValue();
+            }
+            if (segmentFeedbackCode == "3076") {
+                qDebug() << "[PSD2] Two-factor authentication NOT required! :)";
+            }
+            if (segmentFeedbackCode == "0030") {
+                qDebug() << "[PSD2] Two-factor authentication required! :(";
+                // TODO: Remove when two-factor is supported - begin
+                this->appendErrorMessage(segmentFeedbackCode, segmentMessageText);
+                emit errorOccurred();
+                // TODO: Remove when two-factor is supported - end
+                emit twoFactorRequired();
             }
             if (segmentFeedbackCode.startsWith("9")) {
                 this->appendErrorMessage(segmentFeedbackCode, segmentMessageText);
@@ -1095,7 +1108,7 @@ Segment *FinTsDialog::createSegmentTanTwoStepRequest(Message *parentMessage, con
     tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, referenceSegmentId));
     tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, ""));
     tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, ""));
-    tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, "WUGGAHUGGA"));
+    tanTwoStepRequestSegment->addDataElement(new DataElement(tanTwoStepRequestSegment, "PSD2"));
     return tanTwoStepRequestSegment;
 }
 
@@ -1419,6 +1432,16 @@ void FinTsDialog::appendErrorMessage(const QString &errorCode, const QString &er
     errorMessage.insert("code", errorCode);
     errorMessage.insert("text", errorText);
     this->errorMessages.append(errorMessage);
+}
+
+void FinTsDialog::appendTanTwoStepRequest(Message *messageToBeAppended, const QString &segmentId)
+{
+    if (this->getTanRequirement(segmentId) || segmentId == SEGMENT_IDENTIFICATION_ID) {
+        qDebug() << "[PSD2] Bank requires TAN two-step request for " << segmentId;
+        messageToBeAppended->addSegment(createSegmentTanTwoStepRequest(messageToBeAppended, segmentId));
+    } else {
+        qDebug() << "[PSD2] Bank does NOT require TAN two-step request for " << segmentId;
+    }
 }
 
 void FinTsDialog::initializeParameters()

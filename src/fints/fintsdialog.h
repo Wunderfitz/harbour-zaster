@@ -93,6 +93,7 @@ signals:
     void errorOccurred();
     void portfolioInfoCompleted(const QVariantList &portfolioItems);
     void portfolioInfoFailed();
+    void twoFactorRequired();
 
 public slots:
 
@@ -177,6 +178,8 @@ private:
     QString convertToBinaryFormat(const QString &originalString);
     Message *packageMessage(Message *originalMessage);
     void appendErrorMessage(const QString &errorCode, const QString &errorText);
+
+    void appendTanTwoStepRequest(Message *messageToBeAppended, const QString &segmentId);
 
     SimpleCrypt *simpleCrypt;
     Wagnis *wagnis;
