@@ -28,7 +28,6 @@
 #include <QQmlContext>
 #include <QGuiApplication>
 
-#include "wagnis/wagnis.h"
 #include "zaster.h"
 #include "fints/fintsdialog.h"
 #include "fints/fintsbalances.h"
@@ -42,8 +41,6 @@ int main(int argc, char *argv[])
     QQmlContext *context = view.data()->rootContext();
     Zaster zaster;
     context->setContextProperty("zaster", &zaster);
-    Wagnis *wagnis = zaster.getWagnis();
-    context->setContextProperty("wagnis", wagnis);
     FinTsDialog *finTsDialog = zaster.getFinTsDialog();
     context->setContextProperty("finTsDialog", finTsDialog);
     FinTsBalances *finTsBalances = zaster.getFinTsBalances();

@@ -33,10 +33,9 @@
 
 const char SETTINGS_TRANSACTIONS_SINCE[] = "settings/transactionsSince";
 
-FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager, Wagnis *wagnis) : QObject(parent)
+FinTsDialog::FinTsDialog(QObject *parent, QNetworkAccessManager *networkAccessManager) : QObject(parent)
 {
     this->networkAccessManager = networkAccessManager;
-    this->wagnis = wagnis;
 
     connect(&institutesSearchWorker, SIGNAL(searchCompleted(QString, QVariantList)), this, SLOT(handleInstitutesSearchCompleted(QString, QVariantList)));
     database = QSqlDatabase::addDatabase("QSQLITE");
@@ -139,12 +138,6 @@ void FinTsDialog::dialogInitialization(const QString &referenceSegmentId)
 {
     qDebug() << "FinTsDialog::dialogInitialization";
     this->errorMessages.clear();
-
-    if (!wagnis->hasFeature("contribution") && wagnis->getRemainingTime() == 0) {
-        this->appendErrorMessage("666", "You haven't completed the registration process!");
-        emit errorOccurred();
-        return;
-    }
 
     Message *dialogInitializationMessage = this->createMessageDialogInitialization(referenceSegmentId);
     QByteArray serializedInitializationMessage = serializer.serializeAndEncode(dialogInitializationMessage);

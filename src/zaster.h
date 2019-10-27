@@ -23,7 +23,6 @@
 #include <QObject>
 #include <QNetworkAccessManager>
 #include <QSettings>
-#include "wagnis/wagnis.h"
 #include "fints/fintsdialog.h"
 #include "fints/fintsbalances.h"
 #include "fints/fintsaccounts.h"
@@ -34,7 +33,6 @@ class Zaster : public QObject
 public:
     explicit Zaster(QObject *parent = 0);
     ~Zaster();
-    Wagnis *getWagnis();
     FinTsDialog *getFinTsDialog();
     FinTsBalances *getFinTsBalances();
     FinTsAccounts *getFinTsAccounts();
@@ -45,7 +43,6 @@ public slots:
 
 private:
     QNetworkAccessManager *networkAccessManager;
-    Wagnis *wagnis;
     QSettings settings;
     FinTsDialog *finTsDialog;
     FinTsBalances *finTsBalances;

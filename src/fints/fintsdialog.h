@@ -40,7 +40,6 @@
 #include "transactionconstants.h"
 #include "institutessearchworker.h"
 #include "../simplecrypt.h"
-#include "../wagnis/wagnis.h"
 
 // Settings version (to check compatibility)
 const int SETTINGS_VERSION = 3;
@@ -49,7 +48,7 @@ class FinTsDialog : public QObject
 {
     Q_OBJECT
 public:
-    explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0, Wagnis *wagnis = 0);
+    explicit FinTsDialog(QObject *parent = 0, QNetworkAccessManager *networkAccessManager = 0);
     ~FinTsDialog();
 
     Q_INVOKABLE void initializeParameters();
@@ -183,7 +182,6 @@ private:
     void appendTanTwoStepRequest(Message *messageToBeAppended, const QString &segmentId, const QString &accountId = "");
 
     SimpleCrypt *simpleCrypt;
-    Wagnis *wagnis;
     QNetworkAccessManager *networkAccessManager;
     FinTsSerializer serializer;
     FinTsDeserializer deserializer;

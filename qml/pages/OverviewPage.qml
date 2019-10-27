@@ -377,7 +377,7 @@ Page {
                     removeAccountRemorsePopup.execute(qsTr("Removing account"), function() {
                         finTsAccounts.removeCurrentAccount();
                         pageStack.clear();
-                        pageStack.push(( wagnis.isRegistered() && wagnis.hasFeature("contribution") ) ?  ( finTsDialog.isInitialized() ? overviewPage : institutesSearchPage ) : registrationPage);
+                        pageStack.push(finTsDialog.isInitialized() ? overviewPage : institutesSearchPage);
                     } );
                 }
             }

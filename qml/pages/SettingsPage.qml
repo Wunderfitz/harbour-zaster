@@ -69,7 +69,7 @@ Page {
                         console.log("Account " + allAccounts[index].uuid + " was selected");
                         finTsAccounts.switchAccount(allAccounts[index].uuid);
                         pageStack.clear();
-                        pageStack.push(( wagnis.isRegistered() && wagnis.hasFeature("contribution") ) ?  ( finTsDialog.isInitialized() ? overviewPage : institutesSearchPage ) : registrationPage);
+                        pageStack.push(finTsDialog.isInitialized() ? overviewPage : institutesSearchPage);
                     }
                 }
             }
@@ -84,7 +84,7 @@ Page {
                     removeAccountRemorsePopup.execute(qsTr("Removing account"), function() {
                         finTsAccounts.removeCurrentAccount();
                         pageStack.clear();
-                        pageStack.push(( wagnis.isRegistered() && wagnis.hasFeature("contribution") ) ?  ( finTsDialog.isInitialized() ? overviewPage : institutesSearchPage ) : registrationPage);
+                        pageStack.push(finTsDialog.isInitialized() ? overviewPage : institutesSearchPage);
                     } );
                 }
             }
@@ -98,7 +98,7 @@ Page {
                 onClicked: {
                     finTsAccounts.registerNewAccount();
                     pageStack.clear();
-                    pageStack.push(( wagnis.isRegistered() && wagnis.hasFeature("contribution") ) ?  ( finTsDialog.isInitialized() ? overviewPage : institutesSearchPage ) : registrationPage);
+                    pageStack.push(finTsDialog.isInitialized() ? overviewPage : institutesSearchPage);
                 }
             }
 

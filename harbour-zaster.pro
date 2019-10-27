@@ -16,8 +16,6 @@ CONFIG += sailfishapp
 
 QT += core sql
 
-include(src/wagnis/wagnis.pri)
-
 SOURCES += src/harbour-zaster.cpp \
     src/zaster.cpp \
     src/fints/dataelement.cpp \
