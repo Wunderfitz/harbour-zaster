@@ -341,6 +341,11 @@ bool FinTsDialog::getTanRequirement(const QString &segmentId)
     }
 }
 
+QVariantList FinTsDialog::getAllowedTwoStepMethods()
+{
+    return this->bankParameterData.value(BPD_KEY_ALLOWED_TWO_STEP_METHODS).toList();
+}
+
 SimpleCrypt *FinTsDialog::getSimpleCrypt()
 {
     return this->simpleCrypt;
@@ -745,8 +750,16 @@ void FinTsDialog::parseSegmentSegmentFeedback(Segment *segmentSegmentFeedback)
                 qDebug() << "[FinTsDialog] Feedback for segment " << referenceSegmentNumber << ":" << segmentFeedbackCode << segmentMessageText;
             }
             if (segmentFeedbackCode == "3920" && feedbackElements.size() >= 4) {
-                this->bankParameterData.insert(BPD_KEY_PIN_TAN_METHOD, feedbackElements.at(3)->getValue());
-                qDebug() << "[FinTsDialog] Bank told us to use PIN/TAN method: " << feedbackElements.at(3)->getValue();
+                qDebug() << "[FinTsDialog] Bank is allowing PIN/TAN methods:";
+                for (int i = 0; i < (feedbackElements.size() - 3) ; i++ ) {
+                    qDebug() << "-> " << feedbackElements.at(i + 3)->getValue();
+                }
+                if (feedbackElements.size() == 4) {
+                    qDebug() << "[FinTsDialog] Only one PIN/TAN method allowed, using it as default: " << feedbackElements.at(3)->getValue();
+                    this->bankParameterData.insert(BPD_KEY_PIN_TAN_METHOD, feedbackElements.at(3)->getValue());
+                } else {
+                    qDebug() << "[FinTsDialog] Multiple PIN/TAN methods allowed, user needs to select later...";
+                }
             }
             if (segmentFeedbackCode == "3076") {
                 qDebug() << "[PSD2] Two-factor authentication NOT required! :)";
@@ -867,6 +880,19 @@ void FinTsDialog::parseSegmentTanTwoStepInformation(Segment *segmentTanTwoStepIn
         } else {
             this->bankParameterData.insert(BPD_KEY_ONE_STEP_ALLOWED, false);
         }
+        // Starting with element 4, all two-step parameter procedures are listed, see PIN/TAN, pages 146
+        int twoStepProcedures = ( twoStepProcedureInfo.size() - 3 ) / 21;
+        QVariantList procedureList;
+        qDebug() << "[PSD2] Number of different two step procedures: " << twoStepProcedures;
+        for (int i = 0; i < twoStepProcedures; i++) {
+            QVariantMap currentProcedureMap;
+            QList<DataElement *> currentProcedureElements = twoStepProcedureInfo.mid(i * 21 + 3, 21);
+            qDebug() << "[PSD2] Procedure Name: " << currentProcedureElements.at(5)->getValue() << ", ID: " << currentProcedureElements.at(0)->getValue();
+            currentProcedureMap.insert("id", currentProcedureElements.at(0)->getValue());
+            currentProcedureMap.insert("description", currentProcedureElements.at(5)->getValue());
+            procedureList.append(currentProcedureMap);
+        }
+        this->bankParameterData.insert(BPD_KEY_ALLOWED_TWO_STEP_METHODS, procedureList);
     }
 }
 

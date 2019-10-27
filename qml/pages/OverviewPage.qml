@@ -28,6 +28,7 @@ Page {
     property bool initializationCompleted: false
     property bool userParameterDataRequest: false
     property variant allAccounts;
+    property variant allowedTwoStepMethods;
 
     Component.onCompleted: {
         allAccounts = finTsAccounts.getAllAccounts();
@@ -89,6 +90,8 @@ Page {
                     overviewPage.initializationCompleted = true;
                     finTsBalances.retrieveBalances();
                 } else {
+                    overviewPage.allowedTwoStepMethods = finTsDialog.getAllowedTwoStepMethods();
+                    console.log("[OverviewPage] Number of allowed two-step methods: " + overviewPage.allowedTwoStepMethods.length);
                     console.log("[OverviewPage] No accounts received, trying additional dialog initialization");
                     overviewPage.userParameterDataRequest = true;
                     finTsDialog.dialogInitialization();
