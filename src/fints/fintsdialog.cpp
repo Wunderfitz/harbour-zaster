@@ -1512,6 +1512,9 @@ void FinTsDialog::initializeParameters()
             this->storeAccountDescriptor();
             this->initialized = true;
         }
+    } else {
+        qDebug() << "[FinTsDialog] Local parameter file too old, initializing from scratch...";
+        finTsSettings.clear();
     }
     QString accountUUIDString = finTsSettings.value("accountUUID").toString();
     if (accountUUIDString.isEmpty()) {
