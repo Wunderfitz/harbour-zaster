@@ -90,11 +90,16 @@ Page {
                     overviewPage.initializationCompleted = true;
                     finTsBalances.retrieveBalances();
                 } else {
-                    overviewPage.allowedTwoStepMethods = finTsDialog.getAllowedTwoStepMethods();
-                    console.log("[OverviewPage] Number of allowed two-step methods: " + overviewPage.allowedTwoStepMethods.length);
-                    console.log("[OverviewPage] No accounts received, trying additional dialog initialization");
                     overviewPage.userParameterDataRequest = true;
-                    finTsDialog.dialogInitialization();
+                    if (finTsDialog.requiresTwoFactorSelection()) {
+                        overviewPage.allowedTwoStepMethods = finTsDialog.getAllowedTwoStepMethods();
+                        loadingColumn.visible = false;
+                        twoFactorMethodFlickable.visible = true;
+                        console.log("[OverviewPage] Number of allowed two-step methods: " + overviewPage.allowedTwoStepMethods.length);
+                        console.log("[OverviewPage] No accounts received, trying additional dialog initialization");
+                    } else {
+                        finTsDialog.dialogInitialization();
+                    }
                 }
             }
         }
@@ -167,6 +172,83 @@ Page {
                 abortLoading();
             }
         }
+    }
+
+    SilicaFlickable {
+        id: twoFactorMethodFlickable
+        anchors.fill: parent
+        topMargin: Theme.horizontalPageMargin
+        contentHeight: twoFactorMethodColumn.height
+
+        Behavior on opacity { NumberAnimation {} }
+        opacity: visible ? 1 : 0
+        visible: false
+
+        Column {
+            id: twoFactorMethodColumn
+            width: parent.width - ( 2 * Theme.horizontalPageMargin )
+            spacing: Theme.paddingMedium
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.verticalCenter: parent.verticalCenter
+
+            Image {
+                id: zasterTwoFactorImage
+                source: "../../images/zaster.png"
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+
+                fillMode: Image.PreserveAspectFit
+                width: 1/2 * parent.width
+            }
+
+            InfoLabel {
+                id: twoFactorInfoLabel
+                font.pixelSize: Theme.fontSizeLarge
+                text: qsTr("Choose a two-factor method")
+            }
+
+            Text {
+                id: twoFactorMessageText
+                width: parent.width
+                horizontalAlignment: Text.AlignHCenter
+                font.pixelSize: Theme.fontSizeSmall
+                color: Theme.primaryColor
+                wrapMode: Text.Wrap
+                text: qsTr("Remark: Zaster Banker currently only supports mobile/SMS TAN methods.")
+            }
+
+            ComboBox {
+                id: twoFactorComboBox
+                label: qsTr("Two-Factor Method")
+                menu: ContextMenu {
+                    Repeater {
+                        model: allowedTwoStepMethods
+                        delegate: MenuItem {
+                            text: modelData.description
+                        }
+                    }
+                    onActivated: {
+                        console.log("Two-factor method " + allowedTwoStepMethods[index].id + " was selected");
+                    }
+                }
+            }
+
+            Button {
+                id: twoFactorOkButton
+                text: qsTr("OK")
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                onClicked: {
+                    finTsDialog.setTwoFactorMethod(allowedTwoStepMethods[twoFactorComboBox.currentIndex].id);
+                    twoFactorMethodFlickable.visible = false;
+                    loadingColumn.visible = true;
+                    finTsDialog.dialogInitialization();
+                }
+            }
+        }
+
     }
 
     SilicaFlickable {
@@ -537,5 +619,6 @@ Page {
         }
 
     }
+
 
 }

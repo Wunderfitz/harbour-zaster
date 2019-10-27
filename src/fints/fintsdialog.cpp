@@ -341,6 +341,17 @@ bool FinTsDialog::getTanRequirement(const QString &segmentId)
     }
 }
 
+bool FinTsDialog::requiresTwoFactorSelection()
+{
+    return this->bankParameterData.value(BPD_KEY_PIN_TAN_METHOD).toString().isEmpty();
+}
+
+void FinTsDialog::setTwoFactorMethod(const QString &twoFactorMethod)
+{
+    qDebug() << "[PSD2] Setting two-factor method " << twoFactorMethod;
+    this->bankParameterData.insert(BPD_KEY_PIN_TAN_METHOD, twoFactorMethod);
+}
+
 QVariantList FinTsDialog::getAllowedTwoStepMethods()
 {
     return this->bankParameterData.value(BPD_KEY_ALLOWED_TWO_STEP_METHODS).toList();
@@ -1539,7 +1550,7 @@ void FinTsDialog::initializeParameters()
             this->initialized = true;
         }
     } else {
-        qDebug() << "[FinTsDialog] Local parameter file too old, initializing from scratch...";
+        qDebug() << "[FinTsDialog] Local parameter file not found or too old, initializing from scratch...";
         finTsSettings.clear();
     }
     QString accountUUIDString = finTsSettings.value("accountUUID").toString();

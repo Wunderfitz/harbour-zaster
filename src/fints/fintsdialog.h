@@ -76,6 +76,8 @@ public:
     Q_INVOKABLE void setTransactionsSince(const int &transactionsSince);
     Q_INVOKABLE bool containsAccounts();
     Q_INVOKABLE bool getTanRequirement(const QString &segmentId);
+    Q_INVOKABLE bool requiresTwoFactorSelection();
+    Q_INVOKABLE void setTwoFactorMethod(const QString &twoFactorMethod);
     Q_INVOKABLE QVariantList getAllowedTwoStepMethods();
     SimpleCrypt *getSimpleCrypt();
 

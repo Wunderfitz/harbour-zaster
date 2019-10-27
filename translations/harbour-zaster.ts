@@ -210,6 +210,18 @@
         <source>Abort</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Choose a two-factor method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remark: Zaster Banker currently only supports mobile/SMS TAN methods.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Two-Factor Method</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>SettingsPage</name>
