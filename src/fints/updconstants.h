@@ -39,5 +39,6 @@ const char UPD_KEY_ACCOUNT_CHANGED_AT[] = "changedAt";
 const char UPD_KEY_ACCOUNTS[] = "accounts";
 const char UPD_KEY_CAN_RETRIEVE_TRANSACTIONS[] = "canRetrieveTransactions";
 const char UPD_KEY_CAN_RETRIEVE_PORTFOLIO_INFO[] = "canRetrievePortfolioInfo";
+const char UPD_KEY_SIGNATURE_APPLICABLE[] = "signatureApplicable";
 
 #endif // UPDCONSTANTS_H

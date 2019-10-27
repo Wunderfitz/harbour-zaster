@@ -71,6 +71,7 @@ public:
     Q_INVOKABLE bool isInitialized();
     Q_INVOKABLE bool canRetrieveTransactions(const QString &accountId);
     Q_INVOKABLE bool canRetrievePortfolioInfo(const QString &accountId);
+    Q_INVOKABLE bool canUseTanSignature(const QString &accountId, const QString &segmentId);
     Q_INVOKABLE QVariantList getErrorMessages();
     Q_INVOKABLE int getTransactionsSince();
     Q_INVOKABLE void setTransactionsSince(const int &transactionsSince);
@@ -179,7 +180,7 @@ private:
     Message *packageMessage(Message *originalMessage);
     void appendErrorMessage(const QString &errorCode, const QString &errorText);
 
-    void appendTanTwoStepRequest(Message *messageToBeAppended, const QString &segmentId);
+    void appendTanTwoStepRequest(Message *messageToBeAppended, const QString &segmentId, const QString &accountId = "");
 
     SimpleCrypt *simpleCrypt;
     Wagnis *wagnis;
