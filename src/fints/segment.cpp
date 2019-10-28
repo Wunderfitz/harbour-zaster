@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018 Sebastian J. Wolf
+    Copyright (C) 2018-19 Sebastian J. Wolf
 
     This file is part of Zaster Banker.
 

@@ -1,5 +1,5 @@
 /*
-    Copyright (C) 2018 Sebastian J. Wolf
+    Copyright (C) 2018-19 Sebastian J. Wolf
 
     This file is part of Zaster Banker.
 
@@ -42,7 +42,7 @@
 #include "../simplecrypt.h"
 
 // Settings version (to check compatibility)
-const int SETTINGS_VERSION = 3;
+const int SETTINGS_VERSION = 4;
 
 class FinTsDialog : public QObject
 {
