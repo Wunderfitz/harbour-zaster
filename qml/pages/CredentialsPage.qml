@@ -82,7 +82,7 @@ Page {
                 onClicked: {
                     finTsDialog.setUserData(userNameField.text, pinField.text);
                     pageStack.clear();
-                    pageStack.push(Qt.resolvedUrl("OverviewPage.qml"));
+                    pageStack.push(Qt.resolvedUrl("OverviewPage.qml"), { "initializationCompleted" : false });
                 }
             }
 

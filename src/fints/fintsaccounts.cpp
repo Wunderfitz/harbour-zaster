@@ -52,18 +52,21 @@ void FinTsAccounts::removeCurrentAccount()
     QSettings settings("harbour-zaster", "finTsSettings");
     QString currentAccountUUID = settings.value("accountUUID").toString();
     QFile::remove(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf");
-    if (this->myAccounts.size() > 1) {
-        QListIterator<QVariant> accountsIterator(this->myAccounts);
-        while (accountsIterator.hasNext()) {
-            QVariantMap currentAccount = accountsIterator.next().toMap();
-            QString otherAccountUUID = currentAccount.value("uuid").toString();
-            if (otherAccountUUID != currentAccountUUID) {
-                QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + otherAccountUUID + ".conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf");
-            }
+    QListIterator<QVariant> accountsIterator(this->myAccounts);
+    while (accountsIterator.hasNext()) {
+        QVariantMap currentAccount = accountsIterator.next().toMap();
+        QString otherAccountUUID = currentAccount.value("uuid").toString();
+        if (otherAccountUUID != currentAccountUUID) {
+            QFile::rename(QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings-" + otherAccountUUID + ".conf", QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/harbour-zaster/finTsSettings.conf");
         }
     }
     emit accountSwitched();
     this->finTsDialog->initializeParameters();
+    if (this->myAccounts.size() == 1) {
+        this->myAccounts.clear();
+    } else {
+        this->initializeAccounts();
+    }
 }
 
 void FinTsAccounts::switchAccount(const QString &newAccountUUID)

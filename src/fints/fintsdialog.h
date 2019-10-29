@@ -79,6 +79,8 @@ public:
     Q_INVOKABLE bool requiresTwoFactorSelection();
     Q_INVOKABLE void setTwoFactorMethod(const QString &twoFactorMethod);
     Q_INVOKABLE QVariantList getAllowedTwoStepMethods();
+    Q_INVOKABLE bool isInError();
+    Q_INVOKABLE void clearErrorMessages();
     SimpleCrypt *getSimpleCrypt();
 
 signals:

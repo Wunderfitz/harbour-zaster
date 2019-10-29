@@ -98,7 +98,7 @@ Page {
                 onClicked: {
                     finTsAccounts.registerNewAccount();
                     pageStack.clear();
-                    pageStack.push(finTsDialog.isInitialized() ? overviewPage : institutesSearchPage);
+                    pageStack.push(institutesSearchPage);
                 }
             }
 

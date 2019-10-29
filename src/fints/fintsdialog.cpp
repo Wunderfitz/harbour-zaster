@@ -357,6 +357,16 @@ QVariantList FinTsDialog::getAllowedTwoStepMethods()
     return this->bankParameterData.value(BPD_KEY_ALLOWED_TWO_STEP_METHODS).toList();
 }
 
+bool FinTsDialog::isInError()
+{
+    return !this->errorMessages.isEmpty();
+}
+
+void FinTsDialog::clearErrorMessages()
+{
+    this->errorMessages.clear();
+}
+
 SimpleCrypt *FinTsDialog::getSimpleCrypt()
 {
     return this->simpleCrypt;

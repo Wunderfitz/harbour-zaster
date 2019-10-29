@@ -30,15 +30,20 @@ Page {
     property variant allAccounts;
     property variant allowedTwoStepMethods;
 
-    Component.onCompleted: {
+    function initializeOverviewPage() {
+        console.log("Initializing overview page...");
+        overviewPage.initializationCompleted = false;
         allAccounts = finTsAccounts.getAllAccounts();
         if (finTsDialog.isPinSet()) {
+            console.log("PIN is set, synchronize data...");
             // Initial retrieval of account information
             finTsDialog.synchronization();
             loadingColumn.visible = true;
         } else {
+            console.log("PIN is not set, user needs to set it...");
             loadingColumn.canAbort = true;
             overviewFlickable.visible = false;
+            enterPinColumn.initialize();
             enterPinFlickable.visible = true;
         }
     }
@@ -55,6 +60,10 @@ Page {
         finTsBalances.abort();
         loadingColumn.visible = false;
         enterPinFlickable.visible = true;
+    }
+
+    Component.onCompleted: {
+        initializeOverviewPage();
     }
 
     Connections {
@@ -83,21 +92,21 @@ Page {
     Connections {
         target: finTsDialog
         onDialogEndCompleted: {
-            if (!overviewPage.initializationCompleted) {
-                loadingColumn.canAbort = true;
-                if (finTsDialog.containsAccounts() || overviewPage.userParameterDataRequest) {
+            if (!overviewPage.initializationCompleted) {                
+                if (finTsDialog.containsAccounts() || overviewPage.userParameterDataRequest && !finTsDialog.isInError()) {
+                    loadingColumn.canAbort = true;
                     overviewPage.userParameterDataRequest = false;
                     overviewPage.initializationCompleted = true;
                     finTsBalances.retrieveBalances();
                 } else {
                     overviewPage.userParameterDataRequest = true;
-                    if (finTsDialog.requiresTwoFactorSelection()) {
+                    if (finTsDialog.requiresTwoFactorSelection() && !finTsDialog.isInError()) {
                         overviewPage.allowedTwoStepMethods = finTsDialog.getAllowedTwoStepMethods();
                         loadingColumn.visible = false;
                         twoFactorMethodFlickable.visible = true;
                         console.log("[OverviewPage] Number of allowed two-step methods: " + overviewPage.allowedTwoStepMethods.length);
                         console.log("[OverviewPage] No accounts received, trying additional dialog initialization");
-                    } else {
+                    } else if (!finTsDialog.isInError()) {
                         finTsDialog.dialogInitialization();
                     }
                 }
@@ -123,6 +132,11 @@ Page {
                 finTsDialog.closeDialog();
             }
         }
+    }
+
+
+    RemorsePopup {
+        id: removeAccountRemorsePopup
     }
 
     Column {
@@ -306,6 +320,12 @@ Page {
                     horizontalCenter: parent.horizontalCenter
                 }
                 onClicked: {
+                    if (!overviewPage.initializationCompleted) {
+                        finTsDialog.clearErrorMessages();
+                        finTsBalances.abort();
+                        pageStack.clear();
+                        pageStack.push( institutesSearchPage );
+                    }
                     errorFlickable.visible = false;
                     enterPinFlickable.visible = true;
                 }
@@ -324,10 +344,6 @@ Page {
         opacity: visible ? 1 : 0
         visible: false
 
-        RemorsePopup {
-            id: removeAccountRemorsePopup
-        }
-
         onVisibleChanged: {
             if (visible) {
                 allAccounts = finTsAccounts.getAllAccounts();
@@ -340,6 +356,10 @@ Page {
             width: parent.width
             spacing: Theme.paddingMedium
             anchors.verticalCenter: parent.verticalCenter
+
+            function initialize() {
+                bankInfoLabel.text = finTsDialog.getBankName();
+            }
 
             Image {
                 id: zasterImage
@@ -360,7 +380,6 @@ Page {
                 horizontalAlignment: Text.AlignHCenter
                 color: Theme.primaryColor
                 wrapMode: Text.Wrap
-                text: finTsDialog.getBankName()
             }
 
             Text {
@@ -460,9 +479,7 @@ Page {
                 }
                 onClicked: {
                     removeAccountRemorsePopup.execute(qsTr("Removing account"), function() {
-                        finTsAccounts.removeCurrentAccount();
-                        pageStack.clear();
-                        pageStack.push(finTsDialog.isInitialized() ? overviewPage : institutesSearchPage);
+                        overviewPage.removeCurrentAccount();
                     } );
                 }
             }
