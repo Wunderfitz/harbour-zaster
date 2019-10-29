@@ -86,6 +86,19 @@ Page {
                 }
             }
 
+            Button {
+                id: abortButton
+                text: qsTr("Abort")
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                onClicked: {
+                    finTsAccounts.removeCurrentAccount();
+                    pageStack.clear();
+                    pageStack.push(finTsDialog.isInitialized() ? Qt.resolvedUrl("OverviewPage.qml") : Qt.resolvedUrl("InstitutesSearchPage.qml"));
+                }
+            }
+
             Label {
                 id: separatorLabel
                 width: parent.width

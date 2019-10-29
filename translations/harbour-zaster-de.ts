@@ -117,6 +117,10 @@
         <source>Your Credentials</source>
         <translation>Ihre Anmeldedaten</translation>
     </message>
+    <message>
+        <source>Abort</source>
+        <translation>Abbrechen</translation>
+    </message>
 </context>
 <context>
     <name>InstitutesSearchPage</name>
@@ -135,6 +139,10 @@
     <message>
         <source>Find your bank...</source>
         <translation>Finden Sie Ihre Bank...</translation>
+    </message>
+    <message>
+        <source>Abort</source>
+        <translation>Abbrechen</translation>
     </message>
 </context>
 <context>

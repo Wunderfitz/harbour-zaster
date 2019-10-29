@@ -117,6 +117,10 @@
         <source>Your Credentials</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Abort</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>InstitutesSearchPage</name>
@@ -134,6 +138,10 @@
     </message>
     <message>
         <source>Find your bank...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Abort</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

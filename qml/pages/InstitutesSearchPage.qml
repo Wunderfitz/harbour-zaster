@@ -35,8 +35,8 @@ Page {
             id: searchColumn
 
             Behavior on opacity { NumberAnimation {} }
-
             width: parent.width
+            spacing: Theme.paddingSmall
 
             Timer {
                 id: searchTimer
@@ -77,7 +77,7 @@ Page {
             }
 
             Column {
-                height: institutesSearchPage.height - searchHeader.height - searchField.height
+                height: institutesSearchPage.height - searchHeader.height - searchField.height - abortButton.height - 3 * Theme.paddingSmall - separatorLabel.height
                 width: parent.width
 
                 id: noResultsColumn
@@ -97,7 +97,7 @@ Page {
 
                 id: searchListView
 
-                height: institutesSearchPage.height - searchHeader.height - searchField.height
+                height: institutesSearchPage.height - searchHeader.height - searchField.height - abortButton.height - 3 * Theme.paddingSmall - separatorLabel.height
                 width: parent.width
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -168,6 +168,28 @@ Page {
 
                 VerticalScrollDecorator {}
 
+            }
+
+            Button {
+                id: abortButton
+                text: qsTr("Abort")
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
+                onClicked: {
+                    finTsAccounts.removeCurrentAccount();
+                    pageStack.clear();
+                    pageStack.push(finTsDialog.isInitialized() ? Qt.resolvedUrl("OverviewPage.qml") : Qt.resolvedUrl("InstitutesSearchPage.qml"));
+                }
+            }
+
+            Label {
+                id: separatorLabel
+                width: parent.width
+                font.pixelSize: Theme.fontSizeExtraSmall
+                anchors {
+                    horizontalCenter: parent.horizontalCenter
+                }
             }
 
         }

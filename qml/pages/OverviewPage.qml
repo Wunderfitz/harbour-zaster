@@ -324,7 +324,7 @@ Page {
                         finTsDialog.clearErrorMessages();
                         finTsBalances.abort();
                         pageStack.clear();
-                        pageStack.push( institutesSearchPage );
+                        pageStack.push(institutesSearchPage );
                     }
                     errorFlickable.visible = false;
                     enterPinFlickable.visible = true;
@@ -479,7 +479,9 @@ Page {
                 }
                 onClicked: {
                     removeAccountRemorsePopup.execute(qsTr("Removing account"), function() {
-                        overviewPage.removeCurrentAccount();
+                        finTsAccounts.removeCurrentAccount();
+                        pageStack.clear();
+                        pageStack.push(institutesSearchPage );
                     } );
                 }
             }

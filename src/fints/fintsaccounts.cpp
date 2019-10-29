@@ -80,6 +80,11 @@ void FinTsAccounts::switchAccount(const QString &newAccountUUID)
     this->finTsDialog->initializeParameters();
 }
 
+int FinTsAccounts::getNumberOfAccounts()
+{
+    return this->myAccounts.size();
+}
+
 void FinTsAccounts::handleDialogInitializationCompleted()
 {
     initializeAccounts();

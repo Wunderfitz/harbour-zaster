@@ -34,6 +34,7 @@ public:
     Q_INVOKABLE void registerNewAccount();
     Q_INVOKABLE void removeCurrentAccount();
     Q_INVOKABLE void switchAccount(const QString &newAccountUUID);
+    Q_INVOKABLE int getNumberOfAccounts();
 
 signals:
     void accountSwitched();
