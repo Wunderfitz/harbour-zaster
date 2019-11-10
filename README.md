@@ -20,3 +20,6 @@ const char SETTINGS_DEFAULT_ENCRYPTION_KEY[] = "123456789";
 ```
 
 You get the FinTS product ID as soon as you've registered your own application on [hbci-zka.de](https://www.hbci-zka.de/register/prod_register.htm). The default encryption key is only used in case Zaster Banker is unable to determine a unique encryption key from the user's device. Under normal circumstances, Zaster Banker uses an encryption key which was generated automatically. This key is used to encrypt the user's account metadata (not the PIN/password!) on the user's device. Please use a password generator to generate the default key for your application.
+
+## Contributions
+- Chinese Translation: [dashinfantry](https://github.com/dashinfantry)
