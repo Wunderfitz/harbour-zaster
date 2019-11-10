@@ -14,3 +14,8 @@
 - Add abort button for loading screen
 - Make transactions retrieval period configurable
 - Bugfix: Transaction headers missing for some banks (e.g. GLS)
+
+* Mon November 04 2019, Sebastian J. Wolf <sebastian@ygriega.de> 0.4
+- Initial support for PSD2/SCA
+- Several bugfixes (#17, #18)
+- Removed Wagnis
